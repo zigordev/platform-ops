@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3](https://github.com/zigordev/platform-ops/compare/v1.0.2...v1.0.3) (2026-02-25)
+
+
+### Bug Fixes
+
+* empty stuff to trigger a new release ([9cb7337](https://github.com/zigordev/platform-ops/commit/9cb7337bebe0542ea3a3e5623355a0f5e9822e2d))
+* trigger release please ([03f2640](https://github.com/zigordev/platform-ops/commit/03f2640f9e25347ed1851e28ded437bd64dbbb8b))
+
 ## [1.0.2](https://github.com/zigordev/platform-ops/compare/v1.0.1...v1.0.2) (2026-02-25)
 
 
