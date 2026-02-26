@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.4](https://github.com/zigordev/platform-ops/compare/v1.1.3...v1.1.4) (2026-02-26)
+
+
+### Bug Fixes
+
+* trigger release flow smoke test ([afdd046](https://github.com/zigordev/platform-ops/commit/afdd046e3dbb5ebf85bfff1fb07efea10912b910))
+* trigger release flow smoke test ([092cd1d](https://github.com/zigordev/platform-ops/commit/092cd1d8b887a4dc12b92cc3b1925bb0177ba0a3))
+
 ## [1.1.3](https://github.com/zigordev/platform-ops/compare/v1.1.2...v1.1.3) (2026-02-26)
 
 
