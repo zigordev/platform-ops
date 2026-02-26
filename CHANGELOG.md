@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.2](https://github.com/zigordev/platform-ops/compare/v1.1.1...v1.1.2) (2026-02-26)
+
+
+### Bug Fixes
+
+* **ci:** auto-merge release-please PRs by branch ([4f87131](https://github.com/zigordev/platform-ops/commit/4f87131ddbb40bb6d72d0a988a50932f0d121c04))
+* **ci:** auto-merge release-please PRs by branch ([5f27fd0](https://github.com/zigordev/platform-ops/commit/5f27fd0d1088efdcc4bcb897baaa94c4a367b396))
+* wrong release PR author ([1fe9f49](https://github.com/zigordev/platform-ops/commit/1fe9f49f4df2935207897f3af31d84dd2f5cf611))
+
 ## [1.1.1](https://github.com/zigordev/platform-ops/compare/v1.1.0...v1.1.1) (2026-02-26)
 
 
