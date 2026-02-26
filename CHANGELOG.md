@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.6](https://github.com/zigordev/platform-ops/compare/v1.1.5...v1.1.6) (2026-02-26)
+
+
+### Bug Fixes
+
+* **ci:** trigger deploy on published release ([fbf084f](https://github.com/zigordev/platform-ops/commit/fbf084f57d5ff32ab48e3efd8876604333fbecf1))
+* **ci:** trigger deploy on published release ([ab13529](https://github.com/zigordev/platform-ops/commit/ab13529a1e57bf062da4b5d25f9fac22369c16bc))
+
 ## [1.1.5](https://github.com/zigordev/platform-ops/compare/v1.1.4...v1.1.5) (2026-02-26)
 
 
