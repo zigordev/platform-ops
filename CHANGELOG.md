@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3](https://github.com/zigordev/platform-ops/compare/v1.1.2...v1.1.3) (2026-02-26)
+
+
+### Bug Fixes
+
+* **ci:** deploy ops after release-please merge ([46294d1](https://github.com/zigordev/platform-ops/commit/46294d1f7913a8ceb6c188bb81f97c8993bf0742))
+* **ci:** deploy ops after release-please merge ([0d6abc2](https://github.com/zigordev/platform-ops/commit/0d6abc2676d16b6711d5c3cad717c149ca2ccf33))
+
 ## [1.1.2](https://github.com/zigordev/platform-ops/compare/v1.1.1...v1.1.2) (2026-02-26)
 
 
