@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.5](https://github.com/zigordev/platform-ops/compare/v1.1.4...v1.1.5) (2026-02-26)
+
+
+### Bug Fixes
+
+* **ci:** use release token for release-pr auto-merge ([7b64c5d](https://github.com/zigordev/platform-ops/commit/7b64c5dc2fa8bad2960c8d47cb8626d8d13c1cb9))
+* **ci:** use release token for release-pr auto-merge ([5052f52](https://github.com/zigordev/platform-ops/commit/5052f52d0b860394ebf4c1d1f452409a18df84dc))
+
 ## [1.1.4](https://github.com/zigordev/platform-ops/compare/v1.1.3...v1.1.4) (2026-02-26)
 
 
