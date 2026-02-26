@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/zigordev/platform-ops/compare/v1.1.0...v1.1.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* adapt code for cv-web integration ([6cefecb](https://github.com/zigordev/platform-ops/commit/6cefecb38baf1f6020c2a551302f19ca51f65335))
+* adapt code for cv-web integration ([2c751d7](https://github.com/zigordev/platform-ops/commit/2c751d749b9472d0547e8f839d470206b8c2f10a))
+
 ## [1.1.0](https://github.com/zigordev/platform-ops/compare/v1.0.4...v1.1.0) (2026-02-25)
 
 
