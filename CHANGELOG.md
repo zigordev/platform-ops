@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.8](https://github.com/zigordev/platform-ops/compare/v1.1.7...v1.1.8) (2026-02-27)
+
+
+### Bug Fixes
+
+* **ci:** make refactor commits releasable ([74a9a65](https://github.com/zigordev/platform-ops/commit/74a9a6533fa9bcd53a6454601cf3f60bd336bacf))
+* **ci:** make refactor commits releasable ([7a22f38](https://github.com/zigordev/platform-ops/commit/7a22f387f916c949bc10f6c7eb48d5d9755a73a9))
+* deploy prune release root ([#43](https://github.com/zigordev/platform-ops/issues/43)) ([26d1bd6](https://github.com/zigordev/platform-ops/commit/26d1bd6c30acb04b4202d7c0889d9372619e14e1))
+* **deploy:** derive release prune root from release dir ([#42](https://github.com/zigordev/platform-ops/issues/42)) ([44fe4cc](https://github.com/zigordev/platform-ops/commit/44fe4cc758f902f15fd3aa3ef1337d2e8123cf99))
+* trigger direct-release smoke test ([#41](https://github.com/zigordev/platform-ops/issues/41)) ([4ccc696](https://github.com/zigordev/platform-ops/commit/4ccc696cdc01672a060f9655aca12b1e68989c95))
+
+
+### Refactoring
+
+* **ci:** switch to direct release mode ([32f6200](https://github.com/zigordev/platform-ops/commit/32f620052eba3969560fc7734053be0d5e6eb907))
+* **ci:** switch to direct release mode ([7cd7c9d](https://github.com/zigordev/platform-ops/commit/7cd7c9d0179d936233377693689f174b97ae4497))
+
 ## [1.1.7](https://github.com/zigordev/platform-ops/compare/v1.1.6...v1.1.7) (2026-02-27)
 
 
