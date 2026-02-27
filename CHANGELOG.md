@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.7](https://github.com/zigordev/platform-ops/compare/v1.1.6...v1.1.7) (2026-02-27)
+
+
+### Bug Fixes
+
+* **ci:** skip heavy checks for release-please PRs ([23540b6](https://github.com/zigordev/platform-ops/commit/23540b6415a7452235fa55468037cd6b0dd7e43c))
+* **ci:** skip heavy checks for release-please PRs ([db4b2aa](https://github.com/zigordev/platform-ops/commit/db4b2aa8d254280acbd2aa2b8c8fabf4bf2d64d1))
+
 ## [1.1.6](https://github.com/zigordev/platform-ops/compare/v1.1.5...v1.1.6) (2026-02-26)
 
 
