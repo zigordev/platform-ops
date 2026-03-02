@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/zigordev/platform-ops/compare/v1.2.0...v1.2.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* **terraform:** allow cv-web runtime SSM and ECR access ([#47](https://github.com/zigordev/platform-ops/issues/47)) ([ec009e5](https://github.com/zigordev/platform-ops/commit/ec009e502d20b198aba8fc79e4737875fc24646b))
+
 ## [1.2.0](https://github.com/zigordev/platform-ops/compare/v1.1.8...v1.2.0) (2026-02-28)
 
 
