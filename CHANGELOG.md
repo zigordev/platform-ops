@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/zigordev/platform-ops/compare/v1.2.1...v1.2.2) (2026-03-09)
+
+
+### Bug Fixes
+
+* platform ops post refactor 20260309 ([#50](https://github.com/zigordev/platform-ops/issues/50)) ([c19cd43](https://github.com/zigordev/platform-ops/commit/c19cd435fff2ef3ce8e4c2633993926a23ea775e))
+
 ## [1.2.1](https://github.com/zigordev/platform-ops/compare/v1.2.0...v1.2.1) (2026-03-02)
 
 
