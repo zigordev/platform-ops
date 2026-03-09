@@ -5,14 +5,14 @@
 
 ### Bug Fixes
 
-* **terraform:** allow cv-web runtime SSM and ECR access ([#47](https://github.com/zigordev/platform-ops/issues/47)) ([ec009e5](https://github.com/zigordev/platform-ops/commit/ec009e502d20b198aba8fc79e4737875fc24646b))
+* **terraform:** allow cv runtime SSM and ECR access ([#47](https://github.com/zigordev/platform-ops/issues/47)) ([ec009e5](https://github.com/zigordev/platform-ops/commit/ec009e502d20b198aba8fc79e4737875fc24646b))
 
 ## [1.2.0](https://github.com/zigordev/platform-ops/compare/v1.1.8...v1.2.0) (2026-02-28)
 
 
 ### Features
 
-* **infra:** isolate cv-web deploy role and ECR repos ([#45](https://github.com/zigordev/platform-ops/issues/45)) ([5054560](https://github.com/zigordev/platform-ops/commit/50545600767159521fea10865ae6162fb70bd609))
+* **infra:** isolate cv deploy role and ECR repos ([#45](https://github.com/zigordev/platform-ops/issues/45)) ([5054560](https://github.com/zigordev/platform-ops/commit/50545600767159521fea10865ae6162fb70bd609))
 
 ## [1.1.8](https://github.com/zigordev/platform-ops/compare/v1.1.7...v1.1.8) (2026-02-27)
 
@@ -85,8 +85,8 @@
 
 ### Bug Fixes
 
-* adapt code for cv-web integration ([6cefecb](https://github.com/zigordev/platform-ops/commit/6cefecb38baf1f6020c2a551302f19ca51f65335))
-* adapt code for cv-web integration ([2c751d7](https://github.com/zigordev/platform-ops/commit/2c751d749b9472d0547e8f839d470206b8c2f10a))
+* adapt code for cv integration ([6cefecb](https://github.com/zigordev/platform-ops/commit/6cefecb38baf1f6020c2a551302f19ca51f65335))
+* adapt code for cv integration ([2c751d7](https://github.com/zigordev/platform-ops/commit/2c751d749b9472d0547e8f839d470206b8c2f10a))
 
 ## [1.1.0](https://github.com/zigordev/platform-ops/compare/v1.0.4...v1.1.0) (2026-02-25)
 
