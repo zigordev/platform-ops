@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/zigordev/platform-ops/compare/v1.3.0...v1.4.0) (2026-03-11)
+
+
+### Features
+
+* **ops:** switch to always-on central ingress ([#56](https://github.com/zigordev/platform-ops/issues/56)) ([014217a](https://github.com/zigordev/platform-ops/commit/014217a9ed848937c583d2a630811a23a9e4b8ae))
+
 ## [1.3.0](https://github.com/zigordev/platform-ops/compare/v1.2.2...v1.3.0) (2026-03-11)
 
 
