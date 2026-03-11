@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/zigordev/platform-ops/compare/v1.5.0...v1.6.0) (2026-03-11)
+
+
+### Features
+
+* platform ops notifications 20260311 ([#60](https://github.com/zigordev/platform-ops/issues/60)) ([a27aa6f](https://github.com/zigordev/platform-ops/commit/a27aa6f9a36fff36d2582d0404dc7150d98fa0db))
+
 ## [1.5.0](https://github.com/zigordev/platform-ops/compare/v1.4.0...v1.5.0) (2026-03-11)
 
 
