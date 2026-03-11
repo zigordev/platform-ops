@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/zigordev/platform-ops/compare/v1.2.2...v1.3.0) (2026-03-11)
+
+
+### Features
+
+* unified env non secrets 20260310 ([#52](https://github.com/zigordev/platform-ops/issues/52)) ([a99f4fa](https://github.com/zigordev/platform-ops/commit/a99f4fa28531efe568dc3c90fdaca0fb8744c908))
+* unified env non secrets 20260310 ([#53](https://github.com/zigordev/platform-ops/issues/53)) ([12d11ab](https://github.com/zigordev/platform-ops/commit/12d11abd7069ea08cde4677d0a81448f34b6734f))
+
 ## [1.2.2](https://github.com/zigordev/platform-ops/compare/v1.2.1...v1.2.2) (2026-03-09)
 
 
