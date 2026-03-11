@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/zigordev/platform-ops/compare/v1.4.0...v1.5.0) (2026-03-11)
+
+
+### Features
+
+* add notifications observability and docs ([#58](https://github.com/zigordev/platform-ops/issues/58)) ([d259669](https://github.com/zigordev/platform-ops/commit/d259669751cfedbdde0347584ad8de1391d3538d))
+
 ## [1.4.0](https://github.com/zigordev/platform-ops/compare/v1.3.0...v1.4.0) (2026-03-11)
 
 
