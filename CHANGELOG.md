@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/zigordev/platform-ops/compare/v1.7.0...v1.8.0) (2026-05-13)
+
+
+### Features
+
+* **terraform:** add notifications deploy role ([#64](https://github.com/zigordev/platform-ops/issues/64)) ([20be486](https://github.com/zigordev/platform-ops/commit/20be486da62e4c9276c3b034b36599e952d57f12))
+
 ## [1.7.0](https://github.com/zigordev/platform-ops/compare/v1.6.0...v1.7.0) (2026-03-11)
 
 
