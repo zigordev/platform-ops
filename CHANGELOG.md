@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/zigordev/platform-ops/compare/v1.9.0...v1.10.0) (2026-09-02)
+
+
+### Features
+
+* add provision local openbao token ([466a442](https://github.com/zigordev/platform-ops/commit/466a4423f9513ecf0102aeb2e8a1c1bf3db4aa97))
+
 ## [1.9.0](https://github.com/zigordev/platform-ops/compare/v1.8.0...v1.9.0) (2026-06-18)
 
 
