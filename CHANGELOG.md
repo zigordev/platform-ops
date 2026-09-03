@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.3](https://github.com/zigordev/platform-ops/compare/v1.11.2...v1.11.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** grant gitleaks the pull-requests:read it needs on Dependabot PRs ([542bec0](https://github.com/zigordev/platform-ops/commit/542bec05105874b99b1a5b19053c61e2f3e7b3f3))
+
 ## [1.11.2](https://github.com/zigordev/platform-ops/compare/v1.11.1...v1.11.2) (2026-09-03)
 
 
