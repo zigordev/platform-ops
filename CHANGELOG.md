@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/zigordev/platform-ops/compare/v1.11.0...v1.11.1) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** stop the Quality job running a gitleaks check with no gitleaks ([fe18229](https://github.com/zigordev/platform-ops/commit/fe18229b96494036d3f3d9f26bce6d6d6ab16b7a))
+
 ## [1.11.0](https://github.com/zigordev/platform-ops/compare/v1.10.0...v1.11.0) (2026-09-03)
 
 
