@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.11.0](https://github.com/zigordev/platform-ops/compare/v1.10.0...v1.11.0) (2026-09-03)
+
+
+### Features
+
+* **design-system:** vendor colors.css/themes with an enforced sync ([d2434d4](https://github.com/zigordev/platform-ops/commit/d2434d4279b72f494cca52c742816abf2f4c41d9))
+* **observability:** a vendored kit, plus alerting on things that matter ([21cfc9a](https://github.com/zigordev/platform-ops/commit/21cfc9a5f6027048789312cbf2146bf28aad767e))
+* **standards:** add a script that verifies the standard, and defer backups ([18c8fff](https://github.com/zigordev/platform-ops/commit/18c8fff05de766707d06a7fffa34196b81e6d8aa))
+
+
+### Bug Fixes
+
+* **security:** check-secrets.sh silently no-ops without ripgrep ([8339a95](https://github.com/zigordev/platform-ops/commit/8339a9564fe9783bf4c1f896bb099837d9c45b50))
+
 ## [1.10.0](https://github.com/zigordev/platform-ops/compare/v1.9.0...v1.10.0) (2026-09-02)
 
 
