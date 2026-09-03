@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.2](https://github.com/zigordev/platform-ops/compare/v1.11.1...v1.11.2) (2026-09-03)
+
+
+### Bug Fixes
+
+* **ci:** install terraform in the Quality job, nothing else provides it ([8956575](https://github.com/zigordev/platform-ops/commit/8956575a0ee49b8d6dfa805d0b142d150fd8ed9d))
+
 ## [1.11.1](https://github.com/zigordev/platform-ops/compare/v1.11.0...v1.11.1) (2026-09-03)
 
 
