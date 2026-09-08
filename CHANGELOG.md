@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1](https://github.com/zigordev/platform-ops/compare/v1.14.0...v1.14.1) (2026-09-08)
+
+
+### Bug Fixes
+
+* **alertmanager:** give the rendered config to the user that reads it ([#109](https://github.com/zigordev/platform-ops/issues/109)) ([3d81d8d](https://github.com/zigordev/platform-ops/commit/3d81d8d679474ec74acd108286e7ce4dc5a37feb))
+
 ## [1.14.0](https://github.com/zigordev/platform-ops/compare/v1.13.0...v1.14.0) (2026-09-08)
 
 
