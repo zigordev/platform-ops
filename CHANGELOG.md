@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/zigordev/platform-ops/compare/v1.13.0...v1.14.0) (2026-09-08)
+
+
+### Features
+
+* **ingress:** route kini through the shared Caddy ([#107](https://github.com/zigordev/platform-ops/issues/107)) ([736ad2c](https://github.com/zigordev/platform-ops/commit/736ad2ce4060371febf7ed3a835e1c6c1e9b8f99))
+
 ## [1.13.0](https://github.com/zigordev/platform-ops/compare/v1.12.2...v1.13.0) (2026-09-08)
 
 
