@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.2](https://github.com/zigordev/platform-ops/compare/v1.14.1...v1.14.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* **iam:** let the host pull kini and cv images from ECR ([#111](https://github.com/zigordev/platform-ops/issues/111)) ([d7b89e4](https://github.com/zigordev/platform-ops/commit/d7b89e490b792dc599502060ad4e93464247b139))
+
 ## [1.14.1](https://github.com/zigordev/platform-ops/compare/v1.14.0...v1.14.1) (2026-09-08)
 
 
