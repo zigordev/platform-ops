@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/zigordev/platform-ops/compare/v1.17.0...v1.18.0) (2026-09-08)
+
+
+### Features
+
+* **flags:** let the vendored reader take values from Unleash ([#124](https://github.com/zigordev/platform-ops/issues/124)) ([38a91fe](https://github.com/zigordev/platform-ops/commit/38a91fec6a60379bdca59f7bb19ca37f0ab3ab1e))
+
 ## [1.17.0](https://github.com/zigordev/platform-ops/compare/v1.16.0...v1.17.0) (2026-09-08)
 
 
