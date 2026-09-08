@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/zigordev/platform-ops/compare/v1.16.0...v1.17.0) (2026-09-08)
+
+
+### Features
+
+* **flags:** run Unleash in the ops stack ([#122](https://github.com/zigordev/platform-ops/issues/122)) ([002de1c](https://github.com/zigordev/platform-ops/commit/002de1cd112df269505842293b017dd4c4a32161))
+
 ## [1.16.0](https://github.com/zigordev/platform-ops/compare/v1.15.2...v1.16.0) (2026-09-08)
 
 
