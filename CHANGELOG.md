@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.2](https://github.com/zigordev/platform-ops/compare/v1.15.1...v1.15.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* **iam:** accept GitHub's identifier-qualified OIDC subject for cv ([#117](https://github.com/zigordev/platform-ops/issues/117)) ([b39e1d7](https://github.com/zigordev/platform-ops/commit/b39e1d7bef0471a2330d1bea2551e41acbb17669))
+
 ## [1.15.1](https://github.com/zigordev/platform-ops/compare/v1.15.0...v1.15.1) (2026-09-08)
 
 
