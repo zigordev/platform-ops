@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.1](https://github.com/zigordev/platform-ops/compare/v1.19.0...v1.19.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **deploy:** quote secrets in the ops env file and stop sourcing it ([#132](https://github.com/zigordev/platform-ops/issues/132)) ([23a4829](https://github.com/zigordev/platform-ops/commit/23a4829afe0eee5b0b26c07d9e340cf7cf9c3931))
+
 ## [1.19.0](https://github.com/zigordev/platform-ops/compare/v1.18.2...v1.19.0) (2026-09-08)
 
 
