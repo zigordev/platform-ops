@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.1](https://github.com/zigordev/platform-ops/compare/v1.20.0...v1.20.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **prometheus:** drop trading-bot scrape targets from prod ([#137](https://github.com/zigordev/platform-ops/issues/137)) ([2cfb859](https://github.com/zigordev/platform-ops/commit/2cfb859c92605628e65060c553f518b828fe0ab5))
+
 ## [1.20.0](https://github.com/zigordev/platform-ops/compare/v1.19.1...v1.20.0) (2026-09-09)
 
 
