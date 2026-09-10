@@ -122,7 +122,7 @@ services:
       - ../docker/openbao/local.hcl:/etc/openbao/local.hcl:ro
       - ops-local-openbao-data:/openbao/data
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:8200/v1/sys/health >/dev/null']
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8200/v1/sys/health >/dev/null']
       interval: 5s
       timeout: 3s
       retries: 20
