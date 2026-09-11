@@ -2,19 +2,24 @@
 
 ## Runtime
 
-**Node 20 LTS**, pinned in every `package.json`:
+**Node 24 LTS**, pinned once in `.nvmrc` and declared in every `package.json`:
 
 ```json
-"engines": { "node": ">=20.19.0 <21", "npm": ">=10" }
+"engines": { "node": ">=24 <25", "npm": ">=10" }
 ```
 
-`cv`, `gpool` and `kini` already pin this. `notifications` pins Node 24 and
-`trading-bot` pins nothing — both are divergences to close.
+Every Dockerfile builds on `node:24-alpine`, so the runtime CI tests is the
+runtime that ships. `notifications` narrows npm to `>=11 <12`.
 
-Node 20 rather than 24 because three of five repositories are already on it, and
-because the shared tooling — compose files, deploy scripts, GitHub Actions
-setup-node steps — has to work across the estate. One runtime, one lockfile
-format, one set of surprises.
+No repository carries a `.node-version`. A second pin is a second answer: version
+managers that read it select whatever it says, and three of them still said Node
+20 long after everything else had moved to 24.
+
+Dependabot does not propose base-image majors: every `docker` entry ignores
+`version-update:semver-major`. Its Node 26 updates were merged into four
+repositories on 2026-09-07 while CI kept testing 24, so a new Node major now
+arrives as a deliberate change to `.nvmrc`, `engines` and the Dockerfiles
+together.
 
 Rust code pins its toolchain in `rust-toolchain.toml`.
 
@@ -25,9 +30,9 @@ Applications live in `apps/<name>`, never at the repository root.
 
 ## Test runner
 
-**Vitest** for new code. `jest` where it already exists and works — `gpool` and
-`notifications` are not worth migrating for their own sake. What is not
-acceptable is a single repository running both, which `kini` currently does.
+**Vitest** in every repository, the three Nest APIs included. Nest needs the SWC
+plugin rather than Vitest's default esbuild transform, because esbuild does not
+emit the decorator metadata dependency injection reads. Rust uses `cargo test`.
 
 Every workspace defines `test`, even if it only echoes that there are none —
 `npm run test --workspaces --if-present` must never fail because a workspace
@@ -61,15 +66,14 @@ Next.js applications keep source under `src/`:
 
 ```
 apps/<name>/src/
-  app/          route handlers and pages
-  components/   presentational and interactive components
-  lib/          non-React helpers
-  i18n/         locale resolution and message loading
+  app/            route handlers and pages
+  components/     presentational and interactive components
+  lib/            non-React helpers
+  i18n/           locale resolution and message loading
+  observability/  the vendored kit: metrics, RUM, feature flags
 ```
 
-`trading-bot`'s operator console keeps `app/`, `components/` and `lib/` at the
-package root. Every path alias, lint glob and tsconfig setting differs as a
-result, which is the whole cost of that divergence.
+`trading-bot`'s operator console keeps its locale helpers in `lib/i18n/`.
 
 ## Backend code layout
 
@@ -78,14 +82,15 @@ NestJS applications group by feature, with cross-cutting concerns under
 
 ```
 apps/api/src/
-  common/       logging, metrics, guards, filters — anything cross-cutting
-  health/       the health module
-  <feature>/    one directory per bounded concern
+  common/         guards, filters, interceptors, the problem-details body
+  health/         the health module
+  observability/  the vendored kit, including the tracer main.ts loads
+  <feature>/      one directory per bounded concern
   main.ts
   app.module.ts
-  instrumentation.ts
 ```
 
-Metrics belong in `common/metrics/`. `gpool` puts them there; `notifications`
-puts them in `src/metrics/`. Same job, same framework, two addresses — which is
-what makes copying a fix between repositories a manual translation.
+HTTP, process and health metrics come from the kit copy in `observability/`, at
+the same path in every service, so a fix carried over from the kit lands at the
+same address everywhere. `notifications` keeps its own domain metrics in
+`src/metrics/`.
