@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.2](https://github.com/zigordev/platform-ops/compare/v1.20.1...v1.20.2) (2026-09-11)
+
+
+### Bug Fixes
+
+* **openbao:** probe the local healthcheck over IPv4 ([#142](https://github.com/zigordev/platform-ops/issues/142)) ([0c5589e](https://github.com/zigordev/platform-ops/commit/0c5589e299e33777be92a66dd1c6bd861ac3a0e8))
+
 ## [1.20.1](https://github.com/zigordev/platform-ops/compare/v1.20.0...v1.20.1) (2026-09-09)
 
 
