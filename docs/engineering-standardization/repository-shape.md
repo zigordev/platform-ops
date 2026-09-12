@@ -27,8 +27,12 @@
   package.json
 ```
 
-`notifications` keeps its Dockerfile at the repository root and still carries a
-`target/` directory from its Java incarnation. Both are legacy, not variation.
+Where the layout is not met yet: `notifications` keeps its Dockerfile at the
+repository root, legacy from its Java incarnation rather than variation. kini's
+`openbao-run.mjs` lives in `apps/api/scripts/`, and notifications' wrapper is a
+shell script. kini has no `cloud-first-deploy.md` and sity no
+`local-first-start.md`. trading-bot and sity have no `compose.app.prod.yml`,
+because neither deploys yet.
 
 ## The npm script surface
 
@@ -51,13 +55,14 @@ have to read `package.json` to find out how to start something.
 | `precommit:checks`          | What the pre-commit hook runs                    |
 | `audit` / `audit:prod:gate` | Dependency audit, and the gate CI uses           |
 
-`local:up` is always `bash ./scripts/local-stack-up.sh`. The shell script is the
+`local:up` always runs `scripts/local-stack-up.sh`. The shell script is the
 implementation; the npm name is the contract. Every product already does this —
 it is recorded here so it stays true.
 
-`notifications` is missing `precommit:checks`, `test:secrets:gitleaks` and
-`prepare`, and names its quality script `ci:quality` rather than
-`ci:quality:local`. `trading-bot` is missing most of the surface entirely.
+Gaps today: cv and gpool read OpenBao but have no `local:token`; sity has no
+`local:reset`; trading-bot's `lint` runs clippy only, so its TypeScript is never
+linted; platform-ops runs its secret scan as `check:secrets` and installs husky
+with `prepare: husky`.
 
 ## Husky must be installed, not merely present
 
