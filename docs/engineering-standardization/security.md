@@ -55,24 +55,23 @@ pattern.
 
 ## Code scanning
 
-**Semgrep is the scanner. CodeQL is not, and cannot be.**
+**Semgrep and CodeQL both scan, and both are required checks.**
 
 CodeQL code scanning on a _private_ repository requires GitHub Code Security
-(formerly Advanced Security), a paid add-on. Every product repository here is
-private, so the CodeQL workflows carry
-`if: ${{ !github.event.repository.private }}` and have never run once. The
-estate believed it had code scanning on five repositories and actually had it on
-none — the one repository missing the gate was failing the job instead.
+(formerly Advanced Security), a paid add-on. While the product repositories were
+private, the CodeQL workflows carried
+`if: ${{ !github.event.repository.private }}` and never ran once. The estate
+believed it had code scanning on five repositories and actually had it on none —
+the one repository missing the gate was failing the job instead.
 
-The CodeQL workflows are left in place, gated exactly as they are, so they start
-working by themselves the day a repository goes public or the add-on is bought.
-The `sast` job in each `ci.yml` is what actually scans:
+Every repository is public now, so the same workflows run on each pull request
+and weekly on `main`. The `sast` job in each `ci.yml` runs Semgrep:
 
 - `semgrep scan`, not `semgrep ci` — the latter expects a Semgrep AppSec
   Platform token and behaves differently without one.
 - `--error`, so a finding fails the build instead of printing quietly.
-- Findings land in the job log. Uploading SARIF to the Security tab needs the
-  same paid add-on, so the log is the report.
+- Findings land in the job log. Semgrep uploads no SARIF, so the log is its
+  report.
 
 Rules are excluded only with a reason written beside them in the workflow.
 Anything excluded as a false positive was read first; anything excluded as
@@ -106,7 +105,7 @@ Turning it on was not a formality. On the first scan of the estate:
 | Control               | Runs                            |
 | --------------------- | ------------------------------- |
 | Gitleaks              | pre-commit and CI, over history |
-| CodeQL                | CI, on push and PR              |
+| CodeQL                | CI, on PR and weekly on `main`  |
 | `npm audit` prod gate | CI, high and above fails        |
 | Trivy                 | CI, against the built image     |
 | SBOM                  | CI, uploaded per release        |

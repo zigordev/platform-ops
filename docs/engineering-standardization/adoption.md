@@ -1,47 +1,58 @@
 # Adoption
 
 Where each repository stands against the standard, and the order in which to
-close the gaps. Read from the working copies on 2026-09-02.
+close the gaps. Read from each repository's `origin/main` on 2026-09-11 (sity
+from its draft branch), counting the Node 24 and gitleaks fixes opened that day
+as merged.
 
 `~` means present but shallow, unwired, or in one repository only.
 
 ## Status
 
-|                            | cv  | gpool | kini | trading-bot | notifications |
-| -------------------------- | --- | ----- | ---- | ----------- | ------------- |
-| **Shape**                  |     |       |      |             |               |
-| Node 20 pinned             | yes | yes   | yes  | no          | no (24)       |
-| Next.js under `src/`       | yes | yes   | yes  | no          | n/a           |
-| Dockerfile beside app      | yes | yes   | yes  | yes         | no (root)     |
-| Husky actually installed   | no  | yes   | yes  | no          | no            |
-| Full npm script surface    | ~   | yes   | ~    | no          | ~             |
-| **CI**                     |     |       |      |             |               |
-| quality                    | yes | yes   | ~    | no          | yes           |
-| secrets-scan               | yes | yes   | yes  | no          | no            |
-| codeql                     | yes | yes   | yes  | no          | no            |
-| integration                | n/a | yes   | no   | no          | yes           |
-| supply chain (SBOM, Trivy) | yes | yes   | no   | no          | no            |
-| contract drift             | n/a | yes   | no   | no          | n/a           |
-| **Observability**          |     |       |      |             |               |
-| Traces                     | no  | yes   | no   | ~           | yes           |
-| Metrics                    | no  | yes   | no   | ~           | yes           |
-| Scraped                    | no  | yes   | no   | no          | yes           |
-| JSON logs                  | no  | no    | no   | ~           | yes           |
-| `traceId` in logs          | no  | no    | no   | no          | yes           |
-| Health probes deps         | n/a | yes   | yes  | yes         | yes           |
-| Health shape converged     | yes | yes   | yes  | yes         | yes           |
-| Single `/health` path      | yes | yes   | yes  | yes         | yes           |
-| Broker in health           | n/a | yes   | yes  | yes         | yes           |
-| Dashboard                  | no  | yes   | no   | no          | yes           |
-| Graceful shutdown          | n/a | no    | no   | ~           | yes           |
-| **Security**               |     |       |      |             |               |
-| OpenBao wrapper            | yes | yes   | no   | yes         | shell         |
-| Security headers           | no  | no    | no   | no          | n/a           |
-| Dependabot                 | no  | no    | no   | no          | no            |
-| **Operations**             |     |       |      |             |               |
-| Backups                    | no  | no    | no   | no          | no            |
-| SLO + burn-rate alert      | no  | no    | no   | no          | no            |
-| Runbooks                   | no  | no    | no   | no          | no            |
+|                            | cv  | gpool | kini | trading-bot | notifications | sity |
+| -------------------------- | --- | ----- | ---- | ----------- | ------------- | ---- |
+| **Shape**                  |     |       |      |             |               |      |
+| Node 24 pinned             | yes | yes   | yes  | yes         | yes           | yes  |
+| Next.js under `src/`       | yes | yes   | yes  | yes         | n/a           | n/a  |
+| Dockerfile beside app      | yes | yes   | yes  | yes         | no (root)     | yes  |
+| Husky actually installed   | yes | yes   | yes  | yes         | yes           | yes  |
+| Full npm script surface    | ~   | ~     | yes  | ~           | yes           | ~    |
+| **CI**                     |     |       |      |             |               |      |
+| quality                    | yes | ~     | yes  | ~           | yes           | yes  |
+| secrets-scan               | yes | yes   | yes  | yes         | yes           | yes  |
+| codeql                     | yes | yes   | yes  | yes         | yes           | yes  |
+| integration                | n/a | yes   | yes  | ~           | yes           | n/a  |
+| supply chain (SBOM, Trivy) | yes | yes   | yes  | ~           | yes           | yes  |
+| contract drift             | n/a | yes   | yes  | no          | n/a           | n/a  |
+| **Observability**          |     |       |      |             |               |      |
+| Traces                     | no  | yes   | yes  | yes         | yes           | n/a  |
+| Metrics                    | yes | yes   | yes  | yes         | yes           | n/a  |
+| Scraped                    | yes | yes   | yes  | no          | yes           | n/a  |
+| JSON logs                  | no  | yes   | yes  | yes         | yes           | n/a  |
+| `traceId` in logs          | no  | yes   | yes  | yes         | yes           | n/a  |
+| Health probes deps         | n/a | yes   | yes  | yes         | yes           | n/a  |
+| Health shape converged     | yes | yes   | yes  | yes         | yes           | n/a  |
+| Single `/health` path      | yes | yes   | yes  | yes         | yes           | yes  |
+| Broker in health           | n/a | yes   | yes  | yes         | yes           | n/a  |
+| Dashboard                  | ~   | yes   | yes  | no          | yes           | n/a  |
+| Graceful shutdown          | n/a | no    | no   | yes         | yes           | n/a  |
+| **Security**               |     |       |      |             |               |      |
+| OpenBao wrapper            | yes | yes   | yes  | ~           | shell         | n/a  |
+| Security headers           | yes | yes   | yes  | yes         | n/a           | ~    |
+| Dependabot                 | yes | yes   | yes  | yes         | yes           | yes  |
+| Base-image majors held     | yes | yes   | yes  | yes         | yes           | yes  |
+| **Operations**             |     |       |      |             |               |      |
+| Backups                    | no  | no    | no   | no          | no            | n/a  |
+| SLO + burn-rate alert      | no  | yes   | yes  | no          | yes           | n/a  |
+| Runbooks                   | yes | yes   | yes  | no          | yes           | n/a  |
+
+gpool's quality is shallow because its API lint is a no-op, trading-bot's because
+its TypeScript is never linted. cv's web job is scraped but emits no HTTP
+series, so the templated dashboard and the burn-rate alerts have nothing of it to
+read. trading-bot runs its integration suite against Postgres only, its image
+scans are not required checks, and it is scraped only locally. Its control-plane
+alone goes through the OpenBao wrapper. sity's nginx sets `nosniff` and a
+referrer policy but no CSP.
 
 ## Order
 
@@ -88,7 +99,9 @@ Roughly one week.
    the scanner in all seven repositories, and it does not need the add-on. See
    `security.md` for what the first run found — script injection in four deploy
    workflows, TLS with certificate verification disabled, ten actions pinned to
-   mutable tags, and Dependabot with no cooldown.
+   mutable tags, and Dependabot with no cooldown. Every repository has since
+   gone public, so the gated CodeQL workflows run as well, and both scanners are
+   required checks.
 
    **Container hardening is the backlog it left behind.** Semgrep's
    `missing-user`, `missing-user-entrypoint`, `writable-filesystem-service` and
@@ -96,13 +109,15 @@ Roughly one week.
    workflow. Running every image as a non-root user with a read-only root
    filesystem is a project, not a config line — it belongs in phase 4.
 
-6. **Dependabot** in all seven repositories.
+6. **Dependabot** in all seven repositories. Every `docker` entry now also holds
+   back base-image majors; see `conventions.md`.
 7. **Verify husky is installed** everywhere — `git config core.hooksPath`.
    Done, with one deliberate exception: design-system has no dependencies and no
    build, so a pre-commit hook there would mean adding husky and a node_modules
    tree to run a check CI already runs. It got CI instead — gitleaks, plus a
    check that `_ds_manifest.json` still matches the components on disk, which is
-   the only way that repository can actually break.
+   the only way that repository can actually break. design-system has since
+   gained the same hooks as everyone else.
 
 ### Phase 2 — make every service observable
 
@@ -209,8 +224,9 @@ Roughly two weeks. This is where the platform starts paying for itself.
      to a route pattern, the same way the HTTP middleware labels on the route
      rather than the resolved path.
 
-   **Still open:** the RUM code lives in gpool, not the kit, so cv and kini have
-   no RUM. Promoting it needs the client half split from the Nest half.
+   **Since done:** the client half was split out. The RUM client, provider,
+   ingest route and metrics live in the kit, and cv, gpool, kini and the
+   operator console carry copies.
 
 6. **Rust tracing.** Done. The three Rust services had **no OpenTelemetry
    crate at all** — they read `OTEL_EXPORTER_OTLP_ENDPOINT` purely to report
@@ -251,6 +267,12 @@ real problems.
    `>=20.19.0 <21` and testing on 20 — three different majors between what CI
    proved and what shipped.
 
+   It did not stay done. On 2026-09-07 Dependabot's Node 26 base-image updates
+   were merged into cv, kini, notifications and trading-bot while `engines`,
+   `.nvmrc` and CI stayed on 24, and cv, gpool and kini still carried a
+   `.node-version` saying 20. Both were reverted on 2026-09-11, and base-image
+   majors are now held back.
+
 2. **One test runner.** Done: Vitest everywhere. Jest is gone from the three
    Nest APIs, `node:test` from the control-plane and platform-ops, and the two
    apps with no runner at all now have one. 332 tests pass.
@@ -286,6 +308,10 @@ real problems.
    plus a regenerated lockfile, and `npm audit fix --omit=dev`, which prunes
    dev dependencies rather than leaving them alone.
 
+   **Since done:** `security-supply-chain` builds the images, writes an SBOM per
+   image and gates on Trivy in cv, gpool, kini, notifications and sity;
+   trading-bot runs the same steps per image in `image-supply-chain`.
+
 5. **trading-bot's console under `src/`.** Done. It needed a `@ds/*` alias for
    the design system, which the console had been reaching through the old
    repo-wide `@/*` — that stopped working the moment `@/` meant `src/`.
@@ -317,7 +343,8 @@ real problems.
 Started, and further along than "ongoing" suggests.
 
 1. **Image signing and SLSA provenance.** Done for cv, gpool and notifications —
-   the three repositories that push images. Keyless cosign: a short-lived
+   the three repositories that pushed images then — and for kini since its first
+   deploy. Keyless cosign: a short-lived
    certificate from Fulcio bound to the workflow's OIDC identity, recorded in
    Rekor. No private key to store, rotate or leak.
 
@@ -325,7 +352,8 @@ Started, and further along than "ongoing" suggests.
    different image after signing, and the signature would still verify against
    the tag — which is exactly the attack signing is supposed to prevent.
 
-2. **Licence scanning.** Done in all five app repositories, on production
+2. **Licence scanning.** Done in all five app repositories, and later in sity, on
+   production
    dependencies only: a GPL build tool that never ships imposes nothing on the
    artefact. Licences are read from the installed tree rather than the registry
    — one `npm view` per package is several minutes, and it reports what the
@@ -374,9 +402,9 @@ Started, and further along than "ongoing" suggests.
    date, since a codebase of permanent flags has 2^n behaviours nobody has
    tested.
 
-**Still open:** the `e2e-a11y` and visual suites run on cv only — extending them
-to gpool, kini and the operator console is the obvious next step, and the
-contrast fix suggests the other three will have findings too.
+**Still open:** the operator console has no browser suite. gpool and kini now run
+Playwright with axe and Core Web Vitals inside `integration-e2e`, gpool including
+signed-in flows, and sity runs its own render, routing and accessibility suite.
 
 ## How this document stays true
 

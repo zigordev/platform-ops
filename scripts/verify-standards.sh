@@ -10,7 +10,7 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-REPOS="cv gpool kini trading-bot notifications platform-ops design-system"
+REPOS="cv gpool kini trading-bot notifications sity platform-ops design-system"
 FAILED=0
 
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
@@ -19,7 +19,7 @@ skip() { printf '  \033[90m–\033[0m %s\n' "$1"; }
 
 for repo in $REPOS; do
   d="$ROOT/$repo"
-  [ -d "$d/.git" ] || continue
+  [ -e "$d/.git" ] || continue
   printf '\n\033[1m%s\033[0m\n' "$repo"
 
   # --- hooks actually installed, not merely present -------------------------
@@ -34,10 +34,45 @@ for repo in $REPOS; do
   fi
 
   # --- dependency updates ---------------------------------------------------
-  [ -f "$d/.github/dependabot.yml" ] && ok "dependabot" || bad "dependabot missing"
+  if [ -f "$d/.github/dependabot.yml" ]; then
+    ok "dependabot"
+    if grep -q 'package-ecosystem: docker' "$d/.github/dependabot.yml"; then
+      unheld=$(awk '
+        /^  - package-ecosystem:/ { if (eco == "docker" && !held) n++; eco = $3; held = 0 }
+        /version-update:semver-major/ { held = 1 }
+        END { if (eco == "docker" && !held) n++; print n + 0 }
+      ' "$d/.github/dependabot.yml")
+      [ "$unheld" -eq 0 ] && ok "base-image majors held" || bad "$unheld docker update(s) still propose base-image majors"
+    fi
+  else
+    bad "dependabot missing"
+  fi
+
+  nvmrc=""
+  [ -f "$d/.nvmrc" ] && nvmrc=$(tr -d '[:space:]v' < "$d/.nvmrc")
+  [ -f "$d/.node-version" ] && bad ".node-version present — .nvmrc is the only Node pin"
+  if [ -n "$nvmrc" ]; then
+    engines=$(sed -n 's/.*"node": *">=\([0-9][0-9]*\).*/\1/p' "$d/package.json" 2>/dev/null | head -1)
+    [ "$engines" = "$nvmrc" ] && ok "engines on Node $nvmrc" || bad "engines say Node ${engines:-nothing}, .nvmrc says $nvmrc"
+    images=$(find "$d" \( -name node_modules -o -name .git -o -name target -o -name worktrees \) -prune \
+               -o -name 'Dockerfile*' -type f -exec grep -hoE '^FROM node:[0-9]+' {} + 2>/dev/null \
+             | sed 's/FROM node://' | sort -u)
+    for major in $images; do
+      [ "$major" = "$nvmrc" ] && ok "images on node:$major" || bad "an image builds on node:$major, .nvmrc says $nvmrc"
+    done
+  fi
 
   # --- secret scanning ------------------------------------------------------
-  [ -f "$d/.gitleaks.toml" ] && ok "gitleaks config" || skip "no gitleaks config"
+  if [ -f "$d/.gitleaks.toml" ]; then
+    if grep -qE '^[[:space:]]*useDefault[[:space:]]*=[[:space:]]*true' "$d/.gitleaks.toml" \
+       || grep -q '^\[\[rules\]\]' "$d/.gitleaks.toml"; then
+      ok "gitleaks config has rules"
+    else
+      bad "gitleaks config has no rules — add [extend] useDefault = true"
+    fi
+  else
+    skip "no gitleaks config"
+  fi
 
   # --- CI -------------------------------------------------------------------
   if [ -f "$d/.github/workflows/ci.yml" ]; then
@@ -57,6 +92,7 @@ for repo in $REPOS; do
   # --- APIs: helmet and a health endpoint -----------------------------------
   for main in $(find "$d/apps" -maxdepth 4 -name 'main.ts' -path '*/src/*' -not -path '*/node_modules/*' 2>/dev/null); do
     app=$(echo "$main" | sed "s|$d/apps/||;s|/src/main.ts||")
+    grep -qE '"(@nestjs/core|fastify)"' "$d/apps/$app/package.json" 2>/dev/null || continue
     grep -q helmet "$main" && ok "helmet ($app)" || bad "no helmet ($app)"
     if find "$d/apps/$app/src" -iname 'health*' -print -quit 2>/dev/null | grep -q .; then
       ok "health endpoint ($app)"
@@ -141,7 +177,7 @@ printf '\n\033[1mdesign-system consumers\033[0m\n'
 DS_VERSIONS=""
 for repo in cv gpool kini trading-bot; do
   d="$ROOT/$repo"
-  [ -d "$d/.git" ] || continue
+  [ -e "$d/.git" ] || continue
 
   # A re-vendored tree is the old bug walking back in. Look for actual sources,
   # not the directory: an emptied one lingers on any machine that dropped a
