@@ -21,7 +21,7 @@ fi
 # In CI (including GitHub Actions), scan repository files directly.
 # There is no staged area in workflow runners, so staged-only scans are bypassed.
 if [ "$is_ci" = "true" ] || [ "$is_github_actions" = "true" ]; then
-  gitleaks detect --source . --no-git --redact --no-banner
+  gitleaks detect --source . --no-git --redact --config .gitleaks.toml --no-banner
   echo "Secret scan passed (CI full-repo mode)."
   exit 0
 fi
@@ -50,9 +50,9 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   # This avoids false behavior for deleted files that may still exist locally.
   printf '%s\n' "$staged_paths" \
     | xargs -I {} sh -c 'git show ":$1" 2>/dev/null || true' _ {} \
-    | gitleaks detect --pipe --redact --no-banner
+    | gitleaks detect --pipe --redact --config .gitleaks.toml --no-banner
 else
-  gitleaks detect --source . --redact --no-banner
+  gitleaks detect --source . --redact --config .gitleaks.toml --no-banner
 fi
 
 echo "Secret scan passed."

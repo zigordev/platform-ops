@@ -62,6 +62,27 @@ for repo in $REPOS; do
     done
   fi
 
+  # --- rust pin -------------------------------------------------------------
+  if [ -f "$d/rust-toolchain.toml" ]; then
+    channel=$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$d/rust-toolchain.toml" | head -1)
+    rust_images=$(find "$d" \( -name node_modules -o -name .git -o -name target -o -name worktrees \) -prune \
+                    -o -name 'Dockerfile*' -type f -exec grep -hoE '^FROM rust:[0-9][0-9.]*' {} + 2>/dev/null \
+                  | sed 's/FROM rust://' | sort -u)
+    if [ -z "$channel" ]; then
+      bad "rust-toolchain.toml has no channel"
+    elif [ "$channel" = "stable" ] || [ "$channel" = "beta" ] || [ "$channel" = "nightly" ]; then
+      bad "rust-toolchain.toml floats on $channel — pin the version the images build"
+    else
+      ok "rust toolchain pinned to $channel"
+      for img in $rust_images; do
+        case "$img" in
+          "$channel"|"$channel".*) ok "images on rust:$img" ;;
+          *) bad "an image builds on rust:$img, rust-toolchain.toml says $channel" ;;
+        esac
+      done
+    fi
+  fi
+
   # --- secret scanning ------------------------------------------------------
   if [ -f "$d/.gitleaks.toml" ]; then
     if grep -qE '^[[:space:]]*useDefault[[:space:]]*=[[:space:]]*true' "$d/.gitleaks.toml" \

@@ -7,14 +7,14 @@
     "prepare": "husky",
     "format": "prettier --write \".github/**/*.{json,yml,yaml}\" \"docker/**/*.{json,yml,yaml}\" \"docs/**/*.md\" \"infra/**/*.md\" \"README.md\" \"package.json\"",
     "format:check": "prettier --check \".github/**/*.{json,yml,yaml}\" \"docker/**/*.{json,yml,yaml}\" \"docs/**/*.md\" \"infra/**/*.md\" \"README.md\" \"package.json\"",
-    "check:secrets": "bash ./scripts/check-secrets.sh",
+    "test:secrets:gitleaks": "bash ./scripts/precommit-gitleaks.sh",
     "check:shell": "bash ./scripts/check-shell.sh",
     "check:workflows": "bash ./scripts/check-workflows.sh",
     "check:compose": "bash ./scripts/check-compose.sh",
     "check:terraform": "bash ./scripts/check-terraform-fmt.sh",
     "ci:quality:local": "npm run format:check && npm run typecheck && npm run test:cov && npm run test:shell && npm run check:hooks",
-    "precommit:checks": "npm run check:secrets && npm run ci:quality:local",
-    "check:hooks": "npm run check:secrets && npm run check:shell && npm run check:workflows && npm run check:compose && npm run check:terraform",
+    "precommit:checks": "npm run test:secrets:gitleaks && npm run ci:quality:local",
+    "check:hooks": "npm run test:secrets:gitleaks && npm run check:shell && npm run check:workflows && npm run check:compose && npm run check:terraform",
     "local:up": "bash ./scripts/local-stack-up-ops.sh",
     "local:down": "bash ./scripts/local-stack-down-ops.sh",
     "local:reset": "bash ./scripts/local-stack-down-ops.sh --volumes",
@@ -24,7 +24,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check:licences": "node ./scripts/check-licences.mjs .",
-    "check:secret-expiry": "node ./scripts/check-secret-expiry.mjs"
+    "check:secret-expiry": "node ./scripts/check-secret-expiry.mjs",
+    "audit": "npm audit --audit-level=high"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
@@ -41,6 +42,7 @@
     "vitest": "^4.1.11"
   },
   "engines": {
-    "node": ">=24 <25"
+    "node": ">=24 <25",
+    "npm": ">=10"
   }
 }

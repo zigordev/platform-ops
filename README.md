@@ -2,23 +2,63 @@
 
 Shared operations and infrastructure repository for platform services.
 
-## Scope
+## Repository shape
 
-- Terraform infrastructure for AWS deployment
-- Ops Docker stack (OpenBao, Redpanda, Prometheus, Grafana, Loki, Tolgee, OTel, Alertmanager, Jaeger)
-- Deployment orchestration workflows and scripts
+- `docker/` — the ops stack: `compose.ops.local.yml`, `compose.ops.prod.yml` and per-service config folders (`openbao/`, `grafana/`, `loki/`, `prometheus/`, `otel/`, `alertmanager/`, `tolgee/`)
+- `infra/terraform/` — the AWS infrastructure every product deploys onto
+- `scripts/` — local stack, remote deploy, and the checks husky and CI run
+- `observability/` — the kit each product copies
+- `docs/` — `local-first-start.md`, `cloud-first-deploy.md`, the runbooks and the engineering standard
+- `.github/workflows/` — CI, deploy, release, governance workflows
 
-## Docker Config Layout
+## Quick start
 
-Service configs are grouped under per-service folders in `docker/`:
+1. Install dependencies
 
-- `docker/alertmanager/`
-- `docker/grafana/`
-- `docker/loki/`
-- `docker/openbao/`
-- `docker/otel/`
-- `docker/prometheus/`
-- `docker/tolgee/`
+```bash
+npm ci
+```
+
+2. Start the ops stack
+
+```bash
+npm run local:up
+```
+
+That creates the shared `platform_ops_shared` network every product attaches to, and brings up OpenBao, Redpanda, Tolgee and the observability services. First-time setup — initialising and unsealing OpenBao, seeding Tolgee — is in `docs/local-first-start.md`.
+
+3. Stop it
+
+```bash
+npm run local:down
+```
+
+`npm run local:reset` stops it and drops the volumes, which discards local secrets and translations.
+
+## Quality commands
+
+```bash
+npm run format:check
+npm run typecheck
+npm run test:cov
+npm run test:shell
+npm run check:hooks
+npm run audit
+```
+
+`check:hooks` runs the secret scan, shellcheck, workflow, compose and Terraform checks — the same set husky runs before a commit.
+
+## Release + deploy model
+
+- `Release Please` manages versioning/changelog + release PR.
+- On release publish, `Deploy AWS Ops (EC2 Compose)` deploys the ops stack to the shared EC2 host over SSM. A `refactor` or `chore` merge does not cut a release, so it does not deploy.
+- Terraform in `infra/terraform/` owns the host, the deploy bucket, ingress and every product's ECR repository and deploy role.
+- Products own their own app stack compose and config; this repository owns everything they share.
+
+See:
+
+- `docs/local-first-start.md`
+- `docs/cloud-first-deploy.md`
 
 ## Husky Commit Checks
 
@@ -59,35 +99,17 @@ Install gitleaks on macOS:
 brew install gitleaks
 ```
 
-## Local First Validation
+## Local OpenBao
 
-From repo root:
+`docker/.env.ops.local` comes from `docker/.env.ops.local.example`; the real file is git-ignored and is the local ops env source.
 
-```bash
-npm run local:up
-```
-
-Create `docker/.env.ops.local` from `docker/.env.ops.local.example` first. The real `.local` file is ignored by git and is the local ops env source.
-
-OpenBao local now uses production-like behavior:
+Local OpenBao behaves like production:
 
 - no `-dev` auto-init
 - no auto-unseal
 - no default dev token
 
-First run (or after reset) requires manual OpenBao initialization and unseal. Follow `docs/local-first-start.md`.
-
-Stop:
-
-```bash
-npm run local:down
-```
-
-Stop and remove volumes:
-
-```bash
-npm run local:reset
-```
+So a first run — or a run after `npm run local:reset`, which drops the volumes — needs a manual initialise and unseal. `docs/local-first-start.md` walks through it.
 
 ## Production Deployment
 

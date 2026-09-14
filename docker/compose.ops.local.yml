@@ -6,7 +6,7 @@ services:
       - no-new-privileges:true
     image: jaegertracing/all-in-one:1.53
     restart: unless-stopped
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   otel-collector:
     security_opt:
@@ -21,7 +21,7 @@ services:
       - '4320:4318'
     depends_on:
       - jaeger
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   alertmanager:
     security_opt:
@@ -32,7 +32,7 @@ services:
       - --config.file=/etc/alertmanager/alertmanager.yml
     volumes:
       - ./alertmanager/config.local.yml:/etc/alertmanager/alertmanager.yml:ro
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   prometheus:
     security_opt:
@@ -47,7 +47,7 @@ services:
       - ./prometheus/alerts.yml:/etc/prometheus/prometheus.alerts.yml:ro
     depends_on:
       - alertmanager
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   grafana:
     security_opt:
@@ -65,7 +65,7 @@ services:
       - ../docker/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   loki:
     security_opt:
@@ -78,7 +78,7 @@ services:
     volumes:
       - ../docker/loki/config.yml:/etc/loki/config.yml:ro
       - ops-local-loki-data:/loki
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   tolgee:
     security_opt:
@@ -106,7 +106,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 30
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   openbao:
     security_opt:
@@ -126,7 +126,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   redpanda:
     security_opt:
@@ -165,7 +165,7 @@ services:
       timeout: 5s
       retries: 20
     networks:
-      ops_shared:
+      platform_ops_shared:
         aliases:
           - platform-redpanda
 
@@ -181,7 +181,7 @@ services:
       KAFKA_BROKERS: platform-redpanda:9092
     ports:
       - '18081:8080'
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   unleash_db:
     security_opt:
@@ -199,7 +199,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   unleash:
     security_opt:
@@ -226,7 +226,7 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   alloy:
     security_opt:
@@ -243,7 +243,7 @@ services:
       - ops-local-alloy-data:/var/lib/alloy/data
     depends_on:
       - loki
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
   # Host metrics. Without this there is no disk, memory or CPU signal at all —
   # and a full disk has already taken Tolgee down twice in this estate.
@@ -269,10 +269,10 @@ services:
       # is the filesystem that actually matters locally, since it is the VM
       # filling up with build cache that has taken this stack down before.
       - /:/host:ro
-    networks: [ops_shared]
+    networks: [platform_ops_shared]
 
 networks:
-  ops_shared:
+  platform_ops_shared:
     name: platform_ops_shared
     external: true
 
