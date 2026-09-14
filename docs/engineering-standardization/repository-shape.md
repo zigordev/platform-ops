@@ -14,11 +14,12 @@
     local-first-start.md  how to run it on a laptop, from nothing
     cloud-first-deploy.md how it reaches production
   scripts/
-    local-stack-up.sh
-    local-stack-down.sh
-    local-stack-reset.sh
+    local-stack.sh        the shared body, identical in every repository
+    local-stack.config.sh what differs: compose files, secrets, database, Tolgee
     openbao-run.mjs       the boot-time secret wrapper
     precommit-gitleaks.sh
+    audit-prod-gate.mjs   with audit-allowlist.json beside it
+    check-licences.mjs
     prepare-husky.mjs
   .husky/
     pre-commit
@@ -27,12 +28,10 @@
   package.json
 ```
 
-Where the layout is not met yet: `notifications` keeps its Dockerfile at the
-repository root, legacy from its Java incarnation rather than variation. kini's
-`openbao-run.mjs` lives in `apps/api/scripts/`, and notifications' wrapper is a
-shell script. kini has no `cloud-first-deploy.md` and sity no
-`local-first-start.md`. trading-bot and sity have no `compose.app.prod.yml`,
-because neither deploys yet.
+Where the layout is not met yet: kini's `openbao-run.mjs` lives in
+`apps/api/scripts/`, and notifications' wrapper is a shell script rather than the
+shared `.mjs` one. trading-bot and sity have no `compose.app.prod.yml`, because
+neither deploys yet.
 
 ## The npm script surface
 
@@ -55,14 +54,19 @@ have to read `package.json` to find out how to start something.
 | `precommit:checks`          | What the pre-commit hook runs                    |
 | `audit` / `audit:prod:gate` | Dependency audit, and the gate CI uses           |
 
-`local:up` always runs `scripts/local-stack-up.sh`. The shell script is the
-implementation; the npm name is the contract. Every product already does this —
-it is recorded here so it stays true.
+`local:up`, `local:dev`, `local:down` and `local:reset` run
+`scripts/local-stack.sh up|dev|down|reset`. That body is byte-identical in every
+repository; everything that differs — the compose files, the OpenBao path and
+required keys, the database service, whether the Tolgee step pushes before it
+pulls — is declared in `scripts/local-stack.config.sh` beside it. The npm name is
+the contract, the config block is the repository, and the body is shared.
 
-Gaps today: cv and gpool read OpenBao but have no `local:token`; sity has no
-`local:reset`; trading-bot's `lint` runs clippy only, so its TypeScript is never
-linted; platform-ops runs its secret scan as `check:secrets` and installs husky
-with `prepare: husky`.
+`audit-prod-gate.mjs` and `check-licences.mjs` are shared the same way: one body
+everywhere, with the accepted advisories in `scripts/audit-allowlist.json`.
+
+Gaps today: trading-bot's two Node apps have no ESLint config, so `lint` runs
+the Rust linter and nothing else for them; platform-ops installs husky with
+`prepare: husky` rather than the shared `prepare-husky.mjs`.
 
 ## Husky must be installed, not merely present
 
