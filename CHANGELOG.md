@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.3](https://github.com/zigordev/platform-ops/compare/v1.20.2...v1.20.3) (2026-09-15)
+
+
+### Refactoring
+
+* **shape:** converge the script surface, network key and README with the estate ([#145](https://github.com/zigordev/platform-ops/issues/145)) ([5106980](https://github.com/zigordev/platform-ops/commit/510698041e85ee23801fe3dc1f659c55a5ab8d83))
+
 ## [1.20.2](https://github.com/zigordev/platform-ops/compare/v1.20.1...v1.20.2) (2026-09-11)
 
 
