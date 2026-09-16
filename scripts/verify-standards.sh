@@ -309,6 +309,31 @@ for f in audit-prod-gate.mjs check-licences.mjs local-stack.sh; do
   fi
 done
 
+printf '\n\033[1maction pins\033[0m\n'
+pins=$(for repo in $REPOS; do
+  dir="$ROOT/$repo/.github/workflows"
+  [ -d "$dir" ] || continue
+  grep -hoE 'uses: [A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}([ \t]*#[ \t]*\S+)?' "$dir"/*.yml 2>/dev/null
+done | sed 's/^uses:[ \t]*//' | tr -s ' \t' ' ' | sort -u)
+
+split=0
+for action in $(printf '%s\n' "$pins" | cut -d@ -f1 | sort -u); do
+  variants=$(printf '%s\n' "$pins" | grep -c "^$action@")
+  if [ "$variants" -gt 1 ]; then
+    bad "$action: $variants different pins across the estate"
+    split=$((split + 1))
+  fi
+done
+total=$(printf '%s\n' "$pins" | cut -d@ -f1 | sort -u | wc -l | tr -d ' ')
+[ "$split" -eq 0 ] && ok "$total actions, one sha and one label each"
+
+unlabelled=$(printf '%s\n' "$pins" | grep -cv '#' || true)
+if [ "$unlabelled" -eq 0 ]; then
+  ok "every pin carries its version"
+else
+  bad "$unlabelled pin(s) with no version comment"
+fi
+
 printf '\n'
 if [ "$FAILED" -eq 0 ]; then
   printf '\033[32mAll checks passed.\033[0m\n'
