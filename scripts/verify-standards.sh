@@ -11,6 +11,7 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REPOS="cv gpool kini trading-bot notifications sity platform-ops design-system"
+SHARED_PRETTIER="$(shasum "$ROOT/platform-ops/.prettierrc" 2>/dev/null | cut -d" " -f1)"
 FAILED=0
 
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
@@ -80,6 +81,64 @@ for repo in $REPOS; do
           *) bad "an image builds on rust:$img, rust-toolchain.toml says $channel" ;;
         esac
       done
+    fi
+  fi
+
+  # --- npm engine range -----------------------------------------------------
+  if [ -f "$d/package.json" ]; then
+    grep -q '"npm"[[:space:]]*:' "$d/package.json" && ok "engines.npm declared" \
+      || bad "no engines.npm — the standard pins npm as well as node"
+  fi
+
+  # --- one prettier config, no per-app copies -------------------------------
+  if [ -f "$d/.prettierrc" ]; then
+    if [ "$(shasum "$d/.prettierrc" | cut -d' ' -f1)" = "$SHARED_PRETTIER" ]; then
+      ok "shared prettier config"
+    else
+      bad "prettier config differs from the shared one"
+    fi
+    copy=$(find "$d/apps" -maxdepth 2 -name '.prettierrc*' -not -path '*/node_modules/*' 2>/dev/null | head -1)
+    [ -n "$copy" ] && bad "per-app prettier copy: ${copy#"$d"/}"
+  fi
+
+  # --- compose calls the shared network by its real name --------------------
+  for key in $(grep -rhoE '^  [a-z_]+_shared:' "$d"/docker/compose*.yml 2>/dev/null | tr -d ' :' | sort -u); do
+    if [ "$key" = "platform_ops_shared" ]; then
+      ok "compose network key $key"
+    else
+      bad "compose network key $key — the key is the network's real name"
+    fi
+  done
+
+  # --- the local stack: one body, one config block --------------------------
+  if [ -f "$d/scripts/local-stack.sh" ]; then
+    if [ -f "$d/scripts/local-stack.config.sh" ]; then
+      ok "local-stack.sh with its config block"
+    else
+      bad "local-stack.sh without local-stack.config.sh"
+    fi
+    for old in up down dev reset; do
+      [ -f "$d/scripts/local-stack-$old.sh" ] && bad "old wrapper still present: local-stack-$old.sh"
+    done
+  fi
+
+  # --- docs: the pair -------------------------------------------------------
+  if [ -d "$d/docs" ]; then
+    [ -f "$d/docs/local-first-start.md" ] && ok "docs/local-first-start.md" \
+      || bad "no docs/local-first-start.md"
+    if ls "$d"/.github/workflows/deploy*.yml >/dev/null 2>&1; then
+      [ -f "$d/docs/cloud-first-deploy.md" ] && ok "docs/cloud-first-deploy.md" \
+        || bad "deploys but has no docs/cloud-first-deploy.md"
+    fi
+  fi
+
+  # --- README opens with the shared spine -----------------------------------
+  if [ -f "$d/docs/local-first-start.md" ] && [ -f "$d/README.md" ]; then
+    spine=$(grep -E '^## ' "$d/README.md" | head -4 | sed 's/^## //' | tr '\n' '|')
+    if [ "$spine" = "Repository shape|Quick start|Quality commands|Release + deploy model|" ]; then
+      ok "README spine"
+    else
+      bad "README opens with: ${spine:-no sections}"
     fi
   fi
 
@@ -227,6 +286,28 @@ if [ "$distinct" -gt 1 ]; then
 elif [ "$distinct" = 1 ]; then
   ok "all consumers on the same tag"
 fi
+
+printf '\n\033[1mshared script bodies\033[0m\n'
+for f in audit-prod-gate.mjs check-licences.mjs local-stack.sh; do
+  hashes=""
+  present=0
+  for repo in $REPOS; do
+    src="$ROOT/$repo/scripts/$f"
+    [ -f "$src" ] || continue
+    present=$((present + 1))
+    hashes="$hashes $(shasum "$src" | cut -d' ' -f1)"
+  done
+  if [ "$present" -eq 0 ]; then
+    skip "$f: not present anywhere"
+    continue
+  fi
+  distinct=$(printf '%s\n' $hashes | sort -u | wc -l | tr -d ' ')
+  if [ "$distinct" -eq 1 ]; then
+    ok "$f: one body across $present repositories"
+  else
+    bad "$f: $distinct different bodies across $present repositories — they are meant to be identical"
+  fi
+done
 
 printf '\n'
 if [ "$FAILED" -eq 0 ]; then
