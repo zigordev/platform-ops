@@ -17,7 +17,13 @@ that cannot run one states why in its README rather than quietly omitting it.
 | `security-supply-chain` | Prod audit, SBOM, Trivy image scan                       | cv, gpool, kini, notifications, sity; trading-bot scans its images in `image-supply-chain`                                |
 | `contract-drift`        | Generated client matches the live spec                   | gpool and kini, inside `integration-e2e`                                                                                  |
 
-sity's jobs are on its draft branch and reach `main` when that branch lands.
+Job display names are the required-check contexts in each ruleset, so **renaming a
+job and updating the ruleset are one change**. Rename the job alone and every pull
+request in that repository blocks on a context that will never report again.
+
+A check that exists but is not required is decoration: trading-bot's five
+`Image SBOM + Trivy` jobs ran red through two merges before they were added to its
+ruleset on 15 September.
 
 ## What each job is actually for
 
@@ -51,5 +57,25 @@ Deploy runs only from `main`, only after CI passes, and is driven by
 `release-please` tags rather than by pushing. Images go to ECR; a bundle lands in
 S3; SSM drives the compose deploy on the shared host.
 
+Three jobs, same ids and names in every deployable repository: `build-and-push`,
+`deploy-app`, `post-deploy-smoke`. The smoke job needs `DEPLOY_HEALTHCHECK_URL`
+in the `production` environment; unset, it skips, which reads as a pass.
+
+**Evidence travels with the image, bound to the digest, never the tag.** A tag can
+be repointed after signing. The digest is resolved from ECR rather than from a
+local `docker inspect`, because a re-deploy of an existing immutable tag skips the
+build and leaves nothing local to inspect — that defect broke the manual deploy
+path in three repositories until it was fixed on 12 September. gpool attaches the
+fullest set and is the one to copy: Trivy on the pushed image, an SBOM
+attestation, a cosign signature and SLSA provenance.
+
 `trading-bot` and `sity` have no deploy workflow and no production compose
 manifest.
+
+## Translations
+
+A repository whose application reads Tolgee at runtime also runs
+`Promote Prod Translations` on pushes to `main` that touch its message files, so
+committed snapshots reach production Tolgee. Without it, git and Tolgee drift and
+the staler side wins at runtime. It needs `TOLGEE_SYNC_API_URL` as a variable and
+`TOLGEE_SYNC_API_KEY` as a secret on the `production` environment.
