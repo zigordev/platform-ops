@@ -1,9 +1,8 @@
 # Adoption
 
 Where each repository stands against the standard, and the order in which to
-close the gaps. Read from each repository's `origin/main` on 2026-09-11 (sity
-from its draft branch), counting the Node 24 and gitleaks fixes opened that day
-as merged.
+close the gaps. Read from each repository's `origin/main` on 2026-09-16, after
+the repository-shape convergence landed.
 
 `~` means present but shallow, unwired, or in one repository only.
 
@@ -14,9 +13,14 @@ as merged.
 | **Shape**                  |     |       |      |             |               |      |
 | Node 24 pinned             | yes | yes   | yes  | yes         | yes           | yes  |
 | Next.js under `src/`       | yes | yes   | yes  | yes         | n/a           | n/a  |
-| Dockerfile beside app      | yes | yes   | yes  | yes         | no (root)     | yes  |
+| Dockerfile beside app      | yes | yes   | yes  | yes         | yes           | yes  |
 | Husky actually installed   | yes | yes   | yes  | yes         | yes           | yes  |
-| Full npm script surface    | ~   | ~     | yes  | ~           | yes           | ~    |
+| Full npm script surface    | yes | yes   | yes  | yes         | yes           | yes  |
+| One local-stack body       | yes | yes   | yes  | yes         | yes           | yes  |
+| Shared audit + licence     | yes | yes   | yes  | yes         | yes           | yes  |
+| Shared prettier config     | yes | yes   | yes  | yes         | yes           | yes  |
+| Docs pair                  | yes | yes   | yes  | yes         | n/a           | ~    |
+| README spine               | yes | yes   | yes  | yes         | yes           | yes  |
 | **CI**                     |     |       |      |             |               |      |
 | quality                    | yes | ~     | yes  | ~           | yes           | yes  |
 | secrets-scan               | yes | yes   | yes  | yes         | yes           | yes  |
@@ -47,12 +51,20 @@ as merged.
 | Runbooks                   | yes | yes   | yes  | no          | yes           | n/a  |
 
 gpool's quality is shallow because its API lint is a no-op, trading-bot's because
-its TypeScript is never linted. cv's web job is scraped but emits no HTTP
-series, so the templated dashboard and the burn-rate alerts have nothing of it to
-read. trading-bot runs its integration suite against Postgres only, its image
-scans are not required checks, and it is scraped only locally. Its control-plane
-alone goes through the OpenBao wrapper. sity's nginx sets `nosniff` and a
-referrer policy but no CSP.
+neither Node application has an ESLint config, so `lint` runs clippy and nothing
+else for them. cv's web job is scraped but emits no HTTP series, so the templated
+dashboard and the burn-rate alerts have nothing of it to read. trading-bot runs
+its integration suite against Postgres only and is scraped only locally; its
+control-plane alone goes through the OpenBao wrapper. sity's nginx sets `nosniff`
+and a referrer policy but no CSP, and it has no `cloud-first-deploy.md` because it
+does not deploy. trading-bot's image scans became required checks on 15 September.
+
+Verified rather than asserted: every row above that `verify-standards.sh` can
+check, it checks — the Node and Rust pins, the gitleaks rules, the Dependabot
+holds, `engines.npm`, the shared prettier config, the compose network key, the
+local-stack body and its config block, the docs pair, the README spine, the
+design-system tag, and that the three shared script bodies are byte-identical
+across the estate.
 
 ## Order
 
@@ -255,8 +267,19 @@ and an external uptime probe that does not run on the host it watches.
 
 ### Phase 4 — converge the structure
 
-Started. Less mechanical than it looked — two of the first three items turned up
-real problems.
+Done for repository shape as of 2026-09-16, in 31 pull requests across all eight
+repositories. Less mechanical than it looked — several items turned up real
+problems rather than drift.
+
+What shape convergence settled, beyond the numbered items below: `apps/ui` became
+`apps/web` in cv, gpool and kini; every image names its stages
+`base → deps-build → deps-prod → build → prod → local → dev` and sits beside its
+application; compose uses the key `platform_ops_shared`, `API_IMAGE`/`WEB_IMAGE`,
+`init: true` and a `/health` healthcheck on every application service; the
+pre-commit stacks run the CI manifest instead of a near-duplicate; and the
+local-stack, audit-gate and licence-check scripts are one body each with a
+per-repository config block. The dead weight went with it — Terraform stubs in
+three repositories, kini's second monitoring stack, and its legacy compose file.
 
 1. **One Node major.** Done: every repository is on Node 24, the current LTS,
    in `engines`, `.nvmrc`, CI and every Dockerfile.
