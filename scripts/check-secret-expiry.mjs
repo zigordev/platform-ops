@@ -50,7 +50,9 @@ const self = await bao('auth/token/lookup-self');
 if (self?.data?.expire_time) {
   const expires = new Date(self.data.expire_time);
   if (expires.getTime() < horizon) {
-    findings.push(`OpenBao token (${self.data.display_name ?? 'self'}) expires ${expires.toISOString()}`);
+    findings.push(
+      `OpenBao token (${self.data.display_name ?? 'self'}) expires ${expires.toISOString()}`
+    );
   }
 }
 
@@ -58,7 +60,7 @@ if (self?.data?.expire_time) {
 //    `expires_at` field in ISO 8601 beside the secret it describes.
 const mounts = await bao('sys/mounts');
 const kvMounts = Object.keys(mounts?.data ?? {}).filter((m) =>
-  (mounts.data[m].type ?? '').startsWith('kv'),
+  (mounts.data[m].type ?? '').startsWith('kv')
 );
 
 for (const mount of kvMounts) {
