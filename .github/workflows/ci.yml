@@ -8,6 +8,9 @@ on:
 
 # A superseded run tells you about a commit nobody is waiting on, while
 # holding a runner the current commit needs.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -38,6 +41,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+          GITLEAKS_ENABLE_COMMENTS: false
 
   quality:
     name: Quality
