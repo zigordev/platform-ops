@@ -24,6 +24,25 @@ env:
 # and the drift check could go red without anyone finding out until the next
 # time someone ran it by hand.
 jobs:
+  compose-validation:
+    name: Compose Manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate compose manifests
+        run: npm run check:compose
+
   secrets-scan:
     name: Secrets Scan (Gitleaks)
     runs-on: ubuntu-latest
@@ -74,7 +93,7 @@ jobs:
       # install step — running it a second time here would be both redundant
       # and broken.
       - name: Shell, workflow, compose and Terraform checks
-        run: npm run check:shell && npm run check:workflows && npm run check:compose && npm run check:terraform
+        run: npm run check:shell && npm run check:workflows && npm run check:terraform
 
       - name: Terraform validate (bootstrap)
         run: |
