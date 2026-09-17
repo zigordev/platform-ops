@@ -16,7 +16,6 @@ on:
     types: [published]
 
 permissions:
-  id-token: write
   contents: read
 
 concurrency:
@@ -25,6 +24,9 @@ concurrency:
 
 jobs:
   package-bundle:
+    permissions:
+      contents: read
+      id-token: write
     name: Package + Upload Ops Bundle
     runs-on: ubuntu-latest
     environment: production
@@ -114,6 +116,9 @@ jobs:
             "s3://${DEPLOY_BUCKET}/releases/${IMAGE_TAG}/deploy-bundle.tar.gz"
 
   deploy-ops:
+    permissions:
+      contents: read
+      id-token: write
     name: Remote Ops Deploy via SSM
     runs-on: ubuntu-latest
     environment: production
