@@ -6,29 +6,26 @@ on:
   schedule:
     - cron: '17 4 * * 1'
 
-# A superseded run tells you about a commit nobody is waiting on, while
-# holding a runner the current commit needs.
+permissions:
+  contents: read
+
 concurrency:
   group: codeql-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
+env:
+  HUSKY: '0'
 
 jobs:
   analyze:
+    name: Analyze
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       actions: read
       contents: read
       security-events: write
-    name: Analyze
-    # Code scanning upload needs GitHub Advanced Security, a paid add-on on a
-    # private repo. Without this guard the job runs the full analysis and only
-    # fails at the very last step ("Code scanning is not enabled for this
-    # repository") — every other repo in the estate already skips instead.
-    if: ${{ !github.event.repository.private }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
 
     strategy:
       fail-fast: false
@@ -47,7 +44,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      - run: npm install
+      - run: npm ci
 
       - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
