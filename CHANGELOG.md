@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.4](https://github.com/zigordev/platform-ops/compare/v1.20.3...v1.20.4) (2026-09-20)
+
+
+### Bug Fixes
+
+* **ingress:** stop serving /metrics publicly ([#161](https://github.com/zigordev/platform-ops/issues/161)) ([e2507ed](https://github.com/zigordev/platform-ops/commit/e2507eda73cbc03ecae7933d37910525f0ee09e0))
+
 ## [1.20.3](https://github.com/zigordev/platform-ops/compare/v1.20.2...v1.20.3) (2026-09-15)
 
 
