@@ -33,6 +33,15 @@ says what it depends on.
 | `CoreWebVitalsRegressed`                   | [web-vitals.md](web-vitals.md)               |
 | `RumIngestUnderAttack`                     | [rum-ingest.md](rum-ingest.md)               |
 
+## Procedures
+
+Not every file here answers an alert. These describe a job that runs on its own
+and that you may need to inspect, re-run or read the output of.
+
+| Job                 | Runbook                          |
+| ------------------- | -------------------------------- |
+| Nightly log archive | [log-archive.md](log-archive.md) |
+
 ## Where to look
 
 | Thing        | Local                    | Prod                   |

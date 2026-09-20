@@ -300,6 +300,58 @@ prepare_openbao_volume_permissions() {
   fi
 }
 
+ensure_cron_daemon() {
+  if systemctl is-active crond >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if command -v dnf >/dev/null 2>&1; then
+    echo "[deploy] Installing cronie; Amazon Linux 2023 ships without a cron daemon"
+    retry 3 5 dnf install -y cronie >/dev/null 2>&1 || true
+  fi
+
+  systemctl enable --now crond >/dev/null 2>&1 || true
+
+  if ! systemctl is-active crond >/dev/null 2>&1; then
+    echo "No cron daemon is running, so the nightly log archive would never start" >&2
+    return 1
+  fi
+}
+
+install_log_archive_job() {
+  local bin_dir="/opt/platform-ops/bin"
+  local log_file="/var/log/platform-ops-log-archive.log"
+
+  ensure_cron_daemon
+
+  install -d -m 0755 "$bin_dir" "$bin_dir/lib"
+  install -m 0755 scripts/archive-logs.sh "$bin_dir/archive-logs.sh"
+  install -m 0644 scripts/lib/log-archive.sh "$bin_dir/lib/log-archive.sh"
+
+  cat >/etc/cron.d/platform-ops-log-archive <<CRON
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+AWS_REGION=$AWS_REGION
+LOG_ARCHIVE_BUCKET=$OPS_LOG_ARCHIVE_BUCKET
+15 10 * * 1-5 root $bin_dir/archive-logs.sh >>$log_file 2>&1
+CRON
+  chmod 0644 /etc/cron.d/platform-ops-log-archive
+
+  cat >/etc/logrotate.d/platform-ops-log-archive <<ROTATE
+$log_file {
+  weekly
+  rotate 4
+  compress
+  missingok
+  notifempty
+  copytruncate
+}
+ROTATE
+  chmod 0644 /etc/logrotate.d/platform-ops-log-archive
+
+  echo "[deploy] Installed the log archive job (bucket $OPS_LOG_ARCHIVE_BUCKET)"
+}
+
 if [ ! -d "$RELEASE_DIR" ]; then
   echo "Release dir not found: $RELEASE_DIR" >&2
   exit 1
@@ -349,6 +401,7 @@ required_non_secret_keys=(
   SMTP_FROM
   ALERT_EMAIL_TO
   OPS_OPENBAO_KMS_KEY_ID
+  OPS_LOG_ARCHIVE_BUCKET
 )
 
 for key in "${required_non_secret_keys[@]}"; do
@@ -421,6 +474,8 @@ if [ "$OPENBAO_CONFIG_CHANGED" = "true" ]; then
 fi
 
 run_compose --env-file "$OPS_ENV_FILE" -f docker/compose.ops.prod.yml ps
+
+install_log_archive_job
 
 
 prune_old_releases() {
