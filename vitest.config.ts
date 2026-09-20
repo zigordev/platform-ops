@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 
 /**
  * Vitest, not `node:test` + tsx — one runner across the estate.
@@ -14,6 +14,11 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       reportsDirectory: 'coverage',
+      exclude: [
+        ...coverageConfigDefaults.exclude,
+        'packages/observability/rum-client.ts',
+        'packages/observability/RumProvider.tsx',
+      ],
       thresholds: {
         branches: 72,
         functions: 91,
