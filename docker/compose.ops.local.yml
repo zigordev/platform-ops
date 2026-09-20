@@ -1,11 +1,19 @@
 name: platform-ops-local
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+    labels: 'com.docker.compose.project,com.docker.compose.service'
+
 services:
   jaeger:
     security_opt:
       - no-new-privileges:true
     image: jaegertracing/all-in-one:1.53
     restart: unless-stopped
+    logging: *default-logging
     networks: [platform_ops_shared]
 
   otel-collector:
@@ -13,6 +21,7 @@ services:
       - no-new-privileges:true
     image: otel/opentelemetry-collector:0.98.0
     restart: unless-stopped
+    logging: *default-logging
     command: ['--config=/etc/otelcol/config.yml']
     volumes:
       - ./otel/config.yml:/etc/otelcol/config.yml:ro
@@ -28,6 +37,7 @@ services:
       - no-new-privileges:true
     image: prom/alertmanager:v0.27.0
     restart: unless-stopped
+    logging: *default-logging
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
     volumes:
@@ -39,6 +49,7 @@ services:
       - no-new-privileges:true
     image: prom/prometheus:v2.51.2
     restart: unless-stopped
+    logging: *default-logging
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:
@@ -54,6 +65,7 @@ services:
       - no-new-privileges:true
     image: grafana/grafana:10.4.2
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '3002:3000'
     environment:
@@ -72,6 +84,7 @@ services:
       - no-new-privileges:true
     image: grafana/loki:2.9.8
     restart: unless-stopped
+    logging: *default-logging
     command: ['-config.file=/etc/loki/config.yml']
     ports:
       - '3100:3100'
@@ -85,6 +98,7 @@ services:
       - no-new-privileges:true
     image: tolgee/tolgee:v3.141.1
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '8090:8080'
     environment:
@@ -113,6 +127,7 @@ services:
       - no-new-privileges:true
     image: openbao/openbao:2.5.0
     restart: unless-stopped
+    logging: *default-logging
     cap_add:
       - IPC_LOCK
     command: ['server', '-config=/etc/openbao/local.hcl']
@@ -133,6 +148,7 @@ services:
       - no-new-privileges:true
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.10
     restart: unless-stopped
+    logging: *default-logging
     command:
       [
         'redpanda',
@@ -174,6 +190,7 @@ services:
       - no-new-privileges:true
     image: docker.redpanda.com/redpandadata/console:v2.8.1
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       redpanda:
         condition: service_healthy
@@ -188,6 +205,7 @@ services:
       - no-new-privileges:true
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: unleash
       POSTGRES_DB: unleash
@@ -206,6 +224,7 @@ services:
       - no-new-privileges:true
     image: unleashorg/unleash-server:8.2.0
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       unleash_db:
         condition: service_healthy
@@ -233,6 +252,7 @@ services:
       - no-new-privileges:true
     image: grafana/alloy:v1.12.0
     restart: unless-stopped
+    logging: *default-logging
     command:
       - run
       - --storage.path=/var/lib/alloy/data
@@ -254,6 +274,7 @@ services:
       - no-new-privileges:true
     image: prom/node-exporter:v1.8.2
     restart: unless-stopped
+    logging: *default-logging
     command:
       - --path.rootfs=/host
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
