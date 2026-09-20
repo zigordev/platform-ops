@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.0](https://github.com/zigordev/platform-ops/compare/v1.23.0...v1.24.0) (2026-09-20)
+
+
+### Features
+
+* **prometheus:** keep 90 days, store exemplars and watch the stack ([#174](https://github.com/zigordev/platform-ops/issues/174)) ([40b6d46](https://github.com/zigordev/platform-ops/commit/40b6d46501537682abb4962187143d8c49f23dab))
+
 ## [1.23.0](https://github.com/zigordev/platform-ops/compare/v1.22.1...v1.23.0) (2026-09-20)
 
 
