@@ -16,6 +16,19 @@ services:
     logging: *default-logging
     networks: [platform_ops_shared]
 
+  tempo:
+    security_opt:
+      - no-new-privileges:true
+    image: grafana/tempo:2.8.1
+    restart: unless-stopped
+    logging: *default-logging
+    command: ['-config.file=/etc/tempo/config.yml']
+    mem_limit: 512m
+    volumes:
+      - ./tempo/config.yml:/etc/tempo/config.yml:ro
+      - ops-prod-tempo-data:/var/tempo
+    networks: [platform_ops_shared]
+
   otel-collector:
     security_opt:
       - no-new-privileges:true
@@ -27,6 +40,7 @@ services:
       - ./otel/config.yml:/etc/otelcol/config.yml:ro
     depends_on:
       - jaeger
+      - tempo
     networks: [platform_ops_shared]
 
   alertmanager:
@@ -49,6 +63,7 @@ services:
     logging: *default-logging
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
     volumes:
       - ./prometheus/config.prod.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/rules.yml:/etc/prometheus/prometheus.rules.yml:ro
@@ -302,6 +317,7 @@ networks:
     external: true
 
 volumes:
+  ops-prod-tempo-data:
   ops-prod-prometheus-data:
   ops-prod-grafana-data:
   ops-prod-loki-data:

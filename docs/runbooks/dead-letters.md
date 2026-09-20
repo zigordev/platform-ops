@@ -28,7 +28,7 @@ docker exec -it platform-redpanda rpk topic consume notification.email.dlq --num
 ```
 
 The reason is in the service logs at the time of the failure; the trace ID in
-the log line opens the full path in Jaeger.
+the log line opens the full path in Tempo.
 
 ## What to do
 

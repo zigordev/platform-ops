@@ -49,6 +49,7 @@ and that you may need to inspect, re-run or read the output of.
 | Prometheus   | <http://localhost:9090>  | via the ops ingress    |
 | Alertmanager | <http://localhost:9093>  | not exposed; use email |
 | Grafana      | <http://localhost:3001>  | `OPS_GRAFANA_DOMAIN`   |
+| Tempo        | <http://localhost:3200>  | not exposed            |
 | Jaeger       | <http://localhost:16686> | not exposed            |
 
 Locally, alerts go nowhere by design — `config.local.yml` routes everything to a

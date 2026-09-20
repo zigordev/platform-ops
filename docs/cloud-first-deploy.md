@@ -10,7 +10,7 @@ When this runbook is complete, you will have:
 
 - AWS infrastructure provisioned by Terraform
 - a production EC2 host running the shared ops stack
-- OpenBao, Tolgee, Redpanda, Grafana, Prometheus, Loki, Alertmanager, Jaeger, and the OTEL collector
+- OpenBao, Tolgee, Redpanda, Grafana, Prometheus, Loki, Alertmanager, Tempo, Jaeger, and the OTEL collector
 - central public ingress for all platform domains
 - the GitHub deployment wiring needed for this repo and the downstream app repos
 
