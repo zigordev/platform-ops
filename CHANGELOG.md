@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.23.0](https://github.com/zigordev/platform-ops/compare/v1.22.1...v1.23.0) (2026-09-20)
+
+
+### Features
+
+* **tracing:** keep traces in Tempo ([#171](https://github.com/zigordev/platform-ops/issues/171)) ([06c5ae4](https://github.com/zigordev/platform-ops/commit/06c5ae490a3445033b94b4f5b02e90b54f6c1f1e))
+
+
+### Bug Fixes
+
+* **loki:** delete logs after 30 days and fix the notifications log panel ([#170](https://github.com/zigordev/platform-ops/issues/170)) ([6c1eda3](https://github.com/zigordev/platform-ops/commit/6c1eda3b1a55ee8df5656e9559b8fac5d2d976d1))
+
 ## [1.22.1](https://github.com/zigordev/platform-ops/compare/v1.22.0...v1.22.1) (2026-09-20)
 
 
