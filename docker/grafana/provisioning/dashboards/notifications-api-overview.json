@@ -96,7 +96,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=\"docker-json-logs\", service=\"api\", filename=~\".*/notifications-app-.*-api-.*\\\\.log\"}"
+          "expr": "{app=\"notifications-api\"}"
         }
       ],
       "options": {
