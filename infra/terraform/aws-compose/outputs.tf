@@ -13,6 +13,11 @@ output "deploy_bucket_name" {
   value       = aws_s3_bucket.deploy.id
 }
 
+output "archive_bucket_name" {
+  description = "S3 bucket holding archived logs under logs/ and, later, database backups under backups/."
+  value       = aws_s3_bucket.archive.id
+}
+
 output "api_ecr_repository_url" {
   description = "ECR repository URI for the API image."
   value       = aws_ecr_repository.api.repository_url
