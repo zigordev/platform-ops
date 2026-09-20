@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.5](https://github.com/zigordev/platform-ops/compare/v1.20.4...v1.20.5) (2026-09-20)
+
+
+### Bug Fixes
+
+* **observability:** carry the RUM fixes into the kit ([#160](https://github.com/zigordev/platform-ops/issues/160)) ([953947c](https://github.com/zigordev/platform-ops/commit/953947cc3b17f8526571cb7a717059aebd05d367))
+
 ## [1.20.4](https://github.com/zigordev/platform-ops/compare/v1.20.3...v1.20.4) (2026-09-20)
 
 
