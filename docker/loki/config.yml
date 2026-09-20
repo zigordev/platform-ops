@@ -55,6 +55,16 @@ ruler:
   alertmanager_url: http://alertmanager:9093
   enable_alertmanager_v2: true
   enable_api: true
+  # Recording rules go to Prometheus rather than staying in Loki, so a per-site
+  # SLI reads the same way as every other metric the estate alerts on.
+  remote_write:
+    enabled: true
+    client:
+      url: http://prometheus:9090/api/v1/write
+  # The remote-write queue keeps its own WAL, and the default path is relative
+  # to a working directory Loki cannot write to.
+  wal:
+    dir: /loki/ruler-wal
   ring:
     kvstore:
       store: inmemory
