@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.0](https://github.com/zigordev/platform-ops/compare/v1.24.0...v1.25.0) (2026-09-20)
+
+
+### Features
+
+* **observability:** log events with release, flat fields and a level ([#173](https://github.com/zigordev/platform-ops/issues/173)) ([d4cb16f](https://github.com/zigordev/platform-ops/commit/d4cb16fef4f9158fa8ac530f5b036d414f72c550))
+
 ## [1.24.0](https://github.com/zigordev/platform-ops/compare/v1.23.0...v1.24.0) (2026-09-20)
 
 
