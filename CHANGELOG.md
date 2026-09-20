@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.0](https://github.com/zigordev/platform-ops/compare/v1.21.0...v1.22.0) (2026-09-20)
+
+
+### Features
+
+* **logs:** archive each day to S3 before it expires ([#166](https://github.com/zigordev/platform-ops/issues/166)) ([f915b89](https://github.com/zigordev/platform-ops/commit/f915b895cd2e73ffcba7fe0a957fef52de3eac82))
+
 ## [1.21.0](https://github.com/zigordev/platform-ops/compare/v1.20.5...v1.21.0) (2026-09-20)
 
 
