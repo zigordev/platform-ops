@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/zigordev/platform-ops/compare/v1.20.5...v1.21.0) (2026-09-20)
+
+
+### Features
+
+* **infra:** add the archive bucket for logs and future backups ([#163](https://github.com/zigordev/platform-ops/issues/163)) ([2d9af1d](https://github.com/zigordev/platform-ops/commit/2d9af1d7601669614b1f12a579ad60326250a626))
+
 ## [1.20.5](https://github.com/zigordev/platform-ops/compare/v1.20.4...v1.20.5) (2026-09-20)
 
 
