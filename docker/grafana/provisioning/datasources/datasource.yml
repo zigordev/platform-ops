@@ -6,6 +6,7 @@ datasources:
     access: proxy
     url: http://prometheus:9090
     isDefault: true
+    uid: prometheus
   - name: Alertmanager
     type: alertmanager
     access: proxy
@@ -24,3 +25,33 @@ datasources:
     # derived field in loki.yml would point at a datasource that no longer
     # exists after a restart.
     uid: jaeger
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    isDefault: false
+    editable: false
+    uid: tempo
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: '-5m'
+        spanEndTimeShift: '5m'
+        filterByTraceID: true
+        filterBySpanID: false
+        tags:
+          - key: 'service.name'
+            value: 'app'
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: '-5m'
+        spanEndTimeShift: '5m'
+        tags:
+          - key: 'service.name'
+            value: 'job'
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: loki
