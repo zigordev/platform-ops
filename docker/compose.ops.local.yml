@@ -69,6 +69,9 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
+      - --storage.tsdb.retention.time=90d
+      - --storage.tsdb.retention.size=12GB
+      - --enable-feature=exemplar-storage
     volumes:
       - ./prometheus/config.local.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/rules.yml:/etc/prometheus/prometheus.rules.yml:ro
@@ -273,6 +276,7 @@ services:
     command:
       - run
       - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
       - /etc/alloy/config.alloy
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
