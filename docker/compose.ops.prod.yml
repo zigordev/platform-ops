@@ -5,6 +5,7 @@ x-logging: &default-logging
   options:
     max-size: '10m'
     max-file: '3'
+    labels: 'com.docker.compose.project,com.docker.compose.service'
 
 services:
   jaeger:
@@ -12,6 +13,20 @@ services:
       - no-new-privileges:true
     image: jaegertracing/all-in-one:1.53
     restart: unless-stopped
+    logging: *default-logging
+    networks: [platform_ops_shared]
+
+  tempo:
+    security_opt:
+      - no-new-privileges:true
+    image: grafana/tempo:2.8.1
+    restart: unless-stopped
+    logging: *default-logging
+    command: ['-config.file=/etc/tempo/config.yml']
+    mem_limit: 512m
+    volumes:
+      - ./tempo/config.yml:/etc/tempo/config.yml:ro
+      - ops-prod-tempo-data:/var/tempo
     networks: [platform_ops_shared]
 
   otel-collector:
@@ -19,11 +34,13 @@ services:
       - no-new-privileges:true
     image: otel/opentelemetry-collector:0.98.0
     restart: unless-stopped
+    logging: *default-logging
     command: ['--config=/etc/otelcol/config.yml']
     volumes:
       - ./otel/config.yml:/etc/otelcol/config.yml:ro
     depends_on:
       - jaeger
+      - tempo
     networks: [platform_ops_shared]
 
   alertmanager:
@@ -31,6 +48,7 @@ services:
       - no-new-privileges:true
     image: prom/alertmanager:v0.27.0
     restart: unless-stopped
+    logging: *default-logging
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
     volumes:
@@ -42,8 +60,10 @@ services:
       - no-new-privileges:true
     image: prom/prometheus:v2.51.2
     restart: unless-stopped
+    logging: *default-logging
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
     volumes:
       - ./prometheus/config.prod.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/rules.yml:/etc/prometheus/prometheus.rules.yml:ro
@@ -58,6 +78,7 @@ services:
       - no-new-privileges:true
     image: grafana/grafana:10.4.2
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '127.0.0.1:3000:3000'
     environment:
@@ -76,6 +97,7 @@ services:
       - no-new-privileges:true
     image: grafana/loki:2.9.8
     restart: unless-stopped
+    logging: *default-logging
     command: ['-config.file=/etc/loki/config.yml']
     ports:
       - '127.0.0.1:3100:3100'
@@ -89,6 +111,7 @@ services:
       - no-new-privileges:true
     image: tolgee/tolgee:v3.141.1
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '127.0.0.1:8080:8080'
     environment:
@@ -117,6 +140,7 @@ services:
       - no-new-privileges:true
     image: openbao/openbao:2.5.0
     restart: unless-stopped
+    logging: *default-logging
     cap_add:
       - IPC_LOCK
     command: ['server', '-config=/openbao/config/prod.hcl']
@@ -136,6 +160,7 @@ services:
       - no-new-privileges:true
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.10
     restart: unless-stopped
+    logging: *default-logging
     command:
       [
         'redpanda',
@@ -174,6 +199,7 @@ services:
       - no-new-privileges:true
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: unleash
       POSTGRES_DB: unleash
@@ -185,7 +211,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    logging: *default-logging
     networks: [platform_ops_shared]
 
   unleash:
@@ -193,6 +218,7 @@ services:
       - no-new-privileges:true
     image: unleashorg/unleash-server:8.2.0
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       unleash_db:
         condition: service_healthy
@@ -213,7 +239,6 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
-    logging: *default-logging
     networks: [platform_ops_shared]
 
   central-ingress:
@@ -221,6 +246,7 @@ services:
       - no-new-privileges:true
     image: caddy:2-alpine
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '80:80'
       - '443:443'
@@ -250,6 +276,7 @@ services:
       - no-new-privileges:true
     image: grafana/alloy:v1.12.0
     restart: unless-stopped
+    logging: *default-logging
     command:
       - run
       - --storage.path=/var/lib/alloy/data
@@ -271,6 +298,7 @@ services:
       - no-new-privileges:true
     image: prom/node-exporter:v1.8.2
     restart: unless-stopped
+    logging: *default-logging
     command:
       - --path.rootfs=/host
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
@@ -289,6 +317,7 @@ networks:
     external: true
 
 volumes:
+  ops-prod-tempo-data:
   ops-prod-prometheus-data:
   ops-prod-grafana-data:
   ops-prod-loki-data:

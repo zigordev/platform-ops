@@ -2,7 +2,7 @@
 
 Every deployable implements all five of these. They are a contract because the
 platform is built around them: Prometheus scrapes a path, Alloy parses a log
-shape, Jaeger receives a service name. A service that skips one is invisible in
+shape, Tempo receives a service name. A service that skips one is invisible in
 that dimension, and the platform cannot tell the difference between "healthy"
 and "not reporting".
 
@@ -87,8 +87,8 @@ Reference implementation: `notifications/apps/api/src/common/json-logger.ts`.
 `error` goes to stderr; everything else to stdout.
 
 **`traceId` is the field that makes the platform cohere.** With it, a slow span
-in Jaeger and the log lines that produced it are one query apart. Without it,
-Loki and Jaeger are two tools that happen to be installed on the same host.
+in Tempo and the log lines that produced it are one query apart. Without it,
+Loki and Tempo are two tools that happen to be installed on the same host.
 `notifications` already reads the active span context and emits both ids — it is
 the only service that does, and it is the pattern to copy verbatim.
 

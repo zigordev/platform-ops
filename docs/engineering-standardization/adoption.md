@@ -206,10 +206,10 @@ Roughly two weeks. This is where the platform starts paying for itself.
      dashboards matched on `filename=~".*/gpool-app-.*-api"`, which breaks the
      moment a container is renamed.
    - **The Loki datasource gained a derived field** that finds `traceId` in a
-     log line and renders a "View trace" button into Jaeger. This is what
+     log line and renders a "View trace" button into Tempo. This is what
      item 3 was _for_: click a slow trace, get its logs; find an error log, get
-     its trace. Jaeger also gained a stable `uid`, without which the link
-     breaks on every reprovision.
+     its trace. The trace datasource also carries a stable `uid`, without
+     which the link breaks on every reprovision.
 
    `traceId` is deliberately not a Loki label — one stream per trace is
    unbounded cardinality.
