@@ -252,6 +252,11 @@ Set `OPS_OPENBAO_KMS_KEY_ID` in `docker/.env.ops.prod` to the key id. It is not
 a secret; the deploy refuses to render the OpenBao config while it still reads
 `SET_FROM_TERRAFORM`.
 
+Set `OPS_LOG_ARCHIVE_BUCKET` in `docker/.env.ops.prod` to the Terraform output
+`archive_bucket_name`. The deploy installs the nightly log export with it and
+refuses to run while it is missing; the export itself is described in
+[docs/runbooks/log-archive.md](runbooks/log-archive.md).
+
 Deploy. The deploy renders the OpenBao config, sees it changed, and restarts
 OpenBao. It comes back **still sealed** — an already-initialized Shamir cluster
 does not adopt a new seal on its own. Migrate it, once:
