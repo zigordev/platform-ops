@@ -28,13 +28,21 @@ const onlyRecord = (lines: string[]): Record<string, unknown> => {
 afterEach(() => {
   vi.restoreAllMocks();
   delete process.env.OTEL_SERVICE_NAME;
+  delete process.env.LOG_LEVEL;
+  delete process.env.APP_RELEASE;
+  delete process.env.OTEL_SERVICE_VERSION;
 });
 
 test('errors go to stderr, everything else to stdout, as one JSON line named after the service', () => {
   process.env.OTEL_SERVICE_NAME = 'gpool-api';
   capture();
 
-  writeLogRecord('error', new Error('broker gone'), 'KafkaConsumer', 'Error: broker gone\n    at x');
+  writeLogRecord(
+    'error',
+    new Error('broker gone'),
+    'KafkaConsumer',
+    'Error: broker gone\n    at x'
+  );
   writeLogRecord('info', 'listening', 'Bootstrap');
 
   const error = onlyRecord(captured.stderr);
@@ -86,8 +94,89 @@ test('kafkajs lines take the shared shape, keeping their namespace and extra fie
   assert.equal(record.level, 'error');
   assert.equal(record.service, 'notifications-api');
   assert.equal(record.context, 'kafkajs:Connection');
-  assert.deepEqual(record.message, {
-    message: 'Connection error: ECONNREFUSED',
-    broker: 'platform-redpanda:9092',
+  assert.equal(record.message, 'Connection error: ECONNREFUSED');
+  assert.equal(record.broker, 'platform-redpanda:9092');
+});
+
+test('a crash kafkajs recovers from is a warning, not an outage', () => {
+  capture();
+
+  const log = kafkaLogCreator()(1);
+  log({
+    namespace: 'Consumer',
+    level: 1,
+    label: 'ERROR',
+    log: {
+      message: 'Crash: KafkaJSNumberOfRetriesExceeded',
+      logger: 'kafkajs',
+      groupId: 'notifications',
+      restarting: true,
+    },
   });
+
+  assert.equal(captured.stderr.length, 0);
+  const record = onlyRecord(captured.stdout);
+  assert.equal(record.level, 'warn');
+  assert.equal(record.restarting, true);
+});
+
+test('fields passed as the message land at the top level, where LogQL reads them', () => {
+  capture();
+
+  writeLogRecord('info', {
+    event: 'notification.sent',
+    templateId: 'contact-message',
+    attempt: 1,
+  });
+
+  const record = onlyRecord(captured.stdout);
+  assert.equal(record.event, 'notification.sent');
+  assert.equal(record.templateId, 'contact-message');
+  assert.equal(record.attempt, 1);
+  assert.equal('message' in record, false);
+});
+
+test('an error passed as the message keeps its stack; one described in fields does not', () => {
+  capture();
+
+  writeLogRecord('error', new Error('broker gone'));
+  writeLogRecord('warn', { event: 'contact.publish_failed', error: new Error('no brokers') });
+
+  const unexpected = onlyRecord(captured.stderr);
+  assert.deepEqual(Object.keys(unexpected.error as object).sort(), ['message', 'name', 'stack']);
+  assert.equal((unexpected.error as Record<string, unknown>).message, 'broker gone');
+
+  const handled = onlyRecord(captured.stdout);
+  assert.deepEqual(handled.error, { name: 'Error', message: 'no brokers' });
+});
+
+test('LOG_LEVEL drops everything below it', () => {
+  process.env.LOG_LEVEL = 'warn';
+  capture();
+
+  writeLogRecord('debug', 'noisy');
+  writeLogRecord('info', 'routine');
+  writeLogRecord('warn', 'worth reading');
+
+  assert.equal(captured.stdout.length, 1);
+  assert.equal(onlyRecord(captured.stdout).message, 'worth reading');
+});
+
+test('an unreadable LOG_LEVEL keeps the default rather than silencing the service', () => {
+  process.env.LOG_LEVEL = 'quiet';
+  capture();
+
+  writeLogRecord('info', 'routine');
+  writeLogRecord('debug', 'noisy');
+
+  assert.equal(captured.stdout.length, 1);
+});
+
+test('every record names the release it came from, when the service knows it', () => {
+  process.env.APP_RELEASE = '1.22.1';
+  capture();
+
+  writeLogRecord('info', 'listening');
+
+  assert.equal(onlyRecord(captured.stdout).release, '1.22.1');
 });

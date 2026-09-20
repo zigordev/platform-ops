@@ -69,22 +69,33 @@ deliveries. No other service counts anything about its own domain.
 One JSON object per line, to stdout. Alloy tails the container and ships it to
 Loki; nothing else is required of the application.
 
-Reference implementation: `notifications/apps/api/src/common/json-logger.ts`.
+Reference implementation: `platform-ops/packages/observability/json-logger.ts`.
 
 **The record shape is fixed:**
 
-| Field       | Always         | Notes                                  |
-| ----------- | -------------- | -------------------------------------- |
-| `timestamp` | yes            | ISO 8601                               |
-| `level`     | yes            | `log` `error` `warn` `debug` `verbose` |
-| `service`   | yes            | same value as `OTEL_SERVICE_NAME`      |
-| `message`   | yes            |                                        |
-| `context`   | when known     | the emitting class or module           |
-| `traceId`   | when in a span |                                        |
-| `spanId`    | when in a span |                                        |
-| `stack`     | on errors      |                                        |
+| Field       | Always            | Notes                                      |
+| ----------- | ----------------- | ------------------------------------------ |
+| `timestamp` | yes               | ISO 8601                                   |
+| `level`     | yes               | `debug` `info` `warn` `error`              |
+| `service`   | yes               | same value as `OTEL_SERVICE_NAME`          |
+| `release`   | when known        | `OTEL_SERVICE_VERSION`, `APP_RELEASE`      |
+| `event`     | for event lines   | dot-style name, from the fields passed in  |
+| `message`   | for message lines | free text                                  |
+| `context`   | when known        | the emitting class or module               |
+| `traceId`   | when in a span    |                                            |
+| `spanId`    | when in a span    |                                            |
+| `error`     | on failures       | `name`, `message`, `stack` when unexpected |
+| `stack`     | on errors         |                                            |
 
 `error` goes to stderr; everything else to stdout.
+
+**Fields go at the top level, not inside `message`.** Pass an object and it is
+spread into the record, so LogQL reads `event` rather than `message_event` —
+Loki flattens a nested object by prefixing it with its parent's name, which is
+how a whole estate ended up querying fields that read as empty.
+
+**`LOG_LEVEL` filters below a level**, defaulting to `info`. An unreadable value
+keeps the default rather than silencing the service.
 
 **`traceId` is the field that makes the platform cohere.** With it, a slow span
 in Tempo and the log lines that produced it are one query apart. Without it,
