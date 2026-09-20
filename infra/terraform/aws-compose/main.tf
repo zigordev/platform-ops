@@ -49,6 +49,7 @@ locals {
     var.notifications_ecr_api_repository_name != "" ? var.notifications_ecr_api_repository_name : "notifications/prod/api"
   )
   deploy_bucket_name                = var.deploy_bucket_name != "" ? var.deploy_bucket_name : "${local.name_prefix}-deploy-${random_id.suffix.hex}"
+  archive_bucket_name               = var.archive_bucket_name != "" ? var.archive_bucket_name : "${local.name_prefix}-archive-${random_id.suffix.hex}"
   ssm_ops_prefix_path               = trimprefix(var.ssm_ops_parameter_prefix, "/")
   cv_ssm_app_prefix_path            = trimprefix(var.cv_ssm_app_parameter_prefix, "/")
   kini_ssm_app_prefix_path          = trimprefix(var.kini_ssm_app_parameter_prefix, "/")
@@ -457,6 +458,85 @@ resource "aws_s3_bucket_public_access_block" "deploy" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket" "archive" {
+  bucket = local.archive_bucket_name
+  tags   = merge(local.tags, { Name = "${local.name_prefix}-archive-bucket" })
+}
+
+resource "aws_s3_bucket_versioning" "archive" {
+  bucket = aws_s3_bucket.archive.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "archive" {
+  bucket = aws_s3_bucket.archive.id
+
+  rule {
+    blocked_encryption_types = ["SSE-C"]
+
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "archive" {
+  bucket = aws_s3_bucket.archive.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "archive" {
+  bucket = aws_s3_bucket.archive.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "archive" {
+  bucket = aws_s3_bucket.archive.id
+
+  rule {
+    id     = "logs"
+    status = "Enabled"
+
+    filter {
+      prefix = "logs/"
+    }
+
+    transition {
+      days          = var.log_archive_transition_days
+      storage_class = "GLACIER_IR"
+    }
+
+    expiration {
+      days = var.log_archive_expiration_days
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 7
+    }
+  }
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 data "aws_iam_policy_document" "ec2_assume_role" {
   statement {
     effect = "Allow"
@@ -523,6 +603,35 @@ data "aws_iam_policy_document" "ec2_runtime" {
       aws_s3_bucket.deploy.arn,
       "${aws_s3_bucket.deploy.arn}/*",
     ]
+  }
+
+  statement {
+    sid    = "LogArchiveWrite"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:AbortMultipartUpload",
+    ]
+    resources = [
+      "${aws_s3_bucket.archive.arn}/logs/*",
+    ]
+  }
+
+  statement {
+    sid    = "LogArchiveList"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.archive.arn,
+    ]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["logs/*"]
+    }
   }
 
   statement {

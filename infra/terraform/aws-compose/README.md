@@ -9,6 +9,7 @@ It uses:
 - VPC + public subnet + security group
 - ECR repos for API/Web images
 - S3 deploy bundle bucket
+- S3 archive bucket for exported logs and, later, database backups
 - IAM role for EC2 runtime
 - IAM role for GitHub Actions OIDC deploy
 
@@ -61,6 +62,7 @@ Use those outputs to configure GitHub Environment `production` variables/secrets
 - It does **not** populate SSM env parameters.
 - It does **not** unseal OpenBao after reboot.
 - It does **not** configure per-application DNS hostnames.
+- It does **not** install the nightly log export; that is a host cron from `scripts/`.
 
 Use:
 

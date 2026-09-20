@@ -316,3 +316,21 @@ variable "power_on_schedule" {
     error_message = "power_on_schedule must be an EventBridge cron expression such as cron(0 8 * * ? *)."
   }
 }
+
+variable "archive_bucket_name" {
+  description = "Bucket holding archived logs and, later, database backups. Generated when empty."
+  type        = string
+  default     = ""
+}
+
+variable "log_archive_transition_days" {
+  description = "Days before an archived log day moves to Glacier Instant Retrieval."
+  type        = number
+  default     = 30
+}
+
+variable "log_archive_expiration_days" {
+  description = "Days before an archived log day is deleted."
+  type        = number
+  default     = 365
+}
