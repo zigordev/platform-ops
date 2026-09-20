@@ -40,7 +40,8 @@ Which endpoints, and which status codes:
 topk(10, sum by (job, route, status) (rate(http_requests_total{status=~"5.."}[15m])))
 ```
 
-Then a trace for one of them. Jaeger, filter by service and `error=true`; the
+Then a trace for one of them. In Grafana Explore, Tempo, `{ status = error }`
+filtered by service; the
 span with the exception on it names the failing call.
 
 ## What to do

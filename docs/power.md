@@ -56,7 +56,7 @@ Set `power_schedule_enabled = false` and apply again to pause the window without
 
 Docker starts on boot and every container carries `restart: unless-stopped`, so the whole estate restarts on its own. OpenBao unseals itself through KMS. Applications retry their dependencies for about ninety seconds and are restarted by Docker if they give up, so the first few minutes show containers restarting; that is normal. Expect three to five minutes until every public endpoint answers.
 
-The `ServiceDown` alerts for the five trading-bot scrape jobs fire on every boot, exactly as they do after every ops deploy, because those targets do not exist yet. Prometheus, Loki and Jaeger show a gap for the off hours.
+The `ServiceDown` alerts for the five trading-bot scrape jobs fire on every boot, exactly as they do after every ops deploy, because those targets do not exist yet. Prometheus, Loki and Tempo show a gap for the off hours.
 
 ## While the host is off
 
