@@ -41,3 +41,20 @@ compactor:
 
 analytics:
   reporting_enabled: false
+
+ruler:
+  # Loki can evaluate alerting rules of its own, and until now it did not: the
+  # ruler was unconfigured, so a rule file would have been read by nobody. The
+  # rules live beside this config, under a directory named for the tenant —
+  # `fake` is what Loki calls the single tenant when auth is off.
+  storage:
+    type: local
+    local:
+      directory: /etc/loki/rules
+  rule_path: /loki/rules-tmp
+  alertmanager_url: http://alertmanager:9093
+  enable_alertmanager_v2: true
+  enable_api: true
+  ring:
+    kvstore:
+      store: inmemory

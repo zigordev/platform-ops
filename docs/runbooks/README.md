@@ -32,6 +32,7 @@ says what it depends on.
 | `RedpandaDown`                             | [redpanda-down.md](redpanda-down.md)         |
 | `CoreWebVitalsRegressed`                   | [web-vitals.md](web-vitals.md)               |
 | `RumIngestUnderAttack`                     | [rum-ingest.md](rum-ingest.md)               |
+| `ErrorLogsSpiking`, `UncaughtExceptions`   | [error-logs.md](error-logs.md)               |
 
 ## Procedures
 

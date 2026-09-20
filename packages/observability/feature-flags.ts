@@ -38,6 +38,11 @@ export interface ResolvedFlag extends FlagDefinition {
   readonly source: 'default' | 'environment' | 'remote';
 }
 
+export type RemoteFlagEvent =
+  | { readonly kind: 'unavailable'; readonly error: string }
+  | { readonly kind: 'recovered' }
+  | { readonly kind: 'changed' };
+
 export interface RemoteFlagOptions {
   /** Base URL of the Unleash server, without a trailing path. */
   readonly url: string;
@@ -47,6 +52,14 @@ export interface RemoteFlagOptions {
   readonly appName: string;
   /** How often to poll, in milliseconds. */
   readonly refreshInterval?: number;
+  /**
+   * Told when the flag source goes away, comes back, or changes a value.
+   *
+   * The SDK swallows its own errors and serves the last values it had, which
+   * is the right behaviour and completely silent: a flag source that has been
+   * unreachable for a day looks exactly like one nobody has changed.
+   */
+  readonly onEvent?: (event: RemoteFlagEvent) => void;
   /**
    * Stops the SDK registering and reporting which flags it read.
    *
@@ -163,6 +176,9 @@ export async function connectRemoteFlags(options: RemoteFlagOptions): Promise<bo
     ...(options.backupPath ? { backupPath: options.backupPath } : {}),
   });
 
+  let healthy = true;
+  const report = options.onEvent ?? (() => undefined);
+
   const ready = await new Promise<boolean>((resolve) => {
     const settle = (value: boolean) => {
       clearTimeout(timer);
@@ -172,6 +188,23 @@ export async function connectRemoteFlags(options: RemoteFlagOptions): Promise<bo
     client.on('synchronized', () => settle(true));
     client.on('error', () => settle(false));
   });
+
+  client.on('error', (payload?: unknown) => {
+    if (healthy) {
+      report({
+        kind: 'unavailable',
+        error: payload instanceof Error ? payload.message : String(payload ?? 'unknown error'),
+      });
+    }
+    healthy = false;
+  });
+
+  client.on('synchronized', () => {
+    if (!healthy) report({ kind: 'recovered' });
+    healthy = true;
+  });
+
+  client.on('changed', () => report({ kind: 'changed' }));
 
   remote = client;
   return ready;
