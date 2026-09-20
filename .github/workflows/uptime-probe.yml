@@ -112,6 +112,9 @@ jobs:
           GPOOL_API_DOMAIN: ${{ vars.GPOOL_API_DOMAIN }}
           GPOOL_WEB_DOMAIN: ${{ vars.GPOOL_WEB_DOMAIN }}
           OPS_GRAFANA_DOMAIN: ${{ vars.OPS_GRAFANA_DOMAIN }}
+          CV_WEB_DOMAIN: ${{ vars.CV_WEB_DOMAIN }}
+          KINI_WEB_DOMAIN: ${{ vars.KINI_WEB_DOMAIN }}
+          KINI_API_DOMAIN: ${{ vars.KINI_API_DOMAIN }}
         run: |
           set -uo pipefail
 
@@ -193,6 +196,19 @@ jobs:
           probe_health "gpool-api" "https://${GPOOL_API_DOMAIN}/health"
           probe_page   "gpool-web" "https://${GPOOL_WEB_DOMAIN}/"
           probe_page   "grafana"   "https://${OPS_GRAFANA_DOMAIN}/api/health"
+
+          if [ -n "${CV_WEB_DOMAIN:-}" ]; then
+            probe_page   "cv-web" "https://${CV_WEB_DOMAIN}/"
+            probe_health "cv-web" "https://${CV_WEB_DOMAIN}/health"
+          fi
+
+          if [ -n "${KINI_WEB_DOMAIN:-}" ]; then
+            probe_page "kini-web" "https://${KINI_WEB_DOMAIN}/"
+          fi
+
+          if [ -n "${KINI_API_DOMAIN:-}" ]; then
+            probe_health "kini-api" "https://${KINI_API_DOMAIN}/health"
+          fi
 
           {
             echo "failures<<PROBE_EOF"

@@ -1,25 +1,45 @@
 {$GPOOL_WEB_DOMAIN} {
   encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
   reverse_proxy gpool-web:3001
 }
 
 {$GPOOL_API_DOMAIN} {
   encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
   reverse_proxy gpool-api:3000
 }
 
 {$KINI_WEB_DOMAIN} {
   encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
   reverse_proxy kini-web:3001
 }
 
 {$KINI_API_DOMAIN} {
   encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
   reverse_proxy kini-api:3000
 }
 
 {$CV_WEB_DOMAIN} {
   encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
   reverse_proxy cv-web:3001
 }
 
