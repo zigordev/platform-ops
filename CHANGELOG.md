@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.1](https://github.com/zigordev/platform-ops/compare/v1.22.0...v1.22.1) (2026-09-20)
+
+
+### Bug Fixes
+
+* **ops:** label and cap every ops container's logs ([#167](https://github.com/zigordev/platform-ops/issues/167)) ([127eeaf](https://github.com/zigordev/platform-ops/commit/127eeaf9907ee77d5244be3bbdb0de64cbe8ddb5))
+
 ## [1.22.0](https://github.com/zigordev/platform-ops/compare/v1.21.0...v1.22.0) (2026-09-20)
 
 
