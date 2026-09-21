@@ -24,7 +24,7 @@ increase(notifications_dlq_total[6h])
 What they were — read the dead-letter topic on the broker:
 
 ```bash
-docker exec -it platform-redpanda rpk topic consume notification.email.dlq --num 20
+sudo docker exec -it platform-ops-prod-redpanda-1 rpk topic consume notification.email.requested.v1.DLT --num 20
 ```
 
 The reason is in the service logs at the time of the failure; the trace ID in

@@ -4,9 +4,11 @@
 
 ## What fired
 
-The 75th-percentile Largest Contentful Paint for a UI has been above 2.5 seconds
-for six hours. 2.5s is the boundary Google draws between "good" and "needs
-improvement", and p75 is the percentile it grades on.
+For a UI with at least twenty page views an hour, the 75th percentile of one
+Core Web Vital has been worse than "good" over six hours. The `vital` label says
+which: LCP past 2.5 seconds, INP past 200 milliseconds, or CLS past 0.1. Those
+are the boundaries Google draws between "good" and "needs improvement", and p75
+is the percentile it grades on.
 
 This is measured in real browsers, from the RUM beacons the UIs send — not from
 CI, not from a synthetic run on a fast machine with a warm cache.
@@ -31,8 +33,20 @@ The other vitals, which usually move together:
 histogram_quantile(0.75, sum by (job, metric_name, le) (rate(rum_performance_seconds_bucket[6h])))
 ```
 
-`CLS` and `INP` are collected too. INP replaced FID as a Core Web Vital in March
-2024 and is the one that catches a heavy main thread.
+CLS is a score rather than a duration, so it has its own histogram:
+
+```promql
+histogram_quantile(0.75, sum by (job, le) (rate(rum_layout_shift_score_bucket[6h])))
+```
+
+A poor value names the element behind it, once per ten minutes per element:
+
+```logql
+{app="cv-web"} | json | event="rum.vital_poor"
+```
+
+`target` is a CSS selector for the LCP element, the element an interaction hit
+for INP, or the element that shifted most for CLS.
 
 ## What to do
 
