@@ -46,13 +46,12 @@ and that you may need to inspect, re-run or read the output of.
 
 ## Where to look
 
-| Thing        | Local                    | Prod                   |
-| ------------ | ------------------------ | ---------------------- |
-| Prometheus   | <http://localhost:9090>  | via the ops ingress    |
-| Alertmanager | <http://localhost:9093>  | not exposed; use email |
-| Grafana      | <http://localhost:3001>  | `OPS_GRAFANA_DOMAIN`   |
-| Tempo        | <http://localhost:3200>  | not exposed            |
-| Jaeger       | <http://localhost:16686> | not exposed            |
+| Thing        | Local                   | Prod                   |
+| ------------ | ----------------------- | ---------------------- |
+| Grafana      | <http://localhost:3002> | `OPS_GRAFANA_DOMAIN`   |
+| Prometheus   | not exposed; Grafana    | not exposed; Grafana   |
+| Alertmanager | not exposed; Grafana    | not exposed; use email |
+| Tempo        | <http://localhost:3200> | not exposed; Grafana   |
 
 Locally, alerts go nowhere by design — `config.local.yml` routes everything to a
 null receiver. Alertmanager's own UI is the local delivery channel.
