@@ -50,6 +50,10 @@ scrape_configs:
     static_configs:
       - targets: ['platform-redpanda:9644']
 
+  - job_name: 'caddy'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['central-ingress:9180']
   # The platform watching itself. Until this existed, Prometheus could not say
   # how much it was storing, Loki could not report a rejected push, and a
   # collector dropping spans was invisible.
