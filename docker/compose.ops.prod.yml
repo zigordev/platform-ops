@@ -106,6 +106,7 @@ services:
       - '127.0.0.1:3100:3100'
     volumes:
       - ../docker/loki/config.yml:/etc/loki/config.yml:ro
+      - ../docker/loki/rules:/etc/loki/rules:ro
       - ops-prod-loki-data:/loki
     networks: [platform_ops_shared]
 
