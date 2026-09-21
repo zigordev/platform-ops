@@ -57,14 +57,24 @@ inhibit_rules:
   - source_matchers:
       - alertname="ServiceDown"
     target_matchers:
-      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking"
+      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking|PageLatencyBudget.*|AskSlow|AskUpstreamFailing|ContactPublishFailing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*"
+    equal: ['environment', 'job']
+  - source_matchers:
+      - alertname="ServiceUnhealthy"
+    target_matchers:
+      - alertname=~"NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*"
     equal: ['environment', 'job']
 
   - source_matchers:
       - alertname="RedpandaDown"
     target_matchers:
-      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing"
+      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing"
     equal: ['environment']
+  - source_matchers:
+      - alertname="RedpandaDown"
+    target_matchers:
+      - alertname="ServiceDown"
+    equal: ['environment', 'job']
 
   - source_matchers:
       - alertname="HostDiskCritical"
