@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.0](https://github.com/zigordev/platform-ops/compare/v1.25.0...v1.26.0) (2026-09-21)
+
+
+### Features
+
+* **alerting:** alert on logs, and send one email per outage ([#177](https://github.com/zigordev/platform-ops/issues/177)) ([0d40965](https://github.com/zigordev/platform-ops/commit/0d40965eeac7227c5bc78bd3e52700030755488a))
+
 ## [1.25.0](https://github.com/zigordev/platform-ops/compare/v1.24.0...v1.25.0) (2026-09-20)
 
 
