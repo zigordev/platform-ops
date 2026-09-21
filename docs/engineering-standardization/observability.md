@@ -6,7 +6,9 @@ shape, Tempo receives a service name. A service that skips one is invisible in
 that dimension, and the platform cannot tell the difference between "healthy"
 and "not reporting".
 
-Today the platform scrapes **two of seven** services.
+In production that is six services: cv-web, gpool-api, gpool-web, kini-api,
+kini-web and notifications-api. trading-bot's five run the same contract
+locally; it has no deploy yet.
 
 ---
 
@@ -15,25 +17,52 @@ Today the platform scrapes **two of seven** services.
 OTLP over HTTP to the shared collector. Bootstrapped before anything else
 imports, so instrumentation can patch the modules it wraps.
 
-Reference implementation: `notifications/apps/api/src/instrumentation.ts`.
+Reference implementation: `platform-ops/packages/observability/tracing.ts`, and
+`trading-bot/crates/observability` for the Rust services.
 
 ```ts
-resource: { [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME }
-traceExporter: new OTLPTraceExporter({ url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT })
+resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: serviceName });
+traceExporter: new OTLPTraceExporter({ url: `${endpoint}/v1/traces` });
 ```
 
-Instrument what the service actually uses — HTTP and the framework always, plus
-`pg` if it has a database and `kafkajs` if it consumes events. `notifications`
-loads http, express, nest, pg and kafkajs; `gpool` uses the generic
-auto-instrumentation bundle, which is broader and less precise.
+The kit loads the Node auto-instrumentations except `fs`, whose span per file
+read drowns everything else, and `pino`, because the kit stamps the trace on log
+lines itself. HTTP, the framework, `pg` and `kafkajs` are all covered.
 
 **`OTEL_SERVICE_NAME` is `<repo>-<app>`** — `gpool-api`, `notifications-api`,
 `cv-web`. This is the same string as the Prometheus job name and the Grafana
 dashboard title. One name, three tools.
 
-Setting the env vars is not instrumentation. `cv`'s compose file exports
-`OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_SERVICE_NAME` while the repository has no
-`@opentelemetry` package installed at all. Nothing sends a span.
+**Every span is kept.** Sampling is parent-based and always on: at this volume
+a trace sampled away is a question nobody can answer later. cv drops the spans
+nobody reads (`/health`, `/metrics`, `/rum/*` and static files); the other
+services still trace their probes, which is noise in Tempo rather than cost.
+
+**A log line names a trace only when that trace was sampled.** A line pointing
+at a trace Tempo never stored is a link that opens nothing.
+
+### Tempo and exemplars
+
+Tempo keeps traces for 30 days. Its metrics generator turns every span into span
+metrics, `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket`
+by `service`, `span_name`, `span_kind` and `status_code`, plus service-graph
+edges, and remote-writes them into Prometheus with an exemplar per bucket. A
+Next.js app's page latency objective is built on them, since a page render has
+no route metric, and every graph drawn from them is a door into a trace. The
+`local-blocks` processor keeps recent blocks queryable by TraceQL metrics, which
+is what Traces Drilldown runs on.
+
+Generator series carry `service`, never `job`, and no `environment`: a rule that
+joins them to scraped series has to `label_replace` the service into a `job`.
+
+An app's own histograms carry exemplars only when its registry speaks
+OpenMetrics and the observation happens inside a sampled span. cv does both, for
+its API routes and for RUM vitals, whose trace id comes from the page's
+`traceparent` meta tag. The other services expose the text format, so their
+exemplars come from span metrics alone.
+
+Grafana wires the rest: a Prometheus exemplar and Loki's `traceId` field open
+Tempo, and a span opens its logs and its service's request metrics.
 
 ---
 
@@ -41,7 +70,9 @@ Setting the env vars is not instrumentation. `cv`'s compose file exports
 
 Prometheus text format on `GET /metrics`, unauthenticated on the private network.
 
-Reference implementation: `gpool/apps/api/src/common/metrics/`.
+Reference implementation: the kit's `http-metrics.middleware.ts` for Express,
+`fastify.ts` for Fastify, and `withRouteMetrics` in `next.ts` for Next.js route
+handlers.
 
 **Every HTTP service exposes these two, with exactly these names and labels:**
 
@@ -59,8 +90,21 @@ Plus `collectDefaultMetrics()` for process and runtime gauges.
 
 **Business metrics** are named `<domain>_<noun>_<verb>_total`, and every service
 should have at least one. RED metrics tell you the API is healthy; they cannot
-tell you nobody has joined a pool in six hours. `notifications` counts
-deliveries. No other service counts anything about its own domain.
+tell you nobody has joined a pool in six hours. notifications counts requests,
+sends, failures, duplicates and dead letters, and times each delivery; cv counts
+questions to the answer box, what they cost, and contact submissions. gpool,
+kini and trading-bot count nothing about their own domain yet.
+
+**Every service exports `service_build_info{version}`**, from the kit's registry:
+the release from `OTEL_SERVICE_VERSION`, `APP_RELEASE` or `NEXT_PUBLIC_RELEASE`,
+in that order. The dashboards mark a deploy when a new version appears.
+
+**In a Next.js app, a metric recorded outside a route handler does not reach
+`/metrics` on its own.** Next gives page renders, route handlers and
+instrumentation module graphs of their own, each with its own copy of every
+module and so its own registry, and `/metrics` serves one of them. Keep the
+numbers on `globalThis` under a `Symbol.for` key and let the metric read them at
+scrape time, as cv does for its flags and its copy source.
 
 ---
 
@@ -99,12 +143,63 @@ keeps the default rather than silencing the service.
 
 **`traceId` is the field that makes the platform cohere.** With it, a slow span
 in Tempo and the log lines that produced it are one query apart. Without it,
-Loki and Tempo are two tools that happen to be installed on the same host.
-`notifications` already reads the active span context and emits both ids — it is
-the only service that does, and it is the pattern to copy verbatim.
+Loki and Tempo are two tools that happen to be installed on the same host. Every
+Node service logs through the kit's `json-logger.ts` and the Rust services
+through the crate's formatter; a handful of `console.log` calls remain in gpool,
+kini and trading-bot.
 
-Three of five services emit unstructured text through `console.log`. Loki
-faithfully collects all of it and can tell you almost nothing about it.
+### Levels
+
+Four levels, and choosing one is a promise about who reads the line:
+
+| level   | means                                                                | read by                    |
+| ------- | -------------------------------------------------------------------- | -------------------------- |
+| `error` | something failed that a person should look at                        | `ErrorLogsSpiking`, people |
+| `warn`  | something went wrong and was handled: a retry, a fallback, a refusal | dashboards, when asked     |
+| `info`  | the service's lifecycle and its business events                      | queries                    |
+| `debug` | detail for a local run, filtered out in production by `LOG_LEVEL`    | nobody in production       |
+
+The kit's Nest logger writes Nest's `log` as `info` and `verbose` as `debug`, and
+its kafkajs adapter maps the client's numeric levels, so every service writes
+the same four strings. An expected failure is a `warn`: a Tolgee timeout that
+fell back to the committed copy is the design working, and logging it as an
+error teaches everyone to ignore the ticket that error lines raise.
+
+### Events
+
+A line recording that something happened carries an `event`: `<area>.<what
+happened>`, lower case, words joined by underscores, such as `ask.completed`,
+`contact.publish_failed`, `notification.dead_lettered` or `smtp.recovered`. The
+name is an interface. Dashboards, runbooks and the log alerts query it, so
+renaming one breaks them, and a new outcome gets a new name rather than a new
+meaning for an old one. Everything else about the event goes in top-level fields
+beside it, never inside `message`.
+
+cv also writes four lifecycle events from its instrumentation:
+`service.started`, `service.stopping`, `process.uncaught_exception` and
+`process.unhandled_rejection`. The other services write none of them yet, and
+should: `UncaughtExceptions` reads the third, so today it can only fire for cv.
+Each service's own events:
+
+| service           | events                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| cv-web            | `request.failed`, `contact.rejected`, `contact.queued`, `contact.publish_failed`, `ask.configured`, `ask.completed`, `ask.budget_unreadable`, `ask.budget_unpersisted`, `flags.unavailable`, `flags.recovered`, `flags.changed`, `i18n.fallback`, `csp.violation`, `rum.client_error`, `rum.vital_poor`, `secrets.unavailable`, `secrets.missing`                                                |
+| notifications-api | `kafka.consumer_started`, `kafka.consumer_crashed`, `notification.retry_scheduled`, `notification.paused_for_relay`, `notification.routed_to_dlt`, `notification.duplicate`, `notification.already_processing`, `notification.sent`, `notification.failed`, `notification.dead_lettered`, `notification.dlt_payload_invalid`, `smtp.unavailable`, `smtp.recovered`, `postgres.idle_client_error` |
+
+Two notifications events predate the convention and should be renamed together
+with the queries that read them: `notification_failure_audit_failed` and
+`notification_failure_lease_release_failed`. gpool, kini and trading-bot write
+no events yet.
+
+### Log alerts
+
+Two rules in `docker/loki/rules/fake/log-alerts.yml`, both tickets.
+`ErrorLogsSpiking` fires when a service writes more than one error line every
+five seconds for ten minutes, and `UncaughtExceptions` on any
+`process.uncaught_exception` line, because a process that logs one keeps running
+and nothing else fires. Logs never
+page: a page needs a symptom visitors feel, and that is a metric's job. The
+level policy above is what keeps the error rule worth reading.
 
 ---
 
@@ -116,18 +211,24 @@ and maintained by hand in each repository. Nothing propagates a change from
 here and nothing compares the copies; the kit is the reference, and carrying a
 change into a consumer is a deliberate edit there.
 
-| file                         | for                                               |
-| ---------------------------- | ------------------------------------------------- |
-| `tracing.ts`                 | OTel bootstrap; **import first**, see below       |
-| `json-logger.ts`             | structured logs carrying `traceId`                |
-| `metrics.registry.ts`        | the one prom-client registry                      |
-| `http-metrics.middleware.ts` | request counter and duration histogram            |
-| `nest.ts`                    | `ObservabilityModule` — `/metrics` + `JsonLogger` |
+| file                                                | for                                                                   |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| `tracing.ts`                                        | OTel bootstrap; **import first**, see below                           |
+| `json-logger.ts`                                    | structured logs carrying the trace of a sampled span                  |
+| `metrics.registry.ts`                               | the one prom-client registry, with `service_build_info`               |
+| `health-metrics.ts`                                 | the health status and component gauges                                |
+| `feature-flags.ts`                                  | flag definitions, environment overrides and the Unleash client        |
+| `http-metrics.middleware.ts`                        | request counter and duration histogram (Express)                      |
+| `nest.ts`, `fastify.ts`                             | the NestJS and Fastify adapters                                       |
+| `next.ts`                                           | the Next.js adapter: `/metrics`, the RUM ingest and CSP report routes |
+| `rum-client.ts`, `RumProvider.tsx`                  | RUM in the browser                                                    |
+| `rum-ingest.ts`, `rum-metrics.ts`, `rum-details.ts` | the RUM ingest: validation, metrics, error and poor-vital logs        |
+| `csp-reports.ts`, `server-timing.ts`, `mask.ts`     | CSP reports, `Server-Timing: traceparent`, masking browser messages   |
 
 Vendored rather than published because these are seven repositories across two
 GitHub owners, built by Dockerfiles whose dependency stage copies only
 manifests. A private registry would mean a token in every CI run and a build
-secret in every image, for five files.
+secret in every image, for a dozen files.
 
 ### The Rust half
 
@@ -182,12 +283,13 @@ services looked equally instrumented until someone compared span names.
 | `OTEL_SERVICE_NAME`           | names the service in traces, logs, metrics, health | required                     |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | **base** URL; the kit appends `/v1/traces`         | `http://otel-collector:4318` |
 | `OTEL_TRACES_ENABLED`         | `false` disables tracing entirely                  | enabled                      |
+| `OTEL_SERVICE_VERSION`        | the release, as `service_build_info{version}`      | `APP_RELEASE`, then `dev`    |
 
 `OTEL_EXPORTER_OTLP_ENDPOINT` is the base URL, per the OTel spec. notifications
-used to treat it as the full traces URL, so the same variable name meant two
-different things in one estate and each compose file carried a different value
-to compensate. If a service ever exports to `.../v1/traces/v1/traces`, this is
-why.
+used to treat it as the full traces URL, and its env files still carried the full
+path in September 2026, so every span went to `.../v1/traces/v1/traces`, got a
+404 and was dropped without an error. If a service's traces are missing and
+nothing complains, check this first.
 
 Tracing reads the environment directly rather than a config object, because it
 must run before any DI container exists. A `tracingEnabled` field in a config
@@ -234,18 +336,20 @@ What each service reports, and what it treats as fatal:
 
 | service                          | components                                                                    | `degraded` when |
 | -------------------------------- | ----------------------------------------------------------------------------- | --------------- |
-| cv-web                           | —                                                                             | never           |
+| cv-web                           | `kafka`, `tolgee`, `unleash`                                                  | any one down    |
 | gpool-api                        | `db`, `kafka`                                                                 | `kafka` down    |
 | kini-api                         | `db`, `kafka`                                                                 | `kafka` down    |
-| notifications-api                | `db`, `kafka`                                                                 | never           |
+| notifications-api                | `db`, `kafka`, `smtp`                                                         | never           |
 | trading-bot-control-plane        | `db`                                                                          | never           |
 | trading-bot-market-data          | `runtimeConfig`, `kafkaProducer`, `kafkaConsumer`, `marketStream`, `database` | never           |
 | trading-bot-execution            | `controlPlane`, `marketData`, `executionContext`, `exchange`                  | never           |
 | trading-bot-research-backtesting | `controlPlane`, `historicalStore`                                             | never           |
 
-Only gpool and kini have an optional dependency today. Everything else either
-has none or cannot work without the ones it has, so its components are all
-required and their loss is a 503.
+gpool, kini and cv have optional dependencies. cv renders from committed copy
+and default flags when Tolgee or Unleash are gone, and only the contact form
+needs the broker. Everything else cannot work without the dependencies it has,
+so their loss is a 503: notifications counts the SMTP relay among them, because
+a relay rejecting its login means no email leaves.
 
 Component values are objects, not bare strings — `{"status": "up"}` rather than
 `"up"`. The nesting looks redundant for a bare up/down, and it is, until the day
@@ -287,9 +391,8 @@ apps.** gpool excludes it alongside `metrics` in `setGlobalPrefix`; cv serves
 `src/app/health/route.ts` rather than `src/app/api/health/`. A probe address that
 varies by framework is a probe address someone will get wrong.
 
-cv reports `components: {}` — it has no database and no broker, and a failed
-Tolgee fetch already falls back to committed messages rather than failing the
-page, so there is nothing whose loss it could honestly report.
+cv always answers 200, with `degraded` when any of its three is down; it has no
+dependency whose loss stops the page rendering.
 
 ### On collapsing liveness into health
 
@@ -380,6 +483,25 @@ because it could never become a label and only ever shipped personal data.
 broken: `..` matches the route-character test, so `/../../etc/passwd` reached a
 label verbatim until a probe caught it.
 
+### Beyond the vitals
+
+- **Error details.** A browser error arrives with its message masked (emails and
+  digits removed) and its stack mapped through the build's source maps on the
+  server, so the log line names the source file and line. Each distinct error is
+  logged once every ten minutes as `rum.client_error`; the metric counts them
+  all.
+- **The trace behind a page view.** Next's `clientTraceMetadata` renders the
+  page's `traceparent` into a meta tag. The client attaches its trace id to LCP,
+  FCP and TTFB, and the server keeps it as an exemplar when the trace was
+  sampled.
+- **Content security policy.** cv sends a report-only policy with a nonce made
+  per request by `src/proxy.ts`, so Next's own inline scripts pass and anything
+  else is reported to `POST /rum/csp`, counted by directive in
+  `csp_violations_total` and logged as `csp.violation`. It uses `report-uri`
+  only: Chromium never delivered a `report-to` report to the local endpoint.
+- **Every series carries the release**, so a regression shows as one release
+  against the one before.
+
 ---
 
 ## 7. Dashboards
@@ -415,14 +537,58 @@ A new dashboard is a file in `packages/dashboards/dashboards/`, listed in its
 
 ---
 
-## Frontend services
+## Profiles
 
-A browser application implements the same contract plus:
+Three kinds of service run here. Each implements the five parts above, plus
+what its kind needs.
 
-- **Core Web Vitals as metrics.** LCP, CLS, **INP** and TTFB, posted to the app's
-  own endpoint and re-exported as Prometheus histograms so they can be alerted
-  on. `gpool` collects these already but stores them privately, so they can
-  never fire an alert. It also still measures **FID**, which Google replaced with
-  INP in March 2024.
-- **A browser error path.** An uncaught exception in a UI is currently invisible
-  everywhere. It should reach the same place a server error does.
+### A web app: cv-web, gpool-web, kini-web and the operator console
+
+- `/metrics`, `POST /rum/events` and `POST /rum/csp` from the kit's `next.ts`,
+  and `/health` at `src/app/health/route.ts`.
+- API route handlers wrapped in `withRouteMetrics`, which counts them and
+  answers with `Server-Timing: traceparent` for a sampled span.
+- `experimental.clientTraceMetadata: ['traceparent']` in `next.config.js`, so a
+  page view can be tied to its render trace. The proxy runs in a trace of its
+  own, so a header set there names the wrong trace.
+- Page renders measured from span metrics, not route metrics: `GET /` server
+  spans, with a page latency objective of 95% under 512 ms, Tempo's bucket edge
+  nearest half a second.
+- A registry that speaks OpenMetrics, for exemplars, and metrics recorded while
+  rendering kept on `globalThis` (section 2).
+- A report-only CSP with a nonce per request and `report-uri /rum/csp`.
+
+### An API: gpool-api, kini-api and the trading-bot control plane
+
+- `http_requests_total` and `http_request_duration_seconds` from the kit's
+  middleware, with `/metrics` and `/health` outside the global prefix.
+- Two objectives: 99.5% of requests not answered 5xx, and 95% within 500 ms, as
+  multi-window burn rates, gated on about three requests a minute.
+- A producer probes its broker on a timer (section 5), because a kafkajs
+  producer cannot tell that the broker is gone.
+- The release as `APP_RELEASE`, so `service_build_info` marks its deploys.
+
+### A consumer: notifications-api
+
+- **A trace per message**, parented on the producer's `traceparent` header, so a
+  contact message is one trace from cv's handler to the SMTP reply:
+  `notification.process`, with `notification.claim`, `notification.render` and
+  `smtp.send` under it.
+- **A delivery objective instead of a request one.** Its HTTP traffic is only
+  probes. 99% of requested emails are sent within two minutes of the request:
+  `notification_delivery_duration_seconds` under 120 s over
+  `notifications_received_total`, on the same burn ladder, gated on any email in
+  the window.
+- **Pause on a dead dependency; never dead-letter it.** When the SMTP relay
+  rejects the login or stops answering, the consumer pauses its partition and
+  retries after a backoff (`SMTP_OUTAGE_BACKOFF_MS`, 30 s by default). `/health`
+  reports `smtp` down, a 503, so `ServiceUnhealthy` pages, and the waiting emails
+  go out when the relay comes back. Dead-lettering is for a message that can
+  never succeed, such as an unknown template, not for an outage that will end.
+- **Lag from the broker, not the app.** `kafka:consumer_group_lag:sum` is
+  Redpanda's newest offset minus the group's committed one.
+  `NotificationsConsumerStuck` fires when it stays above zero for fifteen
+  minutes, and `DeadLetterQueueGrowing` on any dead letter.
+
+Not in any profile yet: gpool, kini and trading-bot count nothing about their
+own domain, and only cv reads exemplars from its own histograms.
