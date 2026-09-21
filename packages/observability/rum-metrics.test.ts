@@ -21,7 +21,10 @@ test('keeps real routes intact', () => {
 });
 
 test('collapses identifiers', () => {
-  assert.equal(normalizePage('/pools/2f8c1e4a-9b3d-4f21-8e77-1a2b3c4d5e6f/accept'), '/pools/:id/accept');
+  assert.equal(
+    normalizePage('/pools/2f8c1e4a-9b3d-4f21-8e77-1a2b3c4d5e6f/accept'),
+    '/pools/:id/accept'
+  );
   assert.equal(normalizePage('/pools/42'), '/pools/:id');
   assert.equal(normalizePage('/u/aVeryLongOpaqueToken123456'), '/u/:id');
 });

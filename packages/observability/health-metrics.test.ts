@@ -32,9 +32,7 @@ describe('recordHealth', () => {
     ] as const) {
       registry.resetMetrics();
       recordHealth(status, {});
-      expect(await scrape()).toMatch(
-        new RegExp(`^service_health_status ${value}$`, 'm')
-      );
+      expect(await scrape()).toMatch(new RegExp(`^service_health_status ${value}$`, 'm'));
     }
   });
 
