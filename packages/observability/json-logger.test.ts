@@ -73,6 +73,19 @@ test('a line emitted inside an active span carries that span, so Loki can find t
   assert.equal(record.spanId, spanId);
 });
 
+test('a line inside a span that was not sampled names no trace, because none was stored', () => {
+  vi.spyOn(trace, 'getActiveSpan').mockReturnValue({
+    spanContext: () => ({ traceId: 'c'.repeat(32), spanId: 'd'.repeat(16), traceFlags: 0 }),
+  } as never);
+  capture();
+
+  writeLogRecord('info', 'health probe');
+
+  const record = onlyRecord(captured.stdout);
+  assert.equal('traceId' in record, false);
+  assert.equal('spanId' in record, false);
+});
+
 test('kafkajs lines take the shared shape, keeping their namespace and extra fields', () => {
   process.env.OTEL_SERVICE_NAME = 'notifications-api';
   capture();
