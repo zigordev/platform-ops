@@ -22,7 +22,7 @@ const capture = () => {
 
 const onlyRecord = (lines: string[]): Record<string, unknown> => {
   assert.equal(lines.length, 1, `expected exactly one line, got ${lines.length}`);
-  return JSON.parse(lines[0]) as Record<string, unknown>;
+  return JSON.parse(lines[0] ?? '') as Record<string, unknown>;
 };
 
 afterEach(() => {
@@ -71,6 +71,19 @@ test('a line emitted inside an active span carries that span, so Loki can find t
   const record = onlyRecord(captured.stdout);
   assert.equal(record.traceId, traceId);
   assert.equal(record.spanId, spanId);
+});
+
+test('a line inside a span that was not sampled names no trace, because none was stored', () => {
+  vi.spyOn(trace, 'getActiveSpan').mockReturnValue({
+    spanContext: () => ({ traceId: 'c'.repeat(32), spanId: 'd'.repeat(16), traceFlags: 0 }),
+  } as never);
+  capture();
+
+  writeLogRecord('info', 'health probe');
+
+  const record = onlyRecord(captured.stdout);
+  assert.equal('traceId' in record, false);
+  assert.equal('spanId' in record, false);
 });
 
 test('kafkajs lines take the shared shape, keeping their namespace and extra fields', () => {

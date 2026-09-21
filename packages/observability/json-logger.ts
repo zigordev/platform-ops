@@ -1,4 +1,4 @@
-import { trace } from '@opentelemetry/api';
+import { trace, TraceFlags } from '@opentelemetry/api';
 
 export type LogLevel = 'debug' | 'error' | 'info' | 'warn';
 
@@ -9,7 +9,7 @@ function threshold(): number {
   return SEVERITY[configured as LogLevel] ?? SEVERITY.info;
 }
 
-function release(): string | undefined {
+export function currentRelease(): string | undefined {
   return (
     process.env.OTEL_SERVICE_VERSION?.trim() ||
     process.env.APP_RELEASE?.trim() ||
@@ -54,7 +54,7 @@ export function writeLogRecord(
   if (SEVERITY[level] < threshold()) return;
 
   const spanContext = trace.getActiveSpan()?.spanContext();
-  const version = release();
+  const version = currentRelease();
 
   const record: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
@@ -77,7 +77,10 @@ export function writeLogRecord(
   }
 
   if (context) record.context = context;
-  if (spanContext?.traceId) {
+  if (
+    spanContext?.traceId &&
+    (spanContext.traceFlags & TraceFlags.SAMPLED) === TraceFlags.SAMPLED
+  ) {
     record.traceId = spanContext.traceId;
     record.spanId = spanContext.spanId;
   }

@@ -29,6 +29,7 @@ test('the sixty-first batch inside a minute is refused', () => {
       ok: true,
       accepted: 0,
       rejected: 0,
+      details: [],
     });
   }
   assert.deepEqual(ingestRumBatch({ events: [] }, 'client-under-limit'), {
@@ -51,6 +52,7 @@ test('an oversize batch keeps the first fifty and counts the rest as rejected', 
     ok: true,
     accepted: 50,
     rejected: 5,
+    details: [],
   });
 });
 
@@ -65,5 +67,6 @@ test('an unknown type or an overlong name drops that event and keeps the others'
     ok: true,
     accepted: 1,
     rejected: 3,
+    details: [],
   });
 });

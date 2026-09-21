@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 
-import { test } from 'vitest';
+import { afterEach, test, vi } from 'vitest';
 
 import { createMetricsRoute, createRumIngestRoute, registry } from './next';
 
-const POST = createRumIngestRoute();
+const POST = createRumIngestRoute({ pages: ['/'] });
 
 let nextAddress = 1;
 
@@ -33,8 +33,14 @@ const pageViews = async () => {
 test('the home page series are exported at zero before any beacon arrives', async () => {
   const frustrations = await registry.getSingleMetricAsString('rum_frustrations_total');
 
-  assert.match(frustrations, /rum_frustrations_total\{frustration_type="dead_click",page="\/"\} 0/);
-  assert.match(frustrations, /rum_frustrations_total\{frustration_type="rage_click",page="\/"\} 0/);
+  assert.match(
+    frustrations,
+    /rum_frustrations_total\{frustration_type="dead_click",page="\/",release="unknown"\} 0/
+  );
+  assert.match(
+    frustrations,
+    /rum_frustrations_total\{frustration_type="rage_click",page="\/",release="unknown"\} 0/
+  );
 });
 
 test('a beacon from the public host is accepted while the server runs on its bind address', async () => {
@@ -87,4 +93,109 @@ test('the metrics route serves the registry in the format Prometheus scrapes', a
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type') ?? '', /^text\/plain; version=0\.0\.4/);
   assert.match(await response.text(), /rum_navigations_total/);
+});
+
+const send = (events: unknown[]) =>
+  POST(
+    new Request('http://0.0.0.0:3001/rum/events', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        host: 'cv.zigordev.com',
+        'x-forwarded-for': `203.0.113.${nextAddress++}`,
+      },
+      body: JSON.stringify({ events }),
+    })
+  );
+
+const sample = async (metric: string, labels: Record<string, string>) => {
+  const values = (await registry.getSingleMetric(metric)?.get())?.values ?? [];
+  return (
+    values.find((value) =>
+      Object.entries(labels).every(([key, expected]) => value.labels[key] === expected)
+    )?.value ?? 0
+  );
+};
+
+const logged: Record<string, unknown>[] = [];
+
+const captureLogs = () => {
+  logged.length = 0;
+  const capture = (chunk: string | Uint8Array) => {
+    logged.push(JSON.parse(String(chunk)) as Record<string, unknown>);
+    return true;
+  };
+  vi.spyOn(process.stdout, 'write').mockImplementation(capture as never);
+  vi.spyOn(process.stderr, 'write').mockImplementation(capture as never);
+};
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+test('a refused cross-origin beacon is counted', async () => {
+  const before = await sample('rum_rejected_total', { reason: 'cross_origin' });
+
+  await post({ host: 'cv.zigordev.com', origin: 'https://evil.example' });
+
+  assert.equal(await sample('rum_rejected_total', { reason: 'cross_origin' }), before + 1);
+});
+
+test("a page outside the app's routes is counted as other", async () => {
+  const before = await sample('rum_navigations_total', { page: 'other' });
+
+  await send([{ type: 'navigation', name: 'Page View', page: '/abc', navigationDepth: 1 }]);
+
+  assert.equal(await sample('rum_navigations_total', { page: 'other' }), before + 1);
+});
+
+test('a browser error is logged once, with its message masked', async () => {
+  captureLogs();
+  const error = {
+    type: 'error',
+    name: 'JavaScript Error',
+    page: '/',
+    error: { type: 'TypeError', message: 'Failed for bob@example.com after 3 tries' },
+  };
+
+  await send([error, error]);
+
+  const errors = logged.filter((line) => line.event === 'rum.client_error');
+  assert.equal(errors.length, 1);
+  assert.deepEqual(errors[0].error, {
+    name: 'TypeError',
+    message: 'Failed for <email> after <n> tries',
+  });
+});
+
+test('a poor vital is logged with the element behind it', async () => {
+  captureLogs();
+
+  await send([
+    {
+      type: 'performance',
+      name: 'INP',
+      value: 640,
+      page: '/',
+      rating: 'poor',
+      target: 'div>button',
+    },
+  ]);
+
+  const poor = logged.find((line) => line.event === 'rum.vital_poor');
+  assert.equal(poor?.metric, 'INP');
+  assert.equal(poor?.target, 'div>button');
+});
+
+test('a trace id is accepted on a plain registry, which records no exemplar', async () => {
+  const before = await sample('rum_performance_seconds', { metric_name: 'LCP' });
+
+  const response = await send([
+    { type: 'performance', name: 'LCP', value: 1800, page: '/', traceId: 'e'.repeat(32) },
+  ]);
+
+  assert.equal(response.status, 204);
+  assert.ok((await registry.metrics()).includes('metric_name="LCP"'));
+  assert.equal((await registry.metrics()).includes('trace_id'), false);
+  assert.ok((await sample('rum_performance_seconds', { metric_name: 'LCP' })) >= before);
 });

@@ -19,17 +19,26 @@ directory is already shaped like a package.
 
 ## What is in it
 
-| file                         | for                                                    |
-| ---------------------------- | ------------------------------------------------------ |
-| `tracing.ts`                 | OTel bootstrap. Import **first**, before anything else |
-| `json-logger.ts`             | structured logs carrying `traceId`, framework-free     |
-| `metrics.registry.ts`        | the one prom-client registry                           |
-| `http-metrics.middleware.ts` | request counter and duration histogram (Express)       |
-| `nest.ts`                    | the NestJS adapter: `MetricsModule`                    |
-| `index.ts`                   | the entry point                                        |
+| file                                                 | for                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| `tracing.ts`                                         | OTel bootstrap. Import **first**, before anything else                   |
+| `json-logger.ts`                                     | structured logs carrying the trace of a sampled span, framework-free     |
+| `metrics.registry.ts`                                | the one prom-client registry                                             |
+| `health-metrics.ts`                                  | health status and component gauges                                       |
+| `feature-flags.ts`                                   | flag definitions, environment overrides and the Unleash client           |
+| `http-metrics.middleware.ts`                         | request counter and duration histogram (Express)                         |
+| `nest.ts`, `fastify.ts`                              | the NestJS and Fastify adapters                                          |
+| `next.ts`                                            | the Next.js adapter: `/metrics`, the RUM ingest and the CSP report route |
+| `rum-client.ts`, `RumProvider.tsx`                   | RUM in the browser: web-vitals, error details, the funnel                |
+| `rum-ingest.ts`, `rum-metrics.ts`, `rum-details.ts`  | validation, metrics by page and release, error and poor-vital logs       |
+| `csp-reports.ts`                                     | CSP violation reports in both browser formats, counted and logged        |
+| `server-timing.ts`                                   | a response's `Server-Timing: traceparent`, for sampled spans only        |
+| `mask.ts`                                            | emails and digits masked out of browser error messages                   |
+| `index.nest.ts`, `index.fastify.ts`, `index.next.ts` | the entry points                                                         |
 
 `tracing.ts`, `json-logger.ts` and `metrics.registry.ts` are framework-free.
-Only `nest.ts` and `http-metrics.middleware.ts` assume Nest and Express.
+The adapters, `nest.ts`, `fastify.ts`, `next.ts` and `http-metrics.middleware.ts`,
+assume their frameworks.
 
 ## Contract
 
