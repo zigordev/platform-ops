@@ -20,14 +20,22 @@ late, then later, then not at all.
 ## How to see
 
 ```promql
-sum by (redpanda_group, redpanda_topic) (redpanda_kafka_consumer_group_lag_sum)
+kafka:consumer_group_lag:sum
 ```
+
+Lag is derived: the partition's latest offset minus the group's committed
+offset. Redpanda 24.3 only exports a lag metric when `enable_consumer_group_metrics`
+includes `consumer_lag`, which this cluster does not set, so an alert written
+against `redpanda_kafka_consumer_group_lag_sum` never had anything to read.
 
 Whether it is growing or draining matters more than the absolute number:
 
 ```promql
-deriv(sum by (redpanda_group) (redpanda_kafka_consumer_group_lag_sum)[30m:])
+deriv(sum by (redpanda_group) (kafka:consumer_group_lag:sum)[30m:])
 ```
+
+The notifications group has a stricter alert of its own, because any lasting
+lag there is mail nobody is reading: see [notifications-stalled.md](notifications-stalled.md).
 
 Positive and steady means the consumer is losing.
 
