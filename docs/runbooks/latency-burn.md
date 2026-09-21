@@ -28,7 +28,8 @@ Where the time is going, by endpoint:
 histogram_quantile(0.95, sum by (job, route, le) (rate(http_request_duration_seconds_bucket[10m])))
 ```
 
-Then Jaeger, sorted by duration, for the slowest span in a slow trace. This is
+Then Grafana's Traces Drilldown, filtered to the service and sorted by duration, for
+the slowest span in a slow trace. This is
 the thing tracing is for; the answer is usually a single database call.
 
 ## What to do

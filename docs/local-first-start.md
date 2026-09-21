@@ -10,7 +10,7 @@ When this runbook is complete, you will have a local shared platform with:
 - `OpenBao` for application secrets
 - `Tolgee` for runtime translations
 - `Redpanda` and Redpanda Console for the shared Kafka-compatible broker
-- `Prometheus`, `Grafana`, `Loki`, `Alertmanager`, `Tempo` and `Jaeger` for observability
+- `Prometheus`, `Grafana`, `Loki`, `Alertmanager` and `Tempo` for observability
 - `OpenTelemetry Collector` for trace ingestion
 - shared Docker network `platform_ops_shared` used by the app repos
 

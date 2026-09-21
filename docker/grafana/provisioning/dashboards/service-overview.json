@@ -432,7 +432,7 @@
         "type": "loki",
         "uid": "${loki}"
       },
-      "description": "Matched on the `app` label, which Alloy promotes from the `service` field of the JSON log line \u2014 the same string as the Prometheus job. Lines carrying a traceId render a 'View trace' link straight into Jaeger.",
+      "description": "Matched on the `app` label, which Alloy promotes from the `service` field of the JSON log line \u2014 the same string as the Prometheus job. Lines carrying a traceId render a 'View trace' link straight into Tempo.",
       "options": {
         "showTime": true,
         "wrapLogMessage": true,
