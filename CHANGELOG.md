@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.28.1](https://github.com/zigordev/platform-ops/compare/v1.28.0...v1.28.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **deploy:** remove the containers of services a release retired ([#187](https://github.com/zigordev/platform-ops/issues/187)) ([7593dfe](https://github.com/zigordev/platform-ops/commit/7593dfea3595fcd50eb0c6d22ff7a548cc2e16c7))
+
 ## [1.28.0](https://github.com/zigordev/platform-ops/compare/v1.27.0...v1.28.0) (2026-09-21)
 
 
