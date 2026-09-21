@@ -316,9 +316,7 @@ groups:
     rules:
       - alert: KafkaConsumerLagGrowing
         expr: |
-          sum by (redpanda_group, redpanda_topic) (
-            redpanda_kafka_consumer_group_lag_sum
-          ) > 1000
+          kafka:consumer_group_lag:sum > 1000
         for: 15m
         labels:
           severity: ticket
@@ -329,6 +327,38 @@ groups:
             fifteen minutes. Either the consumer is slower than the producers or
             it has stopped consuming.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kafka-lag.md'
+
+      - alert: NotificationsConsumerStuck
+        expr: |
+          label_replace(
+            kafka:consumer_group_lag:sum{redpanda_group="notifications-api", redpanda_topic="notification.email.requested.v1"} > 0,
+            "job", "notifications-api", "", ""
+          )
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'notifications has left {{ $value | humanize }} emails unread for fifteen minutes'
+          description: >-
+            The notifications consumer group has been behind on
+            notification.email.requested.v1 for fifteen minutes without ever
+            catching up. Mail is waiting in Kafka and none of it is being sent.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/notifications-stalled.md'
+
+      - alert: NotificationsReceivedButNotSent
+        expr: |
+          sum by (job) (increase(notifications_received_total[30m])) > 0
+          unless on (job)
+          sum by (job) (increase(notifications_sent_total[30m])) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'notifications took emails in but sent none for thirty minutes'
+          description: >-
+            {{ $labels.job }} accepted emails for processing in the last thirty
+            minutes and delivered none of them.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/notifications-stalled.md'
 
       - alert: DeadLetterQueueGrowing
         expr: increase(notifications_dlq_total[1h]) > 0
@@ -365,18 +395,34 @@ groups:
         # p75 is the percentile Google grades Core Web Vitals on, and 2.5s is
         # the boundary between "good" and "needs improvement" for LCP.
         expr: |
-          histogram_quantile(
-            0.75,
-            sum by (job, le) (rate(rum_performance_seconds_bucket{metric_name="LCP"}[6h]))
-          ) > 2.5
+          (
+            label_replace(
+              histogram_quantile(0.75, sum by (job, le) (rate(rum_performance_seconds_bucket{metric_name="LCP"}[6h]))) > 2.5,
+              "vital", "LCP", "", ""
+            )
+            or
+            label_replace(
+              histogram_quantile(0.75, sum by (job, le) (rate(rum_performance_seconds_bucket{metric_name="INP"}[6h]))) > 0.2,
+              "vital", "INP", "", ""
+            )
+            or
+            label_replace(
+              histogram_quantile(0.75, sum by (job, le) (rate(rum_layout_shift_score_bucket[6h]))) > 0.1,
+              "vital", "CLS", "", ""
+            )
+          )
+          and on (job)
+          sum by (job) (rate(rum_navigations_total{navigation_type="Page View"}[6h])) * 3600 >= 20
         for: 1h
         labels:
           severity: ticket
         annotations:
-          summary: '{{ $labels.job }} LCP p75 is above the 2.5s Core Web Vitals threshold'
+          summary: '{{ $labels.job }} {{ $labels.vital }} p75 is past the Core Web Vitals "good" threshold'
           description: >-
-            Real visitors are waiting more than 2.5 seconds for the main content
-            of {{ $labels.job }}. This is measured from browsers, not from CI.
+            For a quarter of real visits to {{ $labels.job }}, {{ $labels.vital }}
+            is worse than good: past 2.5 s for LCP, 200 ms for INP or 0.1 for
+            CLS, measured in browsers over six hours with at least twenty page
+            views an hour.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/web-vitals.md'
 
       - alert: RumIngestUnderAttack
@@ -393,6 +439,201 @@ groups:
             Sustained rejection of RUM beacons for exceeding the per-client rate
             limit. Either a client is looping, or someone is probing the endpoint.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/rum-ingest.md'
+
+      - alert: BrowserErrorsRising
+        expr: |
+          (
+            sum by (job) (increase(rum_errors_total[1h]))
+            /
+            sum by (job) (increase(rum_navigations_total{navigation_type="Page View"}[1h]))
+          ) > 0.1
+          and on (job)
+          sum by (job) (increase(rum_navigations_total{navigation_type="Page View"}[1h])) >= 20
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} is throwing script errors in more than one page view in ten'
+          description: >-
+            Browsers reported {{ $value | humanize }} script errors per page view
+            on {{ $labels.job }} over the last hour, across at least twenty page
+            views. Each error is logged once as rum.client_error with the source
+            line that threw it.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/browser-errors.md'
+
+      - alert: CspViolationsSeen
+        expr: sum by (job, directive) (increase(csp_violations_total[1h])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} broke its content security policy ({{ $labels.directive }})'
+          description: >-
+            Browsers reported {{ $value | humanize }} violations of the
+            report-only policy on {{ $labels.directive }} in the last hour. Nothing
+            was blocked; something ran or loaded that the policy does not allow.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/csp-violations.md'
+
+  - name: cv
+    rules:
+      - alert: PageLatencyBudgetBurningFast
+        expr: |
+          (1 - slo:page_latency:ratio_rate1h) > (14.4 * 0.05)
+          and
+          (1 - slo:page_latency:ratio_rate5m) > (14.4 * 0.05)
+          and
+          slo:page_traffic:rate1h * 3600 >= 20
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} is rendering its page far slower than half a second'
+          description: >-
+            Most page renders of {{ $labels.job }} in the last hour took longer
+            than half a second, and they still do. The objective is 95% under
+            half a second; this burns a month's budget in about two days.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
+
+      - alert: PageLatencyBudgetEroding
+        expr: |
+          (1 - slo:page_latency:ratio_rate6h) > (6 * 0.05)
+          and
+          (1 - slo:page_latency:ratio_rate30m) > (6 * 0.05)
+          and
+          slo:page_traffic:rate6h * 3600 >= 20
+        for: 30m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} is rendering its page slowly for hours'
+          description: >-
+            Nearly a third of page renders of {{ $labels.job }} over six hours
+            took longer than half a second.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
+
+      - alert: AskSlow
+        expr: |
+          histogram_quantile(0.95, sum by (job, le) (rate(cv_ask_latency_seconds_bucket[30m]))) > 10
+          and on (job)
+          sum by (job) (increase(cv_ask_latency_seconds_count[30m])) >= 5
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} is taking more than ten seconds to answer questions'
+          description: >-
+            The 95th percentile of answer times over the last half hour is
+            {{ $value | humanizeDuration }}, across at least five questions. The
+            objective is 95% under ten seconds.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+
+      - alert: AskUpstreamFailing
+        expr: |
+          (
+            sum by (job) (increase(cv_ask_requests_total{outcome="upstream_error"}[15m]))
+            /
+            sum by (job) (increase(cv_ask_requests_total{outcome=~"answered|refused|incomplete|upstream_error"}[15m]))
+          ) > 0.5
+          and on (job)
+          sum by (job) (increase(cv_ask_requests_total{outcome="upstream_error"}[15m])) >= 3
+        for: 2m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} cannot reach Claude for most questions'
+          description: >-
+            More than half of the questions sent to Claude in the last fifteen
+            minutes failed upstream, at least three of them. Visitors see the
+            answer box fail.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+
+      - alert: AskBudgetNearlySpent
+        expr: max by (job) (cv_ask_budget_used_ratio) >= 0.8 < 1
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "{{ $labels.job }} has spent {{ $value | humanizePercentage }} of this month's answer budget"
+          description: >-
+            The answer box closes for the rest of the month once the budget is
+            spent.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+
+      - alert: AskBudgetExhausted
+        expr: max by (job) (cv_ask_budget_used_ratio) >= 1
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "{{ $labels.job }} has spent this month's answer budget"
+          description: >-
+            The answer box is closed until the month turns or the limit is
+            raised. Questions are refused as budget_exhausted.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+
+      - alert: ContactPublishFailing
+        expr: sum by (job) (increase(cv_contact_submissions_total{outcome="failed"}[15m])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} could not hand {{ $value | humanize }} contact messages to the broker'
+          description: >-
+            Contact messages failed to publish to Kafka in the last fifteen
+            minutes. The visitor saw an error and the message was not sent.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/contact-publish.md'
+
+  - name: notifications_delivery_burn
+    rules:
+      - alert: EmailDeliveryBudgetBurningFast
+        expr: |
+          (1 - slo:delivery:ratio_rate1h) > (14.4 * 0.01)
+          and
+          (1 - slo:delivery:ratio_rate5m) > (14.4 * 0.01)
+          and
+          slo:delivery_traffic:increase1h >= 3
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'notifications is late or failing on {{ $value | humanizePercentage }} of emails'
+          description: >-
+            Far more than one email in a hundred received in the last hour was
+            not accepted by SMTP within two minutes of being requested, and
+            that is still true now.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/email-delivery.md'
+
+      - alert: EmailDeliveryBudgetBurning
+        expr: |
+          (1 - slo:delivery:ratio_rate6h) > (6 * 0.01)
+          and
+          (1 - slo:delivery:ratio_rate30m) > (6 * 0.01)
+          and
+          slo:delivery_traffic:increase6h >= 3
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'notifications has been delivering late for hours'
+          description: >-
+            Over six hours, more emails missed the two-minute delivery objective
+            than the monthly budget allows at this pace.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/email-delivery.md'
+
+      - alert: EmailDeliveryBudgetErodingSlowly
+        expr: |
+          (1 - slo:delivery:ratio_rate1d) > (3 * 0.01)
+          and
+          (1 - slo:delivery:ratio_rate2h) > (3 * 0.01)
+          and
+          slo:delivery_traffic:increase1d >= 3
+        for: 1h
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'notifications has missed the delivery objective all day'
+          description: >-
+            A low but steady share of emails has taken longer than two minutes
+            to reach SMTP, or not reached it at all, for a day.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/email-delivery.md'
 
   - name: edge
     rules:

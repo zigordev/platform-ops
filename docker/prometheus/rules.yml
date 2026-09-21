@@ -164,22 +164,22 @@ groups:
   - name: slo_traffic
     rules:
       - record: slo:traffic:rate5m
-        expr: sum by (job) (rate(http_request_duration_seconds_count[5m]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[5m]))
 
       - record: slo:traffic:rate30m
-        expr: sum by (job) (rate(http_request_duration_seconds_count[30m]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[30m]))
 
       - record: slo:traffic:rate1h
-        expr: sum by (job) (rate(http_request_duration_seconds_count[1h]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[1h]))
 
       - record: slo:traffic:rate2h
-        expr: sum by (job) (rate(http_request_duration_seconds_count[2h]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[2h]))
 
       - record: slo:traffic:rate6h
-        expr: sum by (job) (rate(http_request_duration_seconds_count[6h]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[6h]))
 
       - record: slo:traffic:rate1d
-        expr: sum by (job) (rate(http_request_duration_seconds_count[1d]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[1d]))
 
   # ---------------------------------------------------------------------------
   # Host filesystems.
@@ -215,4 +215,118 @@ groups:
         expr: |
           max by (instance, device) (
             node_filesystem_avail_bytes{fstype=~"ext4|xfs|btrfs|zfs"}
+          )
+
+  - name: slo_page_latency_sli
+    rules:
+      - record: slo:page_latency:ratio_rate5m
+        expr: |
+          label_replace(
+            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[5m]))
+            /
+            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[5m])),
+            "job", "$1", "service", "(.*)"
+          )
+      - record: slo:page_latency:ratio_rate30m
+        expr: |
+          label_replace(
+            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[30m]))
+            /
+            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[30m])),
+            "job", "$1", "service", "(.*)"
+          )
+      - record: slo:page_latency:ratio_rate1h
+        expr: |
+          label_replace(
+            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[1h]))
+            /
+            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[1h])),
+            "job", "$1", "service", "(.*)"
+          )
+      - record: slo:page_latency:ratio_rate6h
+        expr: |
+          label_replace(
+            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[6h]))
+            /
+            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[6h])),
+            "job", "$1", "service", "(.*)"
+          )
+      - record: slo:page_traffic:rate1h
+        expr: |
+          label_replace(
+            sum by (service) (rate(traces_spanmetrics_calls_total{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[1h])),
+            "job", "$1", "service", "(.*)"
+          )
+      - record: slo:page_traffic:rate6h
+        expr: |
+          label_replace(
+            sum by (service) (rate(traces_spanmetrics_calls_total{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[6h])),
+            "job", "$1", "service", "(.*)"
+          )
+
+  - name: slo_delivery_sli
+    rules:
+      - record: slo:delivery:ratio_rate5m
+        expr: |
+          clamp_max(
+            sum by (job) (rate(notification_delivery_duration_seconds_bucket{le="120"}[5m]))
+            /
+            sum by (job) (rate(notifications_received_total[5m])),
+            1
+          )
+      - record: slo:delivery:ratio_rate30m
+        expr: |
+          clamp_max(
+            sum by (job) (rate(notification_delivery_duration_seconds_bucket{le="120"}[30m]))
+            /
+            sum by (job) (rate(notifications_received_total[30m])),
+            1
+          )
+      - record: slo:delivery:ratio_rate1h
+        expr: |
+          clamp_max(
+            sum by (job) (rate(notification_delivery_duration_seconds_bucket{le="120"}[1h]))
+            /
+            sum by (job) (rate(notifications_received_total[1h])),
+            1
+          )
+      - record: slo:delivery:ratio_rate2h
+        expr: |
+          clamp_max(
+            sum by (job) (rate(notification_delivery_duration_seconds_bucket{le="120"}[2h]))
+            /
+            sum by (job) (rate(notifications_received_total[2h])),
+            1
+          )
+      - record: slo:delivery:ratio_rate6h
+        expr: |
+          clamp_max(
+            sum by (job) (rate(notification_delivery_duration_seconds_bucket{le="120"}[6h]))
+            /
+            sum by (job) (rate(notifications_received_total[6h])),
+            1
+          )
+      - record: slo:delivery:ratio_rate1d
+        expr: |
+          clamp_max(
+            sum by (job) (rate(notification_delivery_duration_seconds_bucket{le="120"}[1d]))
+            /
+            sum by (job) (rate(notifications_received_total[1d])),
+            1
+          )
+      - record: slo:delivery_traffic:increase1h
+        expr: sum by (job) (increase(notifications_received_total[1h]))
+      - record: slo:delivery_traffic:increase6h
+        expr: sum by (job) (increase(notifications_received_total[6h]))
+      - record: slo:delivery_traffic:increase1d
+        expr: sum by (job) (increase(notifications_received_total[1d]))
+
+  - name: kafka_consumer_lag
+    rules:
+      - record: kafka:consumer_group_lag:sum
+        expr: |
+          sum by (redpanda_group, redpanda_topic) (
+            max by (redpanda_topic, redpanda_partition) (redpanda_kafka_max_offset{redpanda_namespace="kafka"})
+            - on (redpanda_topic, redpanda_partition) group_right
+            max by (redpanda_group, redpanda_topic, redpanda_partition) (redpanda_kafka_consumer_group_committed_offset)
           )
