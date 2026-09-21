@@ -33,6 +33,7 @@ says what it depends on.
 | `CoreWebVitalsRegressed`                   | [web-vitals.md](web-vitals.md)               |
 | `RumIngestUnderAttack`                     | [rum-ingest.md](rum-ingest.md)               |
 | `ErrorLogsSpiking`, `UncaughtExceptions`   | [error-logs.md](error-logs.md)               |
+| `EdgeErrorRatioHigh`, `EdgeLatencyHigh`    | [edge-slis.md](edge-slis.md)                 |
 
 ## Procedures
 

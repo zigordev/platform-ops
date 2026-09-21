@@ -1,0 +1,25 @@
+groups:
+  - name: edge
+    interval: 1m
+    rules:
+      # Caddy's own metrics carry no host label — server, handler, code and
+      # method only — so the per-site numbers come from its access log, which
+      # does. These are remote-written into Prometheus, where the SLO rules,
+      # the alerts and the dashboards already live.
+      - record: edge:requests:rate5m
+        expr: |
+          sum by (host) (
+            rate({service="central-ingress"} | json | logger =~ `http\.log\.access.*` | label_format host=request_host [5m])
+          )
+
+      - record: edge:requests_5xx:rate5m
+        expr: |
+          sum by (host) (
+            rate({service="central-ingress"} | json | logger =~ `http\.log\.access.*` | status >= 500 | label_format host=request_host [5m])
+          )
+
+      - record: edge:latency_p95_seconds:5m
+        expr: |
+          quantile_over_time(0.95,
+            {service="central-ingress"} | json | logger =~ `http\.log\.access.*` | label_format host=request_host | unwrap duration [5m]
+          ) by (host)

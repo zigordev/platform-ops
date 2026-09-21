@@ -1,4 +1,19 @@
+{
+  servers {
+    metrics
+  }
+}
+
+:9180 {
+  metrics /metrics
+}
+
 {$GPOOL_WEB_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
 
   @metrics path /metrics
@@ -8,6 +23,11 @@
 }
 
 {$GPOOL_API_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
 
   @metrics path /metrics
@@ -17,6 +37,11 @@
 }
 
 {$KINI_WEB_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
 
   @metrics path /metrics
@@ -26,6 +51,11 @@
 }
 
 {$KINI_API_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
 
   @metrics path /metrics
@@ -35,6 +65,11 @@
 }
 
 {$CV_WEB_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
 
   @metrics path /metrics
@@ -44,21 +79,41 @@
 }
 
 {$OPS_GRAFANA_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
   reverse_proxy grafana:3000
 }
 
 {$OPS_TOLGEE_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
   reverse_proxy tolgee:8080
 }
 
 {$OPS_UNLEASH_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
   reverse_proxy unleash:4242
 }
 
 {$OPS_OPENBAO_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
   encode zstd gzip
 
   @metrics path /v1/sys/metrics*

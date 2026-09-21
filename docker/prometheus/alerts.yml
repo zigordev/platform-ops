@@ -393,3 +393,44 @@ groups:
             Sustained rejection of RUM beacons for exceeding the per-client rate
             limit. Either a client is looping, or someone is probing the endpoint.
           runbook_url: 'https://github.com/zigorlsp7/platform-ops/blob/main/docs/runbooks/rum-ingest.md'
+
+  - name: edge
+    rules:
+      - alert: EdgeErrorRatioHigh
+        # The first place a failure appears. A UI has no request metrics of its
+        # own for a page render, and the external probe runs every five minutes
+        # from outside: this sees every request, at the edge, per site.
+        expr: |
+          (
+            sum by (host) (edge:requests_5xx:rate5m)
+            /
+            sum by (host) (edge:requests:rate5m)
+          ) > 0.05
+          and
+          sum by (host) (edge:requests:rate5m) > 0.05
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.host }} is answering 5xx to more than 5% of requests'
+          description: >-
+            More than one request in twenty to {{ $labels.host }} has failed at
+            the edge for ten minutes. The traffic gate means this is real
+            traffic, not one request out of three.
+          runbook_url: 'https://github.com/zigorlsp7/platform-ops/blob/main/docs/runbooks/edge-slis.md'
+
+      - alert: EdgeLatencyHigh
+        expr: |
+          edge:latency_p95_seconds:5m > 2
+          and on (host)
+          sum by (host) (edge:requests:rate5m) > 0.05
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.host }} is slow at the edge (p95 above 2s)'
+          description: >-
+            The 95th percentile of requests to {{ $labels.host }}, measured
+            where they arrive rather than inside the application, has been over
+            two seconds for fifteen minutes.
+          runbook_url: 'https://github.com/zigorlsp7/platform-ops/blob/main/docs/runbooks/edge-slis.md'
