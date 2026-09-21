@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.0](https://github.com/zigordev/platform-ops/compare/v1.29.0...v1.30.0) (2026-09-21)
+
+
+### Features
+
+* **observability:** export the release as service_build_info ([#191](https://github.com/zigordev/platform-ops/issues/191)) ([615dd7a](https://github.com/zigordev/platform-ops/commit/615dd7a6b066b760f7b13ad16a9a5de281100b98))
+
 ## [1.29.0](https://github.com/zigordev/platform-ops/compare/v1.28.1...v1.29.0) (2026-09-21)
 
 
