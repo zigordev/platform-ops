@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.29.0](https://github.com/zigordev/platform-ops/compare/v1.28.1...v1.29.0) (2026-09-21)
+
+
+### Features
+
+* **observability:** carry RUM v2 into the kit and link logs only to kept traces ([#184](https://github.com/zigordev/platform-ops/issues/184)) ([e05cb9c](https://github.com/zigordev/platform-ops/commit/e05cb9c42751086bf88c609959bff429dc31c304))
+
 ## [1.28.1](https://github.com/zigordev/platform-ops/compare/v1.28.0...v1.28.1) (2026-09-21)
 
 
