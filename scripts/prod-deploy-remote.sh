@@ -496,7 +496,7 @@ render_openbao_config
 prepare_openbao_volume_permissions
 
 echo "[deploy] Starting ops stack"
-run_compose --env-file "$OPS_ENV_FILE" -f docker/compose.ops.prod.yml up -d
+run_compose --env-file "$OPS_ENV_FILE" -f docker/compose.ops.prod.yml up -d --remove-orphans
 
 if [ "$OPENBAO_CONFIG_CHANGED" = "true" ]; then
   echo "[deploy] OpenBao config changed; restarting OpenBao to load it"
