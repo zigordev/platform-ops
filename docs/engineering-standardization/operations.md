@@ -24,8 +24,10 @@ that calls it. The others drop live requests on every deploy.
 
 ## Alerting
 
-Alert on **symptoms users feel**, not on causes. Eighteen rules cover the estate,
-in [`docker/prometheus/alerts.yml`](../../docker/prometheus/alerts.yml).
+Alert on **symptoms users feel**, not on causes. Thirty-six rules cover the
+estate in [`docker/prometheus/alerts.yml`](../../docker/prometheus/alerts.yml),
+and two log rules in
+[`docker/loki/rules/fake/log-alerts.yml`](../../docker/loki/rules/fake/log-alerts.yml).
 
 Two severities, and they exist because they map onto two different human
 reactions:
@@ -42,7 +44,7 @@ now fails on any severity that does not match a route.
 
 What is covered:
 
-- **The SLO**, as multi-window burn rate — see below.
+- **The objectives**, as multi-window burn rates — see below.
 - **Availability**, three ways, because they answer different questions.
   `ServiceDown` means Prometheus cannot reach the process. `ServiceUnhealthy`
   means the process is up and says it cannot work. `ServiceDegraded` means it is
@@ -52,7 +54,19 @@ What is covered:
 - **The host** — disk level, disk trajectory, and memory. A full disk has taken
   this estate down twice.
 - **Messaging** — consumer lag, dead letters, and the broker itself.
-- **The browser** — Core Web Vitals p75, from real visits rather than CI.
+- **The browser** — Core Web Vitals p75 from real visits rather than CI,
+  browser errors, CSP violations and a flood on the RUM ingest.
+- **cv's own work** — the answer box failing, slowing down or running out of
+  budget, and contact messages that fail to reach the broker.
+- **Email** — the delivery objective, a stuck consumer, requests with nothing
+  sent, and dead letters.
+- **The edge** — server errors and latency per site, as visitors saw them.
+- **Logs** — error lines that keep coming, and uncaught exceptions.
+
+Every alert names a dashboard in a `dashboard` annotation. The email links it,
+with the service and a two-hour window around the alert's start, so the failing
+trace is two clicks away: an exemplar on a latency panel, or the list of failing
+traces on the service's dashboard.
 
 ### Alertmanager is rendered, not committed
 
@@ -79,10 +93,25 @@ every five minutes, checks the public endpoints from outside, and opens a single
 deduplicated issue — not email, because the SMTP relay is one of the things that
 could be broken.
 
+There is no heartbeat, by decision on 2026-09-20: nothing pings an outside
+service while the monitoring works, so nothing notices the monitoring itself
+dying. The probe notices a dead site, not a dead Prometheus or Alertmanager.
+Until a heartbeat exists, the Observability and messaging dashboard's alert
+emails failed count is the place to look.
+
 ## SLOs
 
-**One target for the whole estate: 99.5% availability, 95% of requests within
-500ms.** Written down here so the number is a decision rather than folklore.
+**Four objectives, one per kind of work**, written down here so each number is a
+decision rather than folklore:
+
+| objective        | target               | measured from                                          | alerts                                  |
+| ---------------- | -------------------- | ------------------------------------------------------ | --------------------------------------- |
+| API availability | 99.5% not 5xx        | `http_requests_total`                                  | `AvailabilityBudget*`, pages and ticket |
+| API latency      | 95% within 500 ms    | `http_request_duration_seconds`, `le="0.5"`            | `LatencyBudget*`, page and ticket       |
+| Page latency, cv | 95% within 512 ms    | Tempo span metrics of `GET /`                          | `PageLatencyBudget*`, tickets           |
+| Email delivery   | 99% within 2 minutes | `notification_delivery_duration_seconds` over requests | `EmailDeliveryBudget*`, tickets         |
+
+The two API numbers are one target for every API.
 
 A single target is a deliberate simplification. It over-protects `cv-web`, which
 serves static pages and could hold a far tighter number, and under-protects
@@ -96,6 +125,21 @@ Alerts use **multi-window burn rate**, not raw thresholds: a long window to say
 the budget is genuinely being spent, and a short window to say it is still being
 spent right now. Requiring both is what stops an alert arriving an hour after
 the incident recovered.
+
+### Edge SLIs
+
+The objectives are measured inside each service, so they miss what the service
+never sees: a request the ingress failed, timed out or could not route. The edge
+SLIs close that gap. Loki's ruler reads Caddy's JSON access log and records, per
+site, requests per second, 5xx per second and p95 latency
+(`edge:requests:rate5m`, `edge:requests_5xx:rate5m`,
+`edge:latency_p95_seconds:5m`), remote-written into Prometheus. They are
+thresholds rather than budgets: `EdgeErrorRatioHigh` when more than 5% of a
+site's requests are 5xx for ten minutes, and `EdgeLatencyHigh` when its p95
+stays above two seconds for fifteen, both tickets, both gated on about three
+requests a minute. Caddy's own metrics carry no host label, which is why the
+access log is the source. They exist in production only: the local stack has no
+ingress.
 
 ### What the SLI does not cover
 
