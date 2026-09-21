@@ -5,7 +5,7 @@
  * server-side and pull in prom-client, which must never reach the client
  * bundle. Import them from `./observability/next` inside a route handler.
  */
-export { initRum, trackEvent } from './rum-client';
+export { initRum, trackError, trackEvent } from './rum-client';
 export type { RumOptions } from './rum-client';
 export { allFlags, isEnabled, registerFlags } from './feature-flags';
 export type { FlagDefinition, ResolvedFlag } from './feature-flags';
