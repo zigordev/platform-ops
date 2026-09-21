@@ -22,7 +22,7 @@ const capture = () => {
 
 const onlyRecord = (lines: string[]): Record<string, unknown> => {
   assert.equal(lines.length, 1, `expected exactly one line, got ${lines.length}`);
-  return JSON.parse(lines[0]) as Record<string, unknown>;
+  return JSON.parse(lines[0] ?? '') as Record<string, unknown>;
 };
 
 afterEach(() => {
