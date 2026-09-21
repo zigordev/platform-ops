@@ -52,6 +52,7 @@ groups:
             exhaust a 30-day error budget in about two days, and it is still
             failing now. The 99.5% SLO will be missed within days if this holds.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/availability-burn.md'
+          dashboard: 'service-overview'
 
       - alert: AvailabilityBudgetBurning
         # 6x over 6h: the budget is gone in about five days.
@@ -70,6 +71,7 @@ groups:
             Sustained 5xx responses from {{ $labels.job }} over six hours. Slower
             than the 14x alert, but still fast enough to miss the SLO this month.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/availability-burn.md'
+          dashboard: 'service-overview'
 
       - alert: AvailabilityBudgetErodingSlowly
         # 3x over a day: worth a look, not worth an interruption.
@@ -88,6 +90,7 @@ groups:
             A low but persistent 5xx rate on {{ $labels.job }}. Nothing is on
             fire; something is wrong and has been for hours.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/availability-burn.md'
+          dashboard: 'service-overview'
 
   - name: slo_latency_burn
     rules:
@@ -108,6 +111,7 @@ groups:
             500ms, and have been for an hour. The SLO allows 5%; this is
             fourteen times that rate.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/latency-burn.md'
+          dashboard: 'service-overview'
 
       - alert: LatencyBudgetEroding
         expr: |
@@ -125,6 +129,7 @@ groups:
             {{ $labels.job }} has been missing the 500ms target for a meaningful
             share of requests over six hours.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/latency-burn.md'
+          dashboard: 'service-overview'
 
   # ===========================================================================
   # Availability of the services themselves.
@@ -150,6 +155,7 @@ groups:
             {{ $labels.instance }} for two minutes. The process is down, or the
             network to it is.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/service-down.md'
+          dashboard: 'service-overview'
 
       - alert: ServiceUnhealthy
         # 0 = error. The service is up and telling you it cannot do its job.
@@ -164,6 +170,7 @@ groups:
             returns `error` — a required dependency is unreachable. Check
             `service_component_up` to see which one.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/service-unhealthy.md'
+          dashboard: 'service-overview'
 
       - alert: ServiceDegraded
         # 1 = degraded. Serving traffic, but something optional is broken —
@@ -182,6 +189,7 @@ groups:
             queued. Users see nothing wrong, which is why this needs an alert
             rather than a dashboard.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/service-degraded.md'
+          dashboard: 'service-overview'
 
       - alert: HealthSignalMissing
         # The health gauges are written when /health is called — every ten
@@ -211,6 +219,7 @@ groups:
             the handler no longer records. Until this is fixed, degraded and
             unhealthy states for this service cannot be detected.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/health-signal-missing.md'
+          dashboard: 'service-overview'
 
       - alert: ComponentDown
         expr: service_component_up == 0
@@ -223,6 +232,7 @@ groups:
             The {{ $labels.component }} dependency of {{ $labels.job }} has been
             unreachable for five minutes.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/component-down.md'
+          dashboard: 'service-overview'
 
       - alert: OpenBaoSealed
         expr: max by (job) (vault_core_unsealed) == 0
@@ -239,6 +249,7 @@ groups:
             boot only, so running containers are unaffected and the next deploy
             or restart fails.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/openbao-sealed.md'
+          dashboard: 'platform-stack'
 
   # ===========================================================================
   # Host and infrastructure.
@@ -261,6 +272,7 @@ groups:
             Docker build cache and image layers are the usual cause; `docker
             builder prune -af` reclaims most of it.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/host-disk.md'
+          dashboard: 'platform-host'
 
       - alert: HostDiskCritical
         expr: host:filesystem_avail:ratio < 0.05
@@ -273,6 +285,7 @@ groups:
             {{ $labels.device }} is nearly full. Postgres refuses to start when
             it cannot write, so this takes databases down, not just builds.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/host-disk.md'
+          dashboard: 'platform-host'
 
       - alert: HostMemoryPressure
         expr: |
@@ -289,6 +302,7 @@ groups:
             kills here, and it takes market-data and research-backtesting with
             it — neither of which has a memory limit set.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/host-memory.md'
+          dashboard: 'platform-host'
 
       - alert: HostFilesystemWillFillIn24h
         # Rate of change rather than a level: catches a slow leak while there is
@@ -304,6 +318,7 @@ groups:
             Extrapolating the last six hours, {{ $labels.device }} runs out of
             space within 24 hours.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/host-disk.md'
+          dashboard: 'platform-host'
 
   # ===========================================================================
   # Messaging.
@@ -327,6 +342,7 @@ groups:
             fifteen minutes. Either the consumer is slower than the producers or
             it has stopped consuming.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kafka-lag.md'
+          dashboard: 'platform-stack'
 
       - alert: NotificationsConsumerStuck
         expr: |
@@ -344,6 +360,7 @@ groups:
             notification.email.requested.v1 for fifteen minutes without ever
             catching up. Mail is waiting in Kafka and none of it is being sent.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/notifications-stalled.md'
+          dashboard: 'service-notifications-api'
 
       - alert: NotificationsReceivedButNotSent
         expr: |
@@ -359,6 +376,7 @@ groups:
             {{ $labels.job }} accepted emails for processing in the last thirty
             minutes and delivered none of them.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/notifications-stalled.md'
+          dashboard: 'service-notifications-api'
 
       - alert: DeadLetterQueueGrowing
         expr: increase(notifications_dlq_total[1h]) > 0
@@ -372,6 +390,7 @@ groups:
             in the last hour. Each one is an email a person expected and did not
             receive.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/dead-letters.md'
+          dashboard: 'service-notifications-api'
 
       - alert: RedpandaDown
         expr: up{job="redpanda"} == 0
@@ -384,6 +403,7 @@ groups:
             The broker every product publishes to is down. gpool and kini will
             report `degraded`; notifications will report `error`.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/redpanda-down.md'
+          dashboard: 'platform-stack'
 
   # ===========================================================================
   # RUM. The browser half of the SLO story — a page can be perfectly available
@@ -424,6 +444,7 @@ groups:
             CLS, measured in browsers over six hours with at least twenty page
             views an hour.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/web-vitals.md'
+          dashboard: 'rum-overview'
 
       - alert: RumIngestUnderAttack
         # The ingest endpoint is public and unauthenticated by necessity. This
@@ -439,6 +460,7 @@ groups:
             Sustained rejection of RUM beacons for exceeding the per-client rate
             limit. Either a client is looping, or someone is probing the endpoint.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/rum-ingest.md'
+          dashboard: 'rum-overview'
 
       - alert: BrowserErrorsRising
         expr: |
@@ -460,6 +482,7 @@ groups:
             views. Each error is logged once as rum.client_error with the source
             line that threw it.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/browser-errors.md'
+          dashboard: 'rum-overview'
 
       - alert: CspViolationsSeen
         expr: sum by (job, directive) (increase(csp_violations_total[1h])) > 0
@@ -472,6 +495,7 @@ groups:
             report-only policy on {{ $labels.directive }} in the last hour. Nothing
             was blocked; something ran or loaded that the policy does not allow.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/csp-violations.md'
+          dashboard: 'rum-overview'
 
   - name: cv
     rules:
@@ -492,6 +516,7 @@ groups:
             than half a second, and they still do. The objective is 95% under
             half a second; this burns a month's budget in about two days.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
+          dashboard: 'service-cv-web'
 
       - alert: PageLatencyBudgetEroding
         expr: |
@@ -509,6 +534,7 @@ groups:
             Nearly a third of page renders of {{ $labels.job }} over six hours
             took longer than half a second.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
+          dashboard: 'service-cv-web'
 
       - alert: AskSlow
         expr: |
@@ -525,6 +551,7 @@ groups:
             {{ $value | humanizeDuration }}, across at least five questions. The
             objective is 95% under ten seconds.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+          dashboard: 'cv-funnel'
 
       - alert: AskUpstreamFailing
         expr: |
@@ -545,6 +572,7 @@ groups:
             minutes failed upstream, at least three of them. Visitors see the
             answer box fail.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+          dashboard: 'cv-funnel'
 
       - alert: AskBudgetNearlySpent
         expr: max by (job) (cv_ask_budget_used_ratio) >= 0.8 < 1
@@ -557,6 +585,7 @@ groups:
             The answer box closes for the rest of the month once the budget is
             spent.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+          dashboard: 'cv-funnel'
 
       - alert: AskBudgetExhausted
         expr: max by (job) (cv_ask_budget_used_ratio) >= 1
@@ -569,6 +598,7 @@ groups:
             The answer box is closed until the month turns or the limit is
             raised. Questions are refused as budget_exhausted.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/ask.md'
+          dashboard: 'cv-funnel'
 
       - alert: ContactPublishFailing
         expr: sum by (job) (increase(cv_contact_submissions_total{outcome="failed"}[15m])) > 0
@@ -580,6 +610,7 @@ groups:
             Contact messages failed to publish to Kafka in the last fifteen
             minutes. The visitor saw an error and the message was not sent.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/contact-publish.md'
+          dashboard: 'service-cv-web'
 
   - name: notifications_delivery_burn
     rules:
@@ -600,6 +631,7 @@ groups:
             not accepted by SMTP within two minutes of being requested, and
             that is still true now.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/email-delivery.md'
+          dashboard: 'service-notifications-api'
 
       - alert: EmailDeliveryBudgetBurning
         expr: |
@@ -617,6 +649,7 @@ groups:
             Over six hours, more emails missed the two-minute delivery objective
             than the monthly budget allows at this pace.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/email-delivery.md'
+          dashboard: 'service-notifications-api'
 
       - alert: EmailDeliveryBudgetErodingSlowly
         expr: |
@@ -634,6 +667,7 @@ groups:
             A low but steady share of emails has taken longer than two minutes
             to reach SMTP, or not reached it at all, for a day.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/email-delivery.md'
+          dashboard: 'service-notifications-api'
 
   - name: edge
     rules:
@@ -656,6 +690,7 @@ groups:
             the edge for ten minutes. The traffic gate means this is real
             traffic, not one request out of three.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/edge-slis.md'
+          dashboard: 'platform-edge'
 
       - alert: EdgeLatencyHigh
         expr: |
@@ -672,3 +707,4 @@ groups:
             where they arrive rather than inside the application, has been over
             two seconds for fifteen minutes.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/edge-slis.md'
+          dashboard: 'platform-edge'

@@ -28,8 +28,8 @@ slo:page_latency:ratio_rate1h
 
 In Grafana, Traces Drilldown for `cv-web`, filtered to `GET /` and sorted by
 duration, shows the slow renders and the span that took the time. A slow
-visit's LCP or TTFB point on the RUM dashboard carries an exemplar that opens
-the same trace.
+visit's LCP or TTFB point on the RUM · cv dashboard carries an exemplar that
+opens the same trace, and the cv-web dashboard lists the slow renders directly.
 
 ## What to do
 

@@ -7,6 +7,7 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "types": ["vitest/globals", "node"]
   },
@@ -33,7 +34,8 @@
     "packages/observability/rum-client.ts",
     "packages/observability/metrics.registry.ts",
     "packages/observability/feature-flags.ts",
-    "packages/observability/feature-flags.test.ts"
+    "packages/observability/feature-flags.test.ts",
+    "packages/dashboards/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

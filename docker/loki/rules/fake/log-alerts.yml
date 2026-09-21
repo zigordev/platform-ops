@@ -18,6 +18,7 @@ groups:
             seconds for ten minutes. Read them in Grafana: {app="{{ $labels.app }}"}
             | json | level = "error".
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/error-logs.md'
+          dashboard: 'service-overview'
 
       - alert: UncaughtExceptions
         expr: |
@@ -34,3 +35,4 @@ groups:
             {{ $labels.app }} logged an uncaught exception. The process kept
             running, which is why nothing else fired.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/error-logs.md'
+          dashboard: 'service-overview'

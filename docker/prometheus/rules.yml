@@ -330,3 +330,8 @@ groups:
             - on (redpanda_topic, redpanda_partition) group_right
             max by (redpanda_group, redpanda_topic, redpanda_partition) (redpanda_kafka_consumer_group_committed_offset)
           )
+
+  - name: deploys
+    rules:
+      - record: deploy:version_seen:max3d
+        expr: max by (job, version) (max_over_time(service_build_info[3d] offset 10m))
