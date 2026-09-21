@@ -54,32 +54,24 @@ route:
       repeat_interval: 24h
 
 inhibit_rules:
-  # A service that is down cannot also be usefully described as unhealthy,
-  # degraded, missing a health signal or burning its error budget. One outage
-  # should be one email, not five.
   - source_matchers:
       - alertname="ServiceDown"
     target_matchers:
       - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking"
     equal: ['environment', 'job']
 
-  # The broker being down is why the consumers are behind and why the
-  # dead-letter topic is growing.
   - source_matchers:
       - alertname="RedpandaDown"
     target_matchers:
       - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing"
     equal: ['environment']
 
-  # A disk that is already critical does not need the two alerts that predicted
-  # it would be.
   - source_matchers:
       - alertname="HostDiskCritical"
     target_matchers:
       - alertname=~"HostDiskFillingUp|HostFilesystemWillFillIn24h"
     equal: ['environment', 'instance']
 
-  # Same alert, same service, both severities: the page is the one to answer.
   - source_matchers:
       - severity="page"
     target_matchers:

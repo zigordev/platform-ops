@@ -52,13 +52,6 @@ export interface RemoteFlagOptions {
   readonly appName: string;
   /** How often to poll, in milliseconds. */
   readonly refreshInterval?: number;
-  /**
-   * Told when the flag source goes away, comes back, or changes a value.
-   *
-   * The SDK swallows its own errors and serves the last values it had, which
-   * is the right behaviour and completely silent: a flag source that has been
-   * unreachable for a day looks exactly like one nobody has changed.
-   */
   readonly onEvent?: (event: RemoteFlagEvent) => void;
   /**
    * Stops the SDK registering and reporting which flags it read.

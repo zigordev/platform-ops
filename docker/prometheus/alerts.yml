@@ -397,9 +397,6 @@ groups:
   - name: edge
     rules:
       - alert: EdgeErrorRatioHigh
-        # The first place a failure appears. A UI has no request metrics of its
-        # own for a page render, and the external probe runs every five minutes
-        # from outside: this sees every request, at the edge, per site.
         expr: |
           (
             sum by (host) (edge:requests_5xx:rate5m)

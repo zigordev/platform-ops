@@ -3,10 +3,6 @@ groups:
     interval: 1m
     rules:
       - alert: ErrorLogsSpiking
-        # Not one alert per error line. A single error is a log to read, not a
-        # page to answer; a service writing errors steadily for ten minutes is
-        # the thing worth interrupting someone for. The rate is per app, so one
-        # noisy service cannot hide another going quiet-but-broken.
         expr: |
           sum by (app) (
             rate({job="docker-json-logs"} | json | level = "error" [5m])
@@ -24,9 +20,6 @@ groups:
           runbook_url: 'https://github.com/zigorlsp7/platform-ops/blob/main/docs/runbooks/error-logs.md'
 
       - alert: UncaughtExceptions
-        # Next catches an uncaught exception, prints it and keeps serving, so
-        # nothing else in the platform notices: no 5xx, no health change, no
-        # restart. Without this the only evidence is a line nobody reads.
         expr: |
           sum by (app) (
             count_over_time({job="docker-json-logs"} | json | event = "process.uncaught_exception" [10m])

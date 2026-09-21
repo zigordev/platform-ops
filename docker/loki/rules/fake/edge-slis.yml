@@ -2,10 +2,6 @@ groups:
   - name: edge
     interval: 1m
     rules:
-      # Caddy's own metrics carry no host label — server, handler, code and
-      # method only — so the per-site numbers come from its access log, which
-      # does. These are remote-written into Prometheus, where the SLO rules,
-      # the alerts and the dashboards already live.
       - record: edge:requests:rate5m
         expr: |
           sum by (host) (
