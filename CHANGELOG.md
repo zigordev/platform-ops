@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.0](https://github.com/zigordev/platform-ops/compare/v1.26.0...v1.27.0) (2026-09-21)
+
+
+### Features
+
+* **edge:** measure every site where the request arrives ([#178](https://github.com/zigordev/platform-ops/issues/178)) ([9c7237d](https://github.com/zigordev/platform-ops/commit/9c7237d4c648bc4e69766b5203d22378a46b059d))
+
 ## [1.26.0](https://github.com/zigordev/platform-ops/compare/v1.25.0...v1.26.0) (2026-09-21)
 
 
