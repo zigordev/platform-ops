@@ -27,6 +27,7 @@ required=(
   SMTP_AUTH_USERNAME
   SMTP_AUTH_PASSWORD
   ALERT_EMAIL_TO
+  OPS_GRAFANA_DOMAIN
 )
 
 missing=()
@@ -44,7 +45,7 @@ fi
 # Name every variable explicitly. A bare `envsubst` would also eat Alertmanager's
 # own Go template syntax — `{{ .Annotations.summary }}` survives because it is
 # not shell syntax, but `$labels`-style text in any future receiver would not.
-envsubst '$SMTP_SMARTHOST $SMTP_FROM $SMTP_AUTH_USERNAME $SMTP_AUTH_PASSWORD $ALERT_EMAIL_TO' \
+envsubst '$SMTP_SMARTHOST $SMTP_FROM $SMTP_AUTH_USERNAME $SMTP_AUTH_PASSWORD $ALERT_EMAIL_TO $OPS_GRAFANA_DOMAIN' \
   <"$TEMPLATE" >"$OUTPUT.tmp"
 
 # Comment lines are exempt: the template's own header explains the placeholder

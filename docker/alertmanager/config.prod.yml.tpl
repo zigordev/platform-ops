@@ -103,7 +103,7 @@ receivers:
              <b>Service:</b> {{ .Labels.job }}<br>
              <b>Severity:</b> {{ .Labels.severity }}<br>
              <b>Since:</b> {{ .StartsAt }}</p>
-          <p><a href="{{ .Annotations.runbook_url }}">Runbook</a></p>
+          <p>{{ if .Annotations.dashboard }}<a href="https://${OPS_GRAFANA_DOMAIN}/d/{{ .Annotations.dashboard }}?{{ with or .Labels.job .Labels.app }}var-job={{ . }}&amp;{{ end }}time={{ .StartsAt.UnixMilli }}&amp;time.window=7200000">Dashboard</a> · {{ end }}<a href="{{ .Annotations.runbook_url }}">Runbook</a></p>
           <hr>
           {{ end }}
 
@@ -120,6 +120,6 @@ receivers:
           <p><b>Environment:</b> {{ .Labels.environment }}<br>
              <b>Service:</b> {{ .Labels.job }}<br>
              <b>Since:</b> {{ .StartsAt }}</p>
-          <p><a href="{{ .Annotations.runbook_url }}">Runbook</a></p>
+          <p>{{ if .Annotations.dashboard }}<a href="https://${OPS_GRAFANA_DOMAIN}/d/{{ .Annotations.dashboard }}?{{ with or .Labels.job .Labels.app }}var-job={{ . }}&amp;{{ end }}time={{ .StartsAt.UnixMilli }}&amp;time.window=7200000">Dashboard</a> · {{ end }}<a href="{{ .Annotations.runbook_url }}">Runbook</a></p>
           <hr>
           {{ end }}

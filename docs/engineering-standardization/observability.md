@@ -504,15 +504,36 @@ label verbatim until a probe caught it.
 
 ---
 
-## 7. Dashboard
+## 7. Dashboards
 
-One Grafana dashboard per service, provisioned from a file in
-`platform-ops/docker/grafana/provisioning/dashboards/`, named
-`<service>-overview.json`.
+Dashboards are code. `platform-ops/packages/dashboards/` holds one TypeScript
+file per dashboard, and `npm run dashboards` writes the JSON Grafana provisions
+from `platform-ops/docker/grafana/provisioning/dashboards/<folder>/`, together
+with one provider per folder. Nothing is edited in the Grafana UI: provisioned
+dashboards refuse UI saves, and a test fails when the committed JSON is not what
+the generator writes.
 
-Generated from one template so services stay comparable — request rate, error
-ratio, p95 latency, and the service's own business metric. Two dashboards
-currently exist for seven services.
+Five folders, each with its own provider:
+
+| folder   | what it answers                             | dashboards                                                     |
+| -------- | ------------------------------------------- | -------------------------------------------------------------- |
+| Estate   | is anything wrong, and are we within budget | Estate overview, Service level objectives                      |
+| Services | how one service is doing, down to a trace   | Service overview (any Node service), cv-web, notifications-api |
+| Frontend | what visitors experience                    | RUM overview (any web app), RUM · cv                           |
+| Platform | the host, the edge, the tools themselves    | Host, Edge, Observability and messaging                        |
+| Business | what people do and what it costs            | cv funnel, Email delivery                                      |
+
+Every dashboard marks deploys: the first ten minutes of a `service_build_info`
+version not seen in the three days before are drawn on every graph, so a host
+switched off overnight does not look like a deploy each morning. Latency panels
+ask for exemplars, and the Services dashboards list the latest failing traces.
+Every alert names a dashboard in a `dashboard` annotation, and the alert email
+links it with the service and the time the alert started, so the failing trace
+is two clicks from the email.
+
+A new dashboard is a file in `packages/dashboards/dashboards/`, listed in its
+`index.ts`. The generator's tests check that every metric a query names is in
+`lib/metrics.ts` and that every alert links a dashboard that exists.
 
 ---
 
