@@ -8,14 +8,6 @@ x-logging: &default-logging
     labels: 'com.docker.compose.project,com.docker.compose.service'
 
 services:
-  jaeger:
-    security_opt:
-      - no-new-privileges:true
-    image: jaegertracing/all-in-one:1.53
-    restart: unless-stopped
-    logging: *default-logging
-    networks: [platform_ops_shared]
-
   tempo:
     security_opt:
       - no-new-privileges:true
@@ -44,7 +36,6 @@ services:
       - '4319:4317'
       - '4320:4318'
     depends_on:
-      - jaeger
       - tempo
     networks: [platform_ops_shared]
 
