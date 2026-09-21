@@ -313,7 +313,7 @@ ensure_cron_daemon() {
   systemctl enable --now crond >/dev/null 2>&1 || true
 
   if ! systemctl is-active crond >/dev/null 2>&1; then
-    echo "No cron daemon is running, so the nightly log archive would never start" >&2
+    echo "No cron daemon is running, so the log archive and the image prune would never start" >&2
     return 1
   fi
 }
@@ -350,6 +350,37 @@ ROTATE
   chmod 0644 /etc/logrotate.d/platform-ops-log-archive
 
   echo "[deploy] Installed the log archive job (bucket $OPS_LOG_ARCHIVE_BUCKET)"
+}
+
+install_image_prune_job() {
+  local bin_dir="/opt/platform-ops/bin"
+  local log_file="/var/log/platform-ops-image-prune.log"
+
+  ensure_cron_daemon
+
+  install -d -m 0755 "$bin_dir"
+  install -m 0755 scripts/prune-images.sh "$bin_dir/prune-images.sh"
+
+  cat >/etc/cron.d/platform-ops-image-prune <<CRON
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+45 10 * * 1-5 root $bin_dir/prune-images.sh >>$log_file 2>&1
+CRON
+  chmod 0644 /etc/cron.d/platform-ops-image-prune
+
+  cat >/etc/logrotate.d/platform-ops-image-prune <<ROTATE
+$log_file {
+  weekly
+  rotate 4
+  compress
+  missingok
+  notifempty
+  copytruncate
+}
+ROTATE
+  chmod 0644 /etc/logrotate.d/platform-ops-image-prune
+
+  echo "[deploy] Installed the image prune job"
 }
 
 if [ ! -d "$RELEASE_DIR" ]; then
@@ -476,6 +507,7 @@ fi
 run_compose --env-file "$OPS_ENV_FILE" -f docker/compose.ops.prod.yml ps
 
 install_log_archive_job
+install_image_prune_job
 
 
 prune_old_releases() {
