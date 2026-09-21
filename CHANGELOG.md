@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.0](https://github.com/zigordev/platform-ops/compare/v1.30.0...v1.31.0) (2026-09-21)
+
+
+### Features
+
+* **grafana:** dashboards as code on Grafana 13 ([#190](https://github.com/zigordev/platform-ops/issues/190)) ([385e60c](https://github.com/zigordev/platform-ops/commit/385e60c34e0a5f30d2a40874e257e4dd157844e6))
+
 ## [1.30.0](https://github.com/zigordev/platform-ops/compare/v1.29.0...v1.30.0) (2026-09-21)
 
 
