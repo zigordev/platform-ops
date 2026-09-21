@@ -54,6 +54,13 @@ datasources:
         tags:
           - key: 'service.name'
             value: 'job'
+        queries:
+          - name: 'Request rate by route'
+            query: 'sum by (route) (rate(http_requests_total{$$__tags}[5m]))'
+          - name: 'Server error ratio'
+            query: 'sum(rate(http_requests_total{$$__tags,status=~"5.."}[5m])) / sum(rate(http_requests_total{$$__tags}[5m]))'
+          - name: 'p95 latency by route'
+            query: 'histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{$$__tags}[5m])))'
       serviceMap:
         datasourceUid: prometheus
       nodeGraph:
