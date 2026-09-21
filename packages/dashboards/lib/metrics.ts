@@ -1,0 +1,120 @@
+const APP = [
+  'http_requests_total',
+  'http_request_duration_seconds_bucket',
+  'service_health_status',
+  'service_component_up',
+  'service_build_info',
+  'process_cpu_seconds_total',
+  'process_resident_memory_bytes',
+  'process_start_time_seconds',
+  'nodejs_eventloop_lag_p99_seconds',
+  'cv_contact_submissions_total',
+  'cv_i18n_messages_total',
+  'cv_feature_flag_enabled',
+  'cv_ask_requests_total',
+  'cv_ask_tokens_total',
+  'cv_ask_cost_usd_total',
+  'cv_ask_latency_seconds_bucket',
+  'cv_ask_budget_used_ratio',
+  'cv_ask_citations_bucket',
+  'csp_violations_total',
+  'rum_performance_seconds_bucket',
+  'rum_performance_seconds_count',
+  'rum_layout_shift_score_bucket',
+  'rum_layout_shift_score_count',
+  'rum_errors_total',
+  'rum_interactions_total',
+  'rum_navigations_total',
+  'rum_frustrations_total',
+  'rum_navigation_path_length_bucket',
+  'rum_rejected_total',
+  'notifications_received_total',
+  'notifications_sent_total',
+  'notifications_failed_total',
+  'notifications_deduplicated_total',
+  'notifications_dlq_total',
+  'notification_render_duration_seconds_bucket',
+  'notification_send_duration_seconds_bucket',
+  'notification_delivery_duration_seconds_bucket',
+];
+
+const PLATFORM = [
+  'up',
+  'ALERTS',
+  'traces_spanmetrics_calls_total',
+  'traces_spanmetrics_latency_bucket',
+  'node_cpu_seconds_total',
+  'node_load1',
+  'node_load5',
+  'node_memory_MemAvailable_bytes',
+  'node_memory_MemTotal_bytes',
+  'node_network_receive_bytes_total',
+  'node_network_transmit_bytes_total',
+  'node_boot_time_seconds',
+  'vault_core_unsealed',
+  'redpanda_kafka_max_offset',
+  'redpanda_kafka_consumer_group_consumers',
+  'caddy_http_request_duration_seconds_count',
+  'caddy_reverse_proxy_upstreams_healthy',
+  'prometheus_tsdb_head_series',
+  'prometheus_tsdb_head_samples_appended_total',
+  'prometheus_rule_evaluation_failures_total',
+  'prometheus_tsdb_storage_blocks_bytes',
+  'prometheus_tsdb_wal_storage_size_bytes',
+  'cortex_prometheus_rule_evaluation_failures_total',
+  'alertmanager_alerts',
+  'alertmanager_notifications_total',
+  'alertmanager_notifications_failed_total',
+  'loki_distributor_lines_received_total',
+  'loki_write_sent_entries_total',
+  'loki_write_dropped_entries_total',
+  'tempo_distributor_spans_received_total',
+  'tempo_discarded_spans_total',
+  'tempo_ingester_live_traces',
+  'tempo_metrics_generator_spans_discarded_total',
+  'otelcol_exporter_sent_spans',
+  'otelcol_exporter_send_failed_spans',
+  'otelcol_receiver_refused_spans',
+];
+
+const RULES = [
+  'platform_api:http_error_ratio:rate5m',
+  'slo:availability:ratio_rate1h',
+  'slo:availability:ratio_rate1d',
+  'slo:latency:ratio_rate1h',
+  'slo:latency:ratio_rate1d',
+  'slo:traffic:rate1h',
+  'host:filesystem_avail:ratio',
+  'host:filesystem_avail_bytes:max',
+  'slo:page_latency:ratio_rate1h',
+  'slo:page_latency:ratio_rate6h',
+  'slo:page_traffic:rate1h',
+  'slo:delivery:ratio_rate1h',
+  'slo:delivery:ratio_rate1d',
+  'slo:delivery_traffic:increase1h',
+  'kafka:consumer_group_lag:sum',
+  'edge:requests:rate5m',
+  'edge:requests_5xx:rate5m',
+  'edge:latency_p95_seconds:5m',
+  'deploy:version_seen:max3d',
+];
+
+export const METRICS: ReadonlySet<string> = new Set([...APP, ...PLATFORM, ...RULES]);
+
+const KEYWORDS = new Set(['and', 'or', 'unless', 'offset', 'bool', 'inf', 'nan']);
+
+export function metricNames(expr: string): string[] {
+  const stripped = expr
+    .replace(/"(?:[^"\\]|\\.)*"|`[^`]*`|'(?:[^'\\]|\\.)*'/g, ' ')
+    .replace(/\{[^}]*\}/g, ' ')
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/(?<![\w:])(?:by|without|on|ignoring|group_left|group_right)\s*\([^)]*\)/g, ' ')
+    .replace(/\$\{[^}]*\}|\$\w+/g, ' ')
+    .replace(/(?<![\w:.])\d+(?:\.\d+)?(?:e[+-]?\d+)?[smhdwy]*(?![\w:])/gi, ' ');
+  const names = new Set<string>();
+  for (const match of stripped.matchAll(/(?<![\w:])([a-zA-Z_:][a-zA-Z0-9_:]*)(?![\w:])(?!\s*\()/g)) {
+    const name = match[1];
+    if (name && !KEYWORDS.has(name)) names.add(name);
+  }
+  return [...names];
+}
