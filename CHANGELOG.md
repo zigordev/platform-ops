@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.28.0](https://github.com/zigordev/platform-ops/compare/v1.27.0...v1.28.0) (2026-09-21)
+
+
+### Features
+
+* **alerts:** cv and notifications alerts, a delivery objective and runbooks ([#183](https://github.com/zigordev/platform-ops/issues/183)) ([ff07053](https://github.com/zigordev/platform-ops/commit/ff07053016ecf769092a15bc67f17cb6f5febfed))
+* **grafana:** upgrade to Grafana 12 and link the signals ([#182](https://github.com/zigordev/platform-ops/issues/182)) ([04eb9bb](https://github.com/zigordev/platform-ops/commit/04eb9bbd29ee990e4e1f39e595d92ee39ee7a42d))
+
+
+### Bug Fixes
+
+* **deploy:** prune unused Docker images every weekday ([#185](https://github.com/zigordev/platform-ops/issues/185)) ([8fb1cea](https://github.com/zigordev/platform-ops/commit/8fb1cea6c510cad1ae0e2f1a7f7bce1b80f4f578))
+
 ## [1.27.0](https://github.com/zigordev/platform-ops/compare/v1.26.0...v1.27.0) (2026-09-21)
 
 
