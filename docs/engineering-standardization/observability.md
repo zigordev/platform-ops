@@ -190,16 +190,17 @@ renaming one breaks them, and a new outcome gets a new name rather than a new
 meaning for an old one. Everything else about the event goes in top-level fields
 beside it, never inside `message`.
 
-Every service also writes the standard events, the Node services from the
-kit's `standard-events.ts` and the Rust services from their crate:
-`service.started` with its release and runtime, `service.stopping` with the
-signal, `request.failed` for a response the service failed to produce (a 5xx),
-and `process.uncaught_exception` and `process.unhandled_rejection`; in Rust a
-panic is the `process.uncaught_exception`. `UncaughtExceptions` reads the
-fourth. They are observed rather than handled, so what follows depends on the
-runtime. A Node API or sity's server still dies of an uncaught exception, and
-the log line is written on the way down. A Next app keeps serving after both,
-because Next handles them itself; the web apps write them from
+Every service also writes the standard events: `service.started` with its
+release and runtime, `service.stopping` with the signal, `request.failed` for a
+response the service failed to produce (a 5xx), and `process.uncaught_exception`
+and `process.unhandled_rejection`. The Node services write them from the kit's
+`standard-events.ts`. The Rust services write them from their crate, with two
+differences: their `service.started` carries no runtime, and a panic is their
+`process.uncaught_exception`, with no rejection counterpart. `UncaughtExceptions`
+reads the fourth. They are observed rather than handled, so what follows depends
+on the runtime. A Node API or sity's server still dies of an uncaught exception,
+and the log line is written on the way down. A Next app keeps serving after
+both, because Next handles them itself; the web apps write them from
 `instrumentation.ts`, and the kit logs a rejection there as a `warn`
 (`rejections: 'observe'`). A Rust panic ends the task it happened in, or the
 process when it is the main one. Each service's own events:
