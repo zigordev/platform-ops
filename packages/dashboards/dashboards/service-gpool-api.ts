@@ -46,8 +46,8 @@ export const serviceGpoolApi: DashboardSpec = {
         prom(`slo:latency:ratio_rate1h{job="${JOB}"}`, { legend: '1h' }),
         prom(`slo:latency:ratio_rate1d{job="${JOB}"}`, { legend: '1d' }),
       ], { unit: 'percentunit', max: 1, steps: atLeast(0.95), lines: true }),
-      timeseries('Time in Postgres and the broker', 'p95 of the calls gpool-api makes, by span name. A slow route is usually one slow query underneath it.', { w: 8, h: 7 }, [
-        prom(`histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service="${JOB}", span_kind="SPAN_KIND_CLIENT"}[${RATE_INTERVAL}])))`, { legend: '{{span_name}}' }),
+      timeseries('Time in Postgres and the broker', 'p95 of the calls gpool-api makes, by span name. A slow route is usually one slow query underneath it. Publishes to the broker are producer spans rather than client ones, so both kinds are selected: with client alone the pg spans would be here and the mail path would never appear.', { w: 8, h: 7 }, [
+        prom(`histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service="${JOB}", span_kind=~"SPAN_KIND_CLIENT|SPAN_KIND_PRODUCER"}[${RATE_INTERVAL}])))`, { legend: '{{span_name}}' }),
       ], { unit: 's', min: 0 }),
     ],
     [
@@ -57,7 +57,7 @@ export const serviceGpoolApi: DashboardSpec = {
       timeseries('Predictions', 'Predictions submitted and cleared. Clearing is a player changing their mind, not a failure.', { w: 8, h: 8 }, [
         prom(`sum by (action) (increase(gpool_predictions_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{action}}' }),
       ], { unit: 'short', min: 0, bars: true }),
-      timeseries('Emails gpool asked for', 'By template and outcome. queued reached the broker, skipped was deliberate, failed never left gpool.', { w: 8, h: 8 }, [
+      timeseries('Emails gpool asked for', 'By template and outcome. queued reached the broker, skipped is gpool having no address to send to, failed never left gpool.', { w: 8, h: 8 }, [
         prom(`sum by (template, outcome) (increase(gpool_notifications_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{template}} · {{outcome}}' }),
       ], { unit: 'short', min: 0, bars: true }),
     ],

@@ -565,7 +565,7 @@
       "id": 11,
       "type": "timeseries",
       "title": "Emails gpool asked for",
-      "description": "By outcome, as gpool saw it: queued reached the broker, skipped was deliberate (no address, or the same mail already queued), failed never left.",
+      "description": "By outcome, as gpool saw it: queued reached the broker, skipped is gpool having no address for the person it wanted to write to, failed never left. A repeat of the same event is dropped earlier and is counted in none of these.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -812,7 +812,7 @@
       "id": 15,
       "type": "timeseries",
       "title": "The same steps in the browser",
-      "description": "What players clicked, reported by their browsers. It should track the server counts above; a gap means a step failed after the click. The failure events need gpool#283 for the release label, but the counts read today.",
+      "description": "What players clicked, reported by their browsers, including the two steps that failed in front of them. It should track the server counts above; a gap means a step failed after the click. All of this reads today.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -842,16 +842,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (interaction_type) (increase(rum_interactions_total{job=\"gpool-web\", interaction_type=~\"Pool Created|User Invited|Access Requested|Invitation Accepted|Access Request Accepted\"}[$__rate_interval]))",
-          "legendFormat": "{{interaction_type}}",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (interaction_type) (increase(rum_interactions_total{job=\"gpool-web\", interaction_type=~\"Invitation Accept Failed|Access Request Accept Failed\"}[$__rate_interval]))",
+          "expr": "sum by (interaction_type) (increase(rum_interactions_total{job=\"gpool-web\", interaction_type=~\"Pool Created|User Invited|Access Requested|Invitation Accepted|Invitation Accept Failed|Access Request Accepted|Access Request Accept Failed\"}[$__rate_interval]))",
           "legendFormat": "{{interaction_type}}",
           "range": true,
           "instant": false,

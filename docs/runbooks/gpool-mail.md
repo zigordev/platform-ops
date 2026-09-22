@@ -67,6 +67,10 @@ travel on `notification.email.requested.v1`.
 4. **Read but not sent, all templates:** it is not a gpool problem. See
    [notifications-stalled.md](notifications-stalled.md) for the relay, and
    [dead-letters.md](dead-letters.md) for what has already been given up on.
-5. **Nothing obviously broken:** check `skipped`. gpool skips deliberately when
-   there is no address to send to or when the same mail is already queued, and a
-   run of skips is a product question, not an incident.
+5. **Nothing obviously broken:** check `skipped`. gpool skips when it has no
+   address for the person it wanted to write to, and the `notification.skipped`
+   line says which — `admin_email_missing` or `user_email_missing`. A run of
+   skips is a product question, not an incident. A repeated event is dropped
+   before any of this and logged as `notification.duplicate` at debug level; it
+   is counted in no outcome at all, so a gap between the pool counters and the
+   email counters can be duplicates rather than loss.

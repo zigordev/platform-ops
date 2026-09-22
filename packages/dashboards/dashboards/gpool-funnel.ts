@@ -6,6 +6,9 @@ import { loki, prom } from '../lib/queries.ts';
 
 const GPOOL_MAIL = 'sum by (template_id) (label_replace(sum by (template) (increase(gpool_notifications_total{outcome="queued"}[$__range])), "template_id", "$1", "template", "(.*)"))';
 
+const BROWSER_STEPS =
+  'Pool Created|User Invited|Access Requested|Invitation Accepted|Invitation Accept Failed|Access Request Accepted|Access Request Accept Failed';
+
 function perTemplate(metric: string): string {
   return `sum by (template_id) (increase(${metric}{source_app="gpool"}[$__range]))`;
 }
@@ -62,7 +65,7 @@ export const gpoolFunnel: DashboardSpec = {
       timeseries('Predictions', 'Submitted and cleared. Clearing is a player changing their mind before kickoff, not an error.', { w: 8, h: 8 }, [
         prom(`sum by (action) (increase(gpool_predictions_total[${RATE_INTERVAL}]))`, { legend: '{{action}}' }),
       ], { unit: 'short', min: 0, bars: true }),
-      timeseries('Emails gpool asked for', 'By outcome, as gpool saw it: queued reached the broker, skipped was deliberate (no address, or the same mail already queued), failed never left.', { w: 8, h: 8 }, [
+      timeseries('Emails gpool asked for', 'By outcome, as gpool saw it: queued reached the broker, skipped is gpool having no address for the person it wanted to write to, failed never left. A repeat of the same event is dropped earlier and is counted in none of these.', { w: 8, h: 8 }, [
         prom(`sum by (outcome) (increase(gpool_notifications_total[${RATE_INTERVAL}]))`, { legend: '{{outcome}}' }),
       ], { unit: 'short', min: 0, stack: true, bars: true }),
       timeseries('Emails at the other end', 'The same mail as notifications handled it: sent by the relay, a failed attempt, or given up on.', { w: 8, h: 8 }, [
@@ -90,9 +93,8 @@ export const gpoolFunnel: DashboardSpec = {
       ], { unit: 's', min: 0, steps: under(120), lines: true }),
     ],
     [
-      timeseries('The same steps in the browser', 'What players clicked, reported by their browsers. It should track the server counts above; a gap means a step failed after the click. The failure events need gpool#283 for the release label, but the counts read today.', { w: 12, h: 9 }, [
-        prom(`sum by (interaction_type) (increase(rum_interactions_total{job="gpool-web", interaction_type=~"Pool Created|User Invited|Access Requested|Invitation Accepted|Access Request Accepted"}[${RATE_INTERVAL}]))`, { legend: '{{interaction_type}}' }),
-        prom(`sum by (interaction_type) (increase(rum_interactions_total{job="gpool-web", interaction_type=~"Invitation Accept Failed|Access Request Accept Failed"}[${RATE_INTERVAL}]))`, { legend: '{{interaction_type}}' }),
+      timeseries('The same steps in the browser', 'What players clicked, reported by their browsers, including the two steps that failed in front of them. It should track the server counts above; a gap means a step failed after the click. All of this reads today.', { w: 12, h: 9 }, [
+        prom(`sum by (interaction_type) (increase(rum_interactions_total{job="gpool-web", interaction_type=~"${BROWSER_STEPS}"}[${RATE_INTERVAL}]))`, { legend: '{{interaction_type}}' }),
       ], { unit: 'short', min: 0, bars: true }),
       logs('Pools and the emails they trigger', 'Every pool action and every email decision, newest first, with the pool and user ids. Email addresses are never logged.', { w: 12, h: 9 }, [
         loki('{app="gpool-api"} | json | event=~"pool.*|notification.*"'),

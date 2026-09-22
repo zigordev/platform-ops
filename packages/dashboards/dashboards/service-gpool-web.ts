@@ -10,7 +10,7 @@ const JOB = 'gpool-web';
 export const serviceGpoolWeb: DashboardSpec = {
   uid: 'service-gpool-web',
   title: 'gpool-web',
-  description: 'The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. Everything except the runtime row, the release and the page-view count arrives with gpool#283; until that merges those panels are empty rather than wrong.',
+  description: 'The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. The runtime row, the release, the page-view count and the two rejection panels read today; health, the dependency table, the render panels, the beacon routes and everything from traces or logs arrive with gpool#283, and until it merges they are empty rather than wrong.',
   folder: SERVICES,
   tags: ['service', 'gpool'],
   deploys: deploys(`{job="${JOB}"}`),
@@ -19,10 +19,10 @@ export const serviceGpoolWeb: DashboardSpec = {
       healthStat(JOB),
       releaseStat(JOB),
       componentsTable(JOB, 8),
-      stat('Page views · 1 hour', 'Page views the browsers reported in the last hour. This is the only traffic count that does not wait on gpool#283.', { w: 4, h: 5 }, [
+      stat('Page views · 1 hour', 'Page views the browsers reported in the last hour. The browsers already post these, so this tile does not wait on gpool#283.', { w: 4, h: 5 }, [
         prom(`sum(increase(rum_navigations_total{job="${JOB}", navigation_type="Page View"}[1h])) or vector(0)`, { legend: 'views' }),
       ], { decimals: 0 }),
-      stat('Beacons rejected · 24 hours', 'Browser reports thrown away before they became a metric: wrong origin, too big, rate limited or malformed.', { w: 4, h: 5 }, [
+      stat('Beacons rejected · 24 hours', 'Browser reports thrown away before they became a metric: rate limited, malformed, an event type or name the allow-list does not have, or a batch over the size cap.', { w: 4, h: 5 }, [
         prom(`sum(increase(rum_rejected_total{job="${JOB}"}[24h])) or vector(0)`, { legend: 'rejected' }),
       ], { decimals: 0, steps: under(1) }),
     ],
@@ -41,7 +41,7 @@ export const serviceGpoolWeb: DashboardSpec = {
       timeseries('Beacon route latency p95', 'How long ingest takes. It runs on the render path of nothing, but a slow ingest means beacons are dropped on unload. Hover a dot to open the trace.', { w: 8, h: 8 }, [
         prom(`histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job="${JOB}"}[${RATE_INTERVAL}])))`, { legend: '{{route}}', exemplar: true }),
       ], { unit: 's', min: 0 }),
-      timeseries('Beacons rejected by reason', 'The one RUM counter whose labels the server controls. cross_origin is another site posting here; rate_limited is a client looping or someone probing.', { w: 8, h: 8 }, [
+      timeseries('Beacons rejected by reason', 'The one RUM counter whose labels the server controls. rate_limited is a client looping or someone probing; malformed, unknown_type, bad_name and unrecordable are a beacon the ingest refused to turn into a label; batch_too_large is a client sending more events than one batch may carry.', { w: 8, h: 8 }, [
         prom(`sum by (reason) (increase(rum_rejected_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{reason}}' }),
       ], { unit: 'short', min: 0, bars: true }),
       timeseries('Copy that did not come from Tolgee', 'Renders that fell back, by what they fell back to: cached is the last good export, local is the copy committed in the repo. A run of these means Tolgee is unreachable.', { w: 8, h: 8 }, [

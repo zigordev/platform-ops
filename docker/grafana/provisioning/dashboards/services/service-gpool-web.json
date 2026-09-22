@@ -1,7 +1,7 @@
 {
   "uid": "service-gpool-web",
   "title": "gpool-web",
-  "description": "The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. Everything except the runtime row, the release and the page-view count arrives with gpool#283; until that merges those panels are empty rather than wrong.",
+  "description": "The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. The runtime row, the release, the page-view count and the two rejection panels read today; health, the dependency table, the render panels, the beacon routes and everything from traces or logs arrive with gpool#283, and until it merges they are empty rather than wrong.",
   "tags": ["services", "service", "gpool"],
   "timezone": "browser",
   "editable": false,
@@ -278,7 +278,7 @@
       "id": 4,
       "type": "stat",
       "title": "Page views · 1 hour",
-      "description": "Page views the browsers reported in the last hour. This is the only traffic count that does not wait on gpool#283.",
+      "description": "Page views the browsers reported in the last hour. The browsers already post these, so this tile does not wait on gpool#283.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -317,7 +317,7 @@
       "id": 5,
       "type": "stat",
       "title": "Beacons rejected · 24 hours",
-      "description": "Browser reports thrown away before they became a metric: wrong origin, too big, rate limited or malformed.",
+      "description": "Browser reports thrown away before they became a metric: rate limited, malformed, an event type or name the allow-list does not have, or a batch over the size cap.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -536,7 +536,7 @@
       "id": 10,
       "type": "timeseries",
       "title": "Beacons rejected by reason",
-      "description": "The one RUM counter whose labels the server controls. cross_origin is another site posting here; rate_limited is a client looping or someone probing.",
+      "description": "The one RUM counter whose labels the server controls. rate_limited is a client looping or someone probing; malformed, unknown_type, bad_name and unrecordable are a beacon the ingest refused to turn into a label; batch_too_large is a client sending more events than one batch may carry.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
