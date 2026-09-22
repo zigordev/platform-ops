@@ -30,9 +30,10 @@ groups:
           severity: ticket
           environment: '{{ $externalLabels.environment }}'
         annotations:
-          summary: '{{ $labels.app }} swallowed an uncaught exception'
+          summary: '{{ $labels.app }} hit an uncaught exception'
           description: >-
-            {{ $labels.app }} logged an uncaught exception. The process kept
-            running, which is why nothing else fired.
+            {{ $labels.app }} logged an uncaught exception. A Next app keeps
+            serving after one and a Rust service loses only the task that
+            panicked; any other Node service exited and Docker restarted it.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/error-logs.md'
           dashboard: 'service-overview'

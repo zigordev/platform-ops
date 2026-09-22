@@ -29,13 +29,13 @@ the repository-shape convergence landed.
 | supply chain (SBOM, Trivy) | yes | yes   | yes  | ~           | yes           | yes  |
 | contract drift             | n/a | yes   | yes  | no          | n/a           | n/a  |
 | **Observability**          |     |       |      |             |               |      |
-| Traces                     | yes | yes   | yes  | yes         | yes           | n/a  |
-| Metrics                    | yes | yes   | yes  | yes         | yes           | yes  |
-| Scraped                    | yes | yes   | yes  | no          | yes           | no   |
-| JSON logs                  | yes | yes   | yes  | yes         | yes           | yes  |
-| `traceId` in logs          | yes | yes   | yes  | yes         | yes           | n/a  |
+| Traces                     | no  | yes   | yes  | yes         | yes           | n/a  |
+| Metrics                    | yes | yes   | yes  | yes         | yes           | n/a  |
+| Scraped                    | yes | yes   | yes  | no          | yes           | n/a  |
+| JSON logs                  | no  | yes   | yes  | yes         | yes           | n/a  |
+| `traceId` in logs          | no  | yes   | yes  | yes         | yes           | n/a  |
 | Health probes deps         | n/a | yes   | yes  | yes         | yes           | n/a  |
-| Health shape converged     | yes | yes   | yes  | yes         | yes           | yes  |
+| Health shape converged     | yes | yes   | yes  | yes         | yes           | n/a  |
 | Single `/health` path      | yes | yes   | yes  | yes         | yes           | yes  |
 | Broker in health           | n/a | yes   | yes  | yes         | yes           | n/a  |
 | Dashboard                  | ~   | yes   | yes  | no          | yes           | n/a  |
@@ -55,10 +55,9 @@ neither Node application has an ESLint config, so `lint` runs clippy and nothing
 else for them. cv's web job is scraped but emits no HTTP series, so the templated
 dashboard and the burn-rate alerts have nothing of it to read. trading-bot runs
 its integration suite against Postgres only and is scraped only locally; its
-control-plane alone goes through the OpenBao wrapper. sity's Fastify server sets
-`nosniff`, a referrer policy and a report-only CSP; trading-bot and sity are
-scraped only locally, and sity has no `cloud-first-deploy.md` because it does not
-deploy. trading-bot's image scans became required checks on 15 September.
+control-plane alone goes through the OpenBao wrapper. sity's nginx sets `nosniff`
+and a referrer policy but no CSP, and it has no `cloud-first-deploy.md` because it
+does not deploy. trading-bot's image scans became required checks on 15 September.
 
 Verified rather than asserted: every row above that `verify-standards.sh` can
 check, it checks — the Node and Rust pins, the gitleaks rules, the Dependabot

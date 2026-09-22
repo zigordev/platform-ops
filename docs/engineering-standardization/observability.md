@@ -190,15 +190,19 @@ renaming one breaks them, and a new outcome gets a new name rather than a new
 meaning for an old one. Everything else about the event goes in top-level fields
 beside it, never inside `message`.
 
-Every service also writes the kit's standard events, from `standard-events.ts`:
+Every service also writes the standard events, the Node services from the
+kit's `standard-events.ts` and the Rust services from their crate:
 `service.started` with its release and runtime, `service.stopping` with the
 signal, `request.failed` for a response the service failed to produce (a 5xx),
-and `process.uncaught_exception` and `process.unhandled_rejection`.
-`UncaughtExceptions` reads the fourth. They are observed rather than handled: a
-Node service still dies of an uncaught exception, and the log line is written on
-the way down. The web apps write them from `instrumentation.ts`; Next keeps the
-server running after both, and the kit logs a rejection there as a `warn`
-(`rejections: 'observe'`). Each service's own events:
+and `process.uncaught_exception` and `process.unhandled_rejection`; in Rust a
+panic is the `process.uncaught_exception`. `UncaughtExceptions` reads the
+fourth. They are observed rather than handled, so what follows depends on the
+runtime. A Node API or sity's server still dies of an uncaught exception, and
+the log line is written on the way down. A Next app keeps serving after both,
+because Next handles them itself; the web apps write them from
+`instrumentation.ts`, and the kit logs a rejection there as a `warn`
+(`rejections: 'observe'`). A Rust panic ends the task it happened in, or the
+process when it is the main one. Each service's own events:
 
 | service                               | events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -220,8 +224,9 @@ with the queries that read them: `notification_failure_audit_failed` and
 Two rules in `docker/loki/rules/fake/log-alerts.yml`, both tickets.
 `ErrorLogsSpiking` fires when a service writes more than one error line every
 five seconds for ten minutes, and `UncaughtExceptions` on any
-`process.uncaught_exception` line, because a process that logs one keeps running
-and nothing else fires. Logs never
+`process.uncaught_exception` line: a Next app or a Rust task goes on after one
+with nothing else firing, and a process that exits and restarts shows only as a
+gap in its metrics. Logs never
 page: a page needs a symptom visitors feel, and that is a metric's job. The
 level policy above is what keeps the error rule worth reading.
 
