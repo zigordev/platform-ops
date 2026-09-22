@@ -97,7 +97,7 @@ export const fastifyLoggerOptions = {
   hooks: {
     logMethod(args: unknown[], method: (...args: never[]) => unknown, level: number): void {
       if (level === 30 && isFrameworkChatter(args[0])) return;
-      method.apply(this, args);
+      Reflect.apply(method, this, args);
     },
   },
   timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
