@@ -1,8 +1,8 @@
 import { deploys, RATE_INTERVAL } from '../lib/dashboard.ts';
 import { ESTATE } from '../lib/folders.ts';
-import { HEALTH } from '../lib/common.ts';
+import { HEALTH, secretStoreStat } from '../lib/common.ts';
 import type { DashboardSpec } from '../lib/model.ts';
-import { atLeast, stat, table, timeseries, under, valueMap } from '../lib/panels.ts';
+import { atLeast, stat, table, timeseries, under } from '../lib/panels.ts';
 import { prom } from '../lib/queries.ts';
 
 export const estateOverview: DashboardSpec = {
@@ -87,9 +87,7 @@ export const estateOverview: DashboardSpec = {
       timeseries('Consumer lag', 'Messages written but not yet read, by consumer group and topic.', { w: 6, h: 7 }, [
         prom('kafka:consumer_group_lag:sum', { legend: '{{redpanda_group}} · {{redpanda_topic}}' }),
       ], { unit: 'short', min: 0, steps: under(1000), lines: true }),
-      stat('Secret store', 'Whether OpenBao is unsealed. Sealed means no service can read its secrets at start.', { w: 6, h: 7 }, [
-        prom('min(vault_core_unsealed)', { legend: 'unsealed' }),
-      ], { mappings: valueMap({ '0': ['sealed', 'red'], '1': ['unsealed', 'green'] }), steps: atLeast(1) }),
+      secretStoreStat('Whether OpenBao is unsealed. Sealed means no service can read its secrets at start; down means Prometheus cannot reach it.', { w: 6, h: 7 }),
     ],
   ],
 };

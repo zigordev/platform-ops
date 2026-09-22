@@ -159,8 +159,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:availability:ratio_rate1d",
           "legendFormat": "{{job}}",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -205,8 +205,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:latency:ratio_rate1d",
           "legendFormat": "{{job}}",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -251,8 +251,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:page_latency:ratio_rate6h",
           "legendFormat": "cv-web",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -297,8 +297,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:delivery:ratio_rate1d",
           "legendFormat": "notifications-api",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

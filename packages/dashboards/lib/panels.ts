@@ -57,6 +57,12 @@ function datasourceOf(queries: Query[]): Query['datasource'] {
   return queries[0]?.datasource ?? PROMETHEUS;
 }
 
+function atThisInstant(queries: Query[]): Query[] {
+  return queries.map((query) =>
+    query.datasource.type === 'prometheus' ? { ...query, range: false, instant: true, exemplar: false } : query
+  );
+}
+
 export function timeseries(
   title: string,
   description: string,
@@ -103,7 +109,7 @@ export function stat(
     description,
     ...size,
     datasource: datasourceOf(queries),
-    queries,
+    queries: atThisInstant(queries),
     fieldConfig: fieldConfig(options, {}),
     options: {
       reduceOptions: { calcs: ['lastNotNull'], fields: options.field ?? '', values: false },
@@ -125,7 +131,7 @@ export function gauge(title: string, description: string, size: Size, queries: Q
     description,
     ...size,
     datasource: datasourceOf(queries),
-    queries,
+    queries: atThisInstant(queries),
     fieldConfig: fieldConfig(options, {}),
     options: {
       reduceOptions: { calcs: ['lastNotNull'], fields: '', values: false },

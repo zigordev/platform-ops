@@ -1,5 +1,6 @@
 import { deploys, RATE_INTERVAL } from '../lib/dashboard.ts';
 import { PLATFORM } from '../lib/folders.ts';
+import { secretStoreStat } from '../lib/common.ts';
 import type { DashboardSpec } from '../lib/model.ts';
 import { atLeast, stat, timeseries, under, valueMap } from '../lib/panels.ts';
 import { prom } from '../lib/queries.ts';
@@ -27,9 +28,7 @@ export const platformStack: DashboardSpec = {
       stat('Spans dropped · 1 hour', 'Spans refused by the collector, lost exporting, or discarded by Tempo.', { w: 4, h: 5 }, [
         prom('(sum(increase(otelcol_receiver_refused_spans[1h])) or vector(0)) + (sum(increase(otelcol_exporter_send_failed_spans[1h])) or vector(0)) + (sum(increase(tempo_discarded_spans_total[1h])) or vector(0))', { legend: 'dropped' }),
       ], { decimals: 0, steps: under(1) }),
-      stat('Secret store', 'Whether OpenBao is unsealed.', { w: 4, h: 5 }, [
-        prom('min(vault_core_unsealed)', { legend: 'unsealed' }),
-      ], { mappings: valueMap({ '0': ['sealed', 'red'], '1': ['unsealed', 'green'] }), steps: atLeast(1) }),
+      secretStoreStat('Whether OpenBao is unsealed, sealed, or not answering Prometheus.', { w: 4, h: 5 }),
       stat('Broker', 'Whether Prometheus reaches Redpanda.', { w: 4, h: 5 }, [
         prom('min(up{job="redpanda"})', { legend: 'broker' }),
       ], { mappings: valueMap({ '0': ['down', 'red'], '1': ['up', 'green'] }), steps: atLeast(1) }),

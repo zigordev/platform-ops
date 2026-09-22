@@ -43,7 +43,7 @@ health="$(curl -s "http://localhost:8200/v1/sys/health" || true)"
 case "$health" in
   *'"sealed":true'*)
     echo "OpenBao is sealed. Unseal it first:" >&2
-    echo "  docker exec -it platform-ops-local-openbao-1 bao operator unseal" >&2
+    echo "  docker exec -it -e BAO_ADDR=http://127.0.0.1:8200 platform-ops-local-openbao-1 bao operator unseal" >&2
     exit 1 ;;
   *'"initialized":true'*) : ;;
   *) echo "OpenBao is not reachable on http://localhost:8200 — is the ops stack up?" >&2; exit 1 ;;

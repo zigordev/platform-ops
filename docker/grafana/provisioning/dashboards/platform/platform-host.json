@@ -159,8 +159,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))",
           "legendFormat": "busy",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -204,8 +204,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max(node_load5) / count(count by (cpu) (node_cpu_seconds_total))",
           "legendFormat": "load",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -250,8 +250,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "min(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
           "legendFormat": "available",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -296,8 +296,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "min(host:filesystem_avail:ratio)",
           "legendFormat": "free",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -335,8 +335,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "time() - max(node_boot_time_seconds)",
           "legendFormat": "up for",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -381,8 +381,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "count(up == 1) / count(up)",
           "legendFormat": "up",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

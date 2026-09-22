@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.1](https://github.com/zigordev/platform-ops/compare/v1.31.0...v1.31.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **observability:** keep the seal alert up, read tiles at this instant, fix the unseal hint ([#201](https://github.com/zigordev/platform-ops/issues/201)) ([986030c](https://github.com/zigordev/platform-ops/commit/986030c0730620811587e6022ba5a3a6fd09a50e))
+
 ## [1.31.0](https://github.com/zigordev/platform-ops/compare/v1.30.0...v1.31.0) (2026-09-21)
 
 
