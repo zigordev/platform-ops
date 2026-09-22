@@ -10,6 +10,7 @@ import { rumOverview } from './rum-overview.ts';
 import { serviceCvWeb } from './service-cv-web.ts';
 import { serviceNotificationsApi } from './service-notifications-api.ts';
 import { serviceOverview } from './service-overview.ts';
+import { serviceSityWeb } from './service-sity-web.ts';
 import { sloOverview } from './slo-overview.ts';
 
 export const DASHBOARDS: DashboardSpec[] = [
@@ -18,6 +19,7 @@ export const DASHBOARDS: DashboardSpec[] = [
   serviceOverview,
   serviceCvWeb,
   serviceNotificationsApi,
+  serviceSityWeb,
   rumOverview,
   rumCv,
   cvFunnel,
