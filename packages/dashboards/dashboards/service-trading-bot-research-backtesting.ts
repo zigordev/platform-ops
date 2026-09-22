@@ -14,7 +14,7 @@ export const serviceTradingBotResearchBacktesting: DashboardSpec = {
   uid: 'service-trading-bot-research-backtesting',
   title: 'trading-bot-research-backtesting',
   description:
-    'The Rust service that replays stored history through a strategy and reports what it would have done. Backtests start when market-data says a window is ready, so a stalled readiness topic shows up here as no runs at all rather than as an error. trading-bot is local only: no deploy, no production scrape job. Health, dependencies and release come from trading-bot#158 and stay empty until it merges.',
+    'The Rust service that replays stored history through a strategy and reports what it would have done. Backtests start when market-data says a window is ready, so a stalled readiness topic shows up here as no runs at all rather than as an error. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release and the backtest log panel all come from trading-bot#158 — that branch is where a Rust log line first carries an event name at all — so they stay empty until it merges and the container is rebuilt. The run counters, the replay throughput and the readiness lag are live now.',
   folder: SERVICES,
   tags: ['service', 'trading-bot'],
   deploys: deploys(`{job="${JOB}"}`),
@@ -43,17 +43,19 @@ export const serviceTradingBotResearchBacktesting: DashboardSpec = {
       ], { unit: 'short', min: 0, steps: under(100), lines: true }),
     ],
     [
-      timeseries('Replay throughput', 'Historical klines pulled out of ClickHouse and pushed through the strategy. This is what makes a backtest take the time it takes.', { w: 8, h: 8 }, [
+      timeseries('Replay throughput', 'Historical klines pulled out of ClickHouse and pushed through the strategy. This is what makes a backtest take the time it takes.', { w: 6, h: 8 }, [
         prom(`sum(rate(trading_bot_research_backtesting_replayed_klines_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'klines per second' }),
       ], { unit: 'ops', min: 0 }),
-      timeseries('Signals and simulated trades', 'What the replay produced: signals the strategy emitted, and the trades those signals opened and closed. Signals without trades means the risk rules rejected every one.', { w: 8, h: 8 }, [
+      timeseries('Signals and simulated trades', 'What the replay produced: signals the strategy emitted, and the trades those signals opened and closed. Signals without trades means the risk rules rejected every one.', { w: 6, h: 8 }, [
         prom(`sum(rate(trading_bot_research_backtesting_emitted_signals_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'signals' }),
         prom(`sum(rate(trading_bot_research_backtesting_simulated_trades_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'simulated trades' }),
       ], { unit: 'ops', min: 0 }),
-      timeseries('Requests and latency', 'The backtest API the control-plane calls, and how long a call takes. A backtest runs inside the request, so the p95 is the length of a backtest.', { w: 8, h: 8 }, [
+      timeseries('Requests per second', 'The backtest API the control-plane calls, by route.', { w: 6, h: 8 }, [
         prom(`sum by (route) (rate(http_requests_total${SEL}[${RATE_INTERVAL}]))`, { legend: '{{route}}' }),
-        prom(`histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket${SEL}[${RATE_INTERVAL}])))`, { legend: 'p95 · {{route}}', exemplar: true }),
-      ], { unit: 'short', min: 0 }),
+      ], { unit: 'reqps', min: 0 }),
+      timeseries('Latency p95', 'By route. A backtest runs inside the request that asked for it, so on the backtest route this is the length of a backtest, not the cost of an HTTP call.', { w: 6, h: 8 }, [
+        prom(`histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket${SEL}[${RATE_INTERVAL}])))`, { legend: '{{route}}', exemplar: true }),
+      ], { unit: 's', min: 0 }),
     ],
     [failingTraces(JOB, 8, 10), logs('Backtests', 'Scheduled scans, batches processed, coverage the history could not satisfy and runs that failed.', { w: 8, h: 10 }, [
       loki(`{app="${JOB}"} | json | event=~"backtest.*|backtest_scan.*|trade_cache.*"`),

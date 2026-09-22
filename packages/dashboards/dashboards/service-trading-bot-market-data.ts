@@ -18,7 +18,7 @@ export const serviceTradingBotMarketData: DashboardSpec = {
   uid: 'service-trading-bot-market-data',
   title: 'trading-bot-market-data',
   description:
-    'The Rust service that holds the Binance websocket open, publishes every kline and trade to Kafka, stores them in ClickHouse and backfills the gaps. Its budget against the Binance REQUEST_WEIGHT ceiling is the panel to read first. trading-bot is local only: no deploy, no production scrape job. Health, dependencies and release come from trading-bot#158 and stay empty until it merges; everything else is live now.',
+    'The Rust service that holds the Binance websocket open, publishes every kline and trade to Kafka, stores them in ClickHouse and backfills the gaps. Its budget against the Binance REQUEST_WEIGHT ceiling is the panel to read first. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release and the ingest log panel all come from trading-bot#158 — that branch is where a Rust log line first carries an event name at all — so they stay empty until it merges and the container is rebuilt. The metrics and the traces are live now.',
   folder: SERVICES,
   tags: ['service', 'trading-bot'],
   deploys: deploys(`{job="${JOB}"}`),
@@ -59,14 +59,16 @@ export const serviceTradingBotMarketData: DashboardSpec = {
       ], { unit: 'reqps', min: 0 }),
     ],
     [
-      timeseries('Rate-limit responses', 'The 429s and 418s Binance actually sent, by endpoint. Anything here means the local limiter was already too late.', { w: 8, h: 7 }, [
+      timeseries('Rate-limit responses', 'The 429s and 418s Binance actually sent, by endpoint. Anything here means the local limiter was already too late.', { w: 6, h: 7 }, [
         prom(`sum by (path, status) (increase(trading_bot_market_data_binance_rest_rate_limit_responses_total${SEL}[${RATE_INTERVAL}]))`, { legend: '{{path}} · {{status}}' }),
       ], { unit: 'short', min: 0, bars: true }),
-      timeseries('Limiter delays', 'How often the local limiter held a request back, and how long it held it for on average. Rising delays mean the configured budget is too small for the subscriptions.', { w: 8, h: 7 }, [
-        prom(`sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'delays per second' }),
-        prom(`sum(rate(trading_bot_market_data_binance_rest_limiter_wait_ms_total${SEL}[${RATE_INTERVAL}])) / sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'mean wait (ms)' }),
-      ], { unit: 'short', min: 0 }),
-      timeseries('Backfill and configuration', 'Backfill and gap-repair runs by outcome, and how the runtime configuration refresh went. A failed refresh leaves the stream subscribed to yesterday’s pairs.', { w: 8, h: 7 }, [
+      timeseries('Limiter delays', 'How often the local limiter held a request back rather than spend weight it had already budgeted away. Rising delays mean the budget is too small for the subscriptions.', { w: 6, h: 7 }, [
+        prom(`sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'delays' }),
+      ], { unit: 'ops', min: 0 }),
+      timeseries('Mean limiter wait', 'How long a delayed call waited, on average. Read it next to the delay rate: a few long waits and many short ones are different problems.', { w: 6, h: 7 }, [
+        prom(`sum(rate(trading_bot_market_data_binance_rest_limiter_wait_ms_total${SEL}[${RATE_INTERVAL}])) / sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total${SEL}[${RATE_INTERVAL}])) / 1000`, { legend: 'mean wait' }),
+      ], { unit: 's', min: 0 }),
+      timeseries('Backfill and configuration', 'Backfill and gap-repair runs by outcome, and how the runtime configuration refresh went. A failed refresh leaves the stream subscribed to yesterday’s pairs.', { w: 6, h: 7 }, [
         prom(`sum by (outcome) (increase(trading_bot_market_data_backfill_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'backfill · {{outcome}}' }),
         prom(`sum by (outcome) (increase(trading_bot_market_data_config_refresh_total${SEL}[${RATE_INTERVAL}]))`, { legend: 'config · {{outcome}}' }),
       ], { unit: 'short', min: 0, bars: true }),

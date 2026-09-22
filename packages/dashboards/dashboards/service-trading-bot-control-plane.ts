@@ -12,7 +12,7 @@ export const serviceTradingBotControlPlane: DashboardSpec = {
   uid: 'service-trading-bot-control-plane',
   title: 'trading-bot-control-plane',
   description:
-    'The Fastify API the console and the three Rust services read their configuration from: its routes, the Postgres it owns, and the projections it builds from Kafka. trading-bot is local only — it has no deploy and no production scrape job, so this dashboard is empty against prod by design.',
+    'The Fastify API the console and the three Rust services read their configuration from: its routes, the Postgres it owns, and the projections it builds from Kafka. trading-bot is local only — it has no deploy and no production scrape job, so this dashboard is empty against prod by design. Everything here reads locally today except the starts and stops panel, which needs the lifecycle events trading-bot#158 adds.',
   folder: SERVICES,
   tags: ['service', 'trading-bot'],
   deploys: deploys(`{job="${JOB}"}`),

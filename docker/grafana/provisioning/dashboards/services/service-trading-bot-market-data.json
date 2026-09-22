@@ -1,7 +1,7 @@
 {
   "uid": "service-trading-bot-market-data",
   "title": "trading-bot-market-data",
-  "description": "The Rust service that holds the Binance websocket open, publishes every kline and trade to Kafka, stores them in ClickHouse and backfills the gaps. Its budget against the Binance REQUEST_WEIGHT ceiling is the panel to read first. trading-bot is local only: no deploy, no production scrape job. Health, dependencies and release come from trading-bot#158 and stay empty until it merges; everything else is live now.",
+  "description": "The Rust service that holds the Binance websocket open, publishes every kline and trade to Kafka, stores them in ClickHouse and backfills the gaps. Its budget against the Binance REQUEST_WEIGHT ceiling is the panel to read first. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release and the ingest log panel all come from trading-bot#158 — that branch is where a Rust log line first carries an event name at all — so they stay empty until it merges and the container is rebuilt. The metrics and the traces are live now.",
   "tags": ["services", "service", "trading-bot"],
   "timezone": "browser",
   "editable": false,
@@ -752,7 +752,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 0, "y": 18, "w": 8, "h": 7 },
+      "gridPos": { "x": 0, "y": 18, "w": 6, "h": 7 },
       "targets": [
         {
           "refId": "A",
@@ -769,11 +769,11 @@
       "id": 15,
       "type": "timeseries",
       "title": "Limiter delays",
-      "description": "How often the local limiter held a request back, and how long it held it for on average. Rising delays mean the configured budget is too small for the subscriptions.",
+      "description": "How often the local limiter held a request back rather than spend weight it had already budgeted away. Rising delays mean the budget is too small for the subscriptions.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "ops",
           "min": 0,
           "color": { "mode": "palette-classic" },
           "custom": {
@@ -794,22 +794,13 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 8, "y": 18, "w": 8, "h": 7 },
+      "gridPos": { "x": 6, "y": 18, "w": 6, "h": 7 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
-          "legendFormat": "delays per second",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(trading_bot_market_data_binance_rest_limiter_wait_ms_total{job=\"trading-bot-market-data\"}[$__rate_interval])) / sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
-          "legendFormat": "mean wait (ms)",
+          "legendFormat": "delays",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -818,6 +809,48 @@
     },
     {
       "id": 16,
+      "type": "timeseries",
+      "title": "Mean limiter wait",
+      "description": "How long a delayed call waited, on average. Read it next to the delay rate: a few long waits and many short ones are different problems.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 12, "y": 18, "w": 6, "h": 7 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(trading_bot_market_data_binance_rest_limiter_wait_ms_total{job=\"trading-bot-market-data\"}[$__rate_interval])) / sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total{job=\"trading-bot-market-data\"}[$__rate_interval])) / 1000",
+          "legendFormat": "mean wait",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 17,
       "type": "timeseries",
       "title": "Backfill and configuration",
       "description": "Backfill and gap-repair runs by outcome, and how the runtime configuration refresh went. A failed refresh leaves the stream subscribed to yesterday’s pairs.",
@@ -845,7 +878,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 16, "y": 18, "w": 8, "h": 7 },
+      "gridPos": { "x": 18, "y": 18, "w": 6, "h": 7 },
       "targets": [
         {
           "refId": "A",
@@ -868,7 +901,7 @@
       ]
     },
     {
-      "id": 17,
+      "id": 18,
       "type": "timeseries",
       "title": "Requests per second",
       "description": "The read API the other services call: recent klines and trades, replay and backtest readiness.",
@@ -910,7 +943,7 @@
       ]
     },
     {
-      "id": 18,
+      "id": 19,
       "type": "timeseries",
       "title": "Latency p95",
       "description": "By route. Replay reads a window out of ClickHouse, so it is the slow one by design.",
@@ -952,7 +985,7 @@
       ]
     },
     {
-      "id": 19,
+      "id": 20,
       "type": "table",
       "title": "Failing traces",
       "description": "The latest traces with a span in error. Select a trace id to open it.",
@@ -984,7 +1017,7 @@
       ]
     },
     {
-      "id": 20,
+      "id": 21,
       "type": "logs",
       "title": "Ingest and backfill",
       "description": "Backfill plans and completions, trade gap repairs, compactions, failed readiness snapshots and every time the limiter delayed a call.",
@@ -1010,7 +1043,7 @@
       ]
     },
     {
-      "id": 21,
+      "id": 22,
       "type": "logs",
       "title": "Errors and warnings",
       "description": "Error and warning lines, newest first. A line with a trace id has a button that opens the trace.",

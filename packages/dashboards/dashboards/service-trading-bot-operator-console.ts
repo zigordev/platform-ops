@@ -13,7 +13,7 @@ export const serviceTradingBotOperatorConsole: DashboardSpec = {
   uid: 'service-trading-bot-operator-console',
   title: 'trading-bot-operator-console',
   description:
-    'The Next.js console an operator drives trading-bot from, as a server: page renders from traces, the two beacon routes it exposes to the browser, and the runtime underneath. What visitors experience is on the RUM dashboard. trading-bot is local only: no deploy, no production scrape job. Health, page render traces, CSP reports and the JSON logs Loki labels with this app all arrive with trading-bot#158; the RUM counters and the release are live now.',
+    'The Next.js console an operator drives trading-bot from, as a server: page renders from traces, the two beacon routes it exposes to the browser, and the runtime underneath. What visitors experience is on the RUM dashboard. trading-bot is local only: no deploy, no production scrape job. Health, the page render spans, the per-route request counters behind both beacon panels, CSP reports and the JSON logs Loki labels with this app all arrive with trading-bot#158; until it merges and the container is rebuilt only the release, the restarts and the runtime row have anything in them.',
   folder: SERVICES,
   tags: ['service', 'trading-bot'],
   deploys: deploys(`{job="${JOB}"}`),
