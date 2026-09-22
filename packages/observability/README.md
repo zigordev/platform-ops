@@ -38,6 +38,7 @@ directory is already shaped like a package.
 | `probe-paths.ts`                                     | the probe paths the tracer never samples                                 |
 | `standard-events.ts`                                 | `service.started`, `service.stopping`, `request.failed` and `process.*`  |
 | `start-at-zero.ts`                                   | counters and histograms created at 0 for every label set they know       |
+| `framework-logs.ts`                                  | Nest bootstrap and Fastify's listen line, kept out of the info logs      |
 | `index.nest.ts`, `index.fastify.ts`, `index.next.ts` | the entry points                                                         |
 
 `tracing.ts`, `json-logger.ts` and `metrics.registry.ts` are framework-free.

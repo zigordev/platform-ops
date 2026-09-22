@@ -1,6 +1,7 @@
 import { trace, TraceFlags } from '@opentelemetry/api';
 import type { FastifyInstance } from 'fastify';
 import * as client from 'prom-client';
+import { isFrameworkChatter } from './framework-logs';
 import { currentRelease } from './json-logger';
 import { registry } from './metrics.registry';
 
@@ -91,6 +92,12 @@ export const fastifyLoggerOptions = {
         error: { name: error.name, message: error.message },
         ...(error.stack ? { stack: error.stack } : {}),
       };
+    },
+  },
+  hooks: {
+    logMethod(args: unknown[], method: (...args: never[]) => unknown, level: number): void {
+      if (level === 30 && isFrameworkChatter(args[0])) return;
+      method.apply(this, args);
     },
   },
   timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,

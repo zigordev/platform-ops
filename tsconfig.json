@@ -42,6 +42,8 @@
     "packages/observability/standard-events.test.ts",
     "packages/observability/start-at-zero.ts",
     "packages/observability/start-at-zero.test.ts",
+    "packages/observability/framework-logs.ts",
+    "packages/observability/framework-logs.test.ts",
     "packages/dashboards/**/*.ts"
   ],
   "exclude": ["node_modules"]
