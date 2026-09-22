@@ -167,8 +167,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max(service_health_status{job=\"notifications-api\"})",
           "legendFormat": "health",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -268,8 +268,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max by (version) (service_build_info{job=\"notifications-api\"})",
           "legendFormat": "{{version}}",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -313,8 +313,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max(kafka:consumer_group_lag:sum{redpanda_group=\"notifications-api\", redpanda_topic=\"notification.email.requested.v1\"}) or vector(0)",
           "legendFormat": "lag",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -352,8 +352,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(notifications_received_total[1h])) or vector(0)",
           "legendFormat": "requested",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

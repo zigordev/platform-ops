@@ -158,8 +158,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "histogram_quantile(0.75, sum by (le) (rate(rum_performance_seconds_bucket{job=\"cv-web\", metric_name=\"LCP\"}[1h])))",
           "legendFormat": "LCP",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -203,8 +203,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "histogram_quantile(0.75, sum by (le) (rate(rum_performance_seconds_bucket{job=\"cv-web\", metric_name=\"INP\"}[1h])))",
           "legendFormat": "INP",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -248,8 +248,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "histogram_quantile(0.75, sum by (le) (rate(rum_layout_shift_score_bucket{job=\"cv-web\"}[1h])))",
           "legendFormat": "CLS",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -287,8 +287,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(rum_navigations_total{job=\"cv-web\", navigation_type=\"Page View\"}[24h])) or vector(0)",
           "legendFormat": "views",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -332,8 +332,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(rum_errors_total{job=\"cv-web\"}[24h])) or vector(0)",
           "legendFormat": "errors",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -377,8 +377,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(csp_violations_total{job=\"cv-web\"}[24h])) or vector(0)",
           "legendFormat": "violations",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

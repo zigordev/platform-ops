@@ -190,8 +190,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max(service_health_status{job=\"$job\"})",
           "legendFormat": "health",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -242,8 +242,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "min(up{job=\"$job\"})",
           "legendFormat": "up",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -280,8 +280,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max by (version) (service_build_info{job=\"$job\"})",
           "legendFormat": "{{version}}",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -325,8 +325,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(changes(process_start_time_seconds{job=\"$job\"}[1h]))",
           "legendFormat": "restarts",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

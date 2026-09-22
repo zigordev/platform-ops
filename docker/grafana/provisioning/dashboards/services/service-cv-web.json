@@ -167,8 +167,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max(service_health_status{job=\"cv-web\"})",
           "legendFormat": "health",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -206,8 +206,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(traces_spanmetrics_calls_total{service=\"cv-web\", span_name=\"GET /\", span_kind=\"SPAN_KIND_SERVER\"}[1h]))",
           "legendFormat": "renders",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -244,8 +244,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max by (version) (service_build_info{job=\"cv-web\"})",
           "legendFormat": "{{version}}",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

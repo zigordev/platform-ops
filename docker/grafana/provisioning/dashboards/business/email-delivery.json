@@ -152,8 +152,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(notifications_received_total[24h])) or vector(0)",
           "legendFormat": "requested",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -191,8 +191,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(notifications_sent_total[24h])) or vector(0)",
           "legendFormat": "sent",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -236,8 +236,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(notifications_failed_total[24h])) or vector(0)",
           "legendFormat": "failed",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -281,8 +281,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(notifications_dlq_total[24h])) or vector(0)",
           "legendFormat": "dead-lettered",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -327,8 +327,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:delivery:ratio_rate1d",
           "legendFormat": "on time",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -372,8 +372,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "histogram_quantile(0.95, sum by (le) (increase(notification_delivery_duration_seconds_bucket[24h])))",
           "legendFormat": "p95",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

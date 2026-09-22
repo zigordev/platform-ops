@@ -152,8 +152,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max(prometheus_tsdb_head_series)",
           "legendFormat": "series",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -197,8 +197,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "(sum(increase(prometheus_rule_evaluation_failures_total[1h])) or vector(0)) + (sum(increase(cortex_prometheus_rule_evaluation_failures_total[1h])) or vector(0))",
           "legendFormat": "failures",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -242,8 +242,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(alertmanager_notifications_failed_total[24h])) or vector(0)",
           "legendFormat": "failed",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -287,8 +287,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "(sum(increase(otelcol_receiver_refused_spans[1h])) or vector(0)) + (sum(increase(otelcol_exporter_send_failed_spans[1h])) or vector(0)) + (sum(increase(tempo_discarded_spans_total[1h])) or vector(0))",
           "legendFormat": "dropped",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -297,7 +297,7 @@
       "id": 5,
       "type": "stat",
       "title": "Secret store",
-      "description": "Whether OpenBao is unsealed.",
+      "description": "Whether OpenBao is unsealed, sealed, or not answering Prometheus.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -308,7 +308,8 @@
               "type": "value",
               "options": {
                 "0": { "text": "sealed", "color": "red", "index": 0 },
-                "1": { "text": "unsealed", "color": "green", "index": 1 }
+                "1": { "text": "unsealed", "color": "green", "index": 1 },
+                "-1": { "text": "down", "color": "red", "index": 2 }
               }
             }
           ],
@@ -337,10 +338,10 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "min(vault_core_unsealed)",
+          "expr": "max(vault_core_unsealed) == 1 or on () (max(up{job=\"openbao\"}) - 1)",
           "legendFormat": "unsealed",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -391,8 +392,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "min(up{job=\"redpanda\"})",
           "legendFormat": "broker",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

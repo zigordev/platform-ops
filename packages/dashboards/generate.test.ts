@@ -104,6 +104,17 @@ describe('every dashboard', () => {
     }
   });
 
+  it('reads single-value tiles at this instant, so they show the value now', () => {
+    for (const dashboard of dashboards) {
+      for (const panel of dashboard.panels.filter((panel) => panel.type === 'stat' || panel.type === 'gauge')) {
+        for (const target of (panel.targets as Target[]).filter((target) => target.datasource.type === 'prometheus')) {
+          expect(target.instant, `${dashboard.uid} › ${String(panel.title)}`).toBe(true);
+          expect(target.range, `${dashboard.uid} › ${String(panel.title)}`).toBe(false);
+        }
+      }
+    }
+  });
+
   it('asks for exemplars only on range queries', () => {
     for (const dashboard of dashboards) {
       for (const target of dashboard.panels.flatMap((panel) => panel.targets)) {
