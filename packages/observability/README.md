@@ -29,6 +29,7 @@ directory is already shaped like a package.
 | `http-metrics.middleware.ts`                         | request counter and duration histogram (Express)                         |
 | `nest.ts`, `fastify.ts`                              | the NestJS and Fastify adapters                                          |
 | `next.ts`                                            | the Next.js adapter: `/metrics`, the RUM ingest and the CSP report route |
+| `fastify-rum.ts`                                     | the RUM ingest and the CSP report route for a frontend Fastify serves    |
 | `rum-client.ts`, `RumProvider.tsx`                   | RUM in the browser: web-vitals, error details, the funnel                |
 | `rum-ingest.ts`, `rum-metrics.ts`, `rum-details.ts`  | validation, metrics by page and release, error and poor-vital logs       |
 | `csp-reports.ts`                                     | CSP violation reports in both browser formats, counted and logged        |
