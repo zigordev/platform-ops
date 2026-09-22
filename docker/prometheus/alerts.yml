@@ -673,6 +673,40 @@ groups:
             no email, and nothing retries it.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kini-invitations.md'
           dashboard: 'service-kini-api'
+  - name: gpool
+    rules:
+      - alert: GpoolMailPublishFailing
+        expr: sum by (job) (increase(gpool_notifications_total{outcome="failed"}[15m])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} could not queue {{ $value | humanize }} emails'
+          description: >-
+            gpool failed to hand invitation or access mail to the broker in the
+            last fifteen minutes. Nothing retries it, so each one is an
+            invitation or a request that reaches nobody, and the person who sent
+            it saw no error.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/gpool-mail.md'
+          dashboard: 'gpool-funnel'
+
+      - alert: GpoolMailRequestedButNotSent
+        expr: |
+          sum by (job) (increase(notifications_received_total{source_app="gpool"}[30m])) > 0
+          unless on (job)
+          sum by (job) (increase(notifications_sent_total{source_app="gpool"}[30m])) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "gpool's emails are being read and none of them sent"
+          description: >-
+            {{ $labels.job }} took gpool mail in over the last thirty minutes and
+            delivered none of it. Mail from other products may be flowing
+            normally, so nothing else alerts: a gpool template that fails to
+            render looks exactly like this, and the attempts retry for hours
+            before they reach the dead-letter topic.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/gpool-mail.md'
+          dashboard: 'gpool-funnel'
 
   - name: notifications_delivery_burn
     rules:
