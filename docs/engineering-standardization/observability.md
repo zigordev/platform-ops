@@ -590,8 +590,8 @@ what its kind needs.
 - A report-only CSP with a nonce per request and `report-uri /rum/csp`. A
   hand-written inline script takes the nonce from the request's policy. A
   socket to another origin is named with its `ws:` or `wss:` scheme too, since
-  Chromium does not let `http://host` cover `ws://host`: kini's socket.io and
-  the console's `/ws/ops`. The console builds zod 4 object schemas, so it sets
+  Chromium does not let an `http:` source cover the same host's socket scheme:
+  kini's socket.io and the console's `/ws/ops`. The console builds zod 4 object schemas, so it sets
   `z.config({ jitless: true })`; zod otherwise probes eval and every page view
   reports it.
 - `instrumentation.ts` starts the tracer and writes the standard events inside a
