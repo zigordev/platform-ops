@@ -1,10 +1,17 @@
 import { RATE_INTERVAL } from './dashboard.ts';
 import type { PanelSpec, Row } from './model.ts';
-import { logs, stat, table, timeseries, traces, under, valueMap } from './panels.ts';
+import { atLeast, logs, stat, table, timeseries, traces, under, valueMap, type Size } from './panels.ts';
 import { loki, prom, traceql } from './queries.ts';
 
 export const HEALTH = valueMap({ '0': ['error', 'red'], '1': ['degraded', 'orange'], '2': ['ok', 'green'] });
 export const UP = valueMap({ '0': ['down', 'red'], '1': ['up', 'green'] });
+export const SEAL = valueMap({ '-1': ['down', 'red'], '0': ['sealed', 'red'], '1': ['unsealed', 'green'] });
+
+export function secretStoreStat(description: string, size: Size): PanelSpec {
+  return stat('Secret store', description, size, [
+    prom('max(vault_core_unsealed) == 1 or on () (max(up{job="openbao"}) - 1)', { legend: 'unsealed' }),
+  ], { mappings: SEAL, steps: atLeast(1) });
+}
 
 export function healthStat(job: string): PanelSpec {
   return stat('Health', 'What the service says about itself on /health: ok, degraded (an optional dependency is down) or error.', { w: 4, h: 5 }, [

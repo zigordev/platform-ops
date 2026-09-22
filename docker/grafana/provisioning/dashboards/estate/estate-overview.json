@@ -158,8 +158,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "count(service_health_status == 2) or vector(0)",
           "legendFormat": "healthy",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -203,8 +203,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "count(service_health_status == 1) or vector(0)",
           "legendFormat": "degraded",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -248,8 +248,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "count(service_health_status == 0) or vector(0)",
           "legendFormat": "error",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -293,8 +293,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "count(up == 0) or vector(0)",
           "legendFormat": "down",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -338,8 +338,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)",
           "legendFormat": "firing",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -384,8 +384,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "min(host:filesystem_avail:ratio)",
           "legendFormat": "free",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -961,7 +961,7 @@
       "id": 18,
       "type": "stat",
       "title": "Secret store",
-      "description": "Whether OpenBao is unsealed. Sealed means no service can read its secrets at start.",
+      "description": "Whether OpenBao is unsealed. Sealed means no service can read its secrets at start; down means Prometheus cannot reach it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -972,7 +972,8 @@
               "type": "value",
               "options": {
                 "0": { "text": "sealed", "color": "red", "index": 0 },
-                "1": { "text": "unsealed", "color": "green", "index": 1 }
+                "1": { "text": "unsealed", "color": "green", "index": 1 },
+                "-1": { "text": "down", "color": "red", "index": 2 }
               }
             }
           ],
@@ -1001,10 +1002,10 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "min(vault_core_unsealed)",
+          "expr": "max(vault_core_unsealed) == 1 or on () (max(up{job=\"openbao\"}) - 1)",
           "legendFormat": "unsealed",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]

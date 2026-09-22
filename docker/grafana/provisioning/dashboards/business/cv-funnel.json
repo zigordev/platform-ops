@@ -152,8 +152,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(cv_ask_requests_total[24h])) or vector(0)",
           "legendFormat": "questions",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -198,8 +198,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(cv_ask_requests_total{outcome=\"answered\"}[24h])) / sum(increase(cv_ask_requests_total[24h]))",
           "legendFormat": "answered",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -241,8 +241,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "max(cv_ask_budget_used_ratio)",
           "legendFormat": "used",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -281,8 +281,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(cv_ask_cost_usd_total[24h])) or vector(0)",
           "legendFormat": "spend",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -320,8 +320,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(cv_contact_submissions_total{outcome=\"queued\"}[24h])) or vector(0)",
           "legendFormat": "queued",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
@@ -359,8 +359,8 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(increase(rum_interactions_total{job=\"cv-web\", interaction_type=\"cv-downloaded\"}[24h])) or vector(0)",
           "legendFormat": "downloads",
-          "range": true,
-          "instant": false,
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
