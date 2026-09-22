@@ -39,6 +39,8 @@ says what it depends on.
 | `PageLatencyBudget*`                                            | [page-latency.md](page-latency.md)                   |
 | `AskSlow`, `AskUpstreamFailing`, `AskBudget*`                   | [ask.md](ask.md)                                     |
 | `ContactPublishFailing`                                         | [contact-publish.md](contact-publish.md)             |
+| `PoolsSync*`                                                    | [pools-sync.md](pools-sync.md)                       |
+| `TeamInvitationsNotQueued`                                      | [kini-invitations.md](kini-invitations.md)           |
 | `ErrorLogsSpiking`, `UncaughtExceptions`                        | [error-logs.md](error-logs.md)                       |
 | `EdgeErrorRatioHigh`, `EdgeLatencyHigh`                         | [edge-slis.md](edge-slis.md)                         |
 
