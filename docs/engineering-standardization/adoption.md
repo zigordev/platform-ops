@@ -2,9 +2,9 @@
 
 Where each repository stands against the standard, and the order in which to
 close the gaps. Read from each repository's `origin/main` on 2026-09-16, after
-the repository-shape convergence landed. The observability rows for cv and sity
-were updated on 2026-09-22, when the rollout to gpool, kini, sity and
-trading-bot merged.
+the repository-shape convergence landed. The observability rows for cv and sity,
+and sity's security headers, were updated on 2026-09-22 for the rollout to
+gpool, kini, sity and trading-bot.
 
 `~` means present but shallow, unwired, or in one repository only.
 
@@ -36,15 +36,15 @@ trading-bot merged.
 | Scraped                    | yes | yes   | yes  | no          | yes           | no   |
 | JSON logs                  | yes | yes   | yes  | yes         | yes           | yes  |
 | `traceId` in logs          | yes | yes   | yes  | yes         | yes           | n/a  |
-| Health probes deps         | n/a | yes   | yes  | yes         | yes           | n/a  |
+| Health probes deps         | yes | yes   | yes  | yes         | yes           | n/a  |
 | Health shape converged     | yes | yes   | yes  | yes         | yes           | yes  |
 | Single `/health` path      | yes | yes   | yes  | yes         | yes           | yes  |
-| Broker in health           | n/a | yes   | yes  | yes         | yes           | n/a  |
+| Broker in health           | yes | yes   | yes  | yes         | yes           | n/a  |
 | Dashboard                  | ~   | yes   | yes  | no          | yes           | n/a  |
-| Graceful shutdown          | n/a | no    | no   | yes         | yes           | n/a  |
+| Graceful shutdown          | n/a | no    | no   | yes         | yes           | yes  |
 | **Security**               |     |       |      |             |               |      |
 | OpenBao wrapper            | yes | yes   | yes  | ~           | shell         | n/a  |
-| Security headers           | yes | yes   | yes  | yes         | n/a           | ~    |
+| Security headers           | yes | yes   | yes  | yes         | n/a           | yes  |
 | Dependabot                 | yes | yes   | yes  | yes         | yes           | yes  |
 | Base-image majors held     | yes | yes   | yes  | yes         | yes           | yes  |
 | **Operations**             |     |       |      |             |               |      |
@@ -54,8 +54,8 @@ trading-bot merged.
 
 gpool's quality is shallow because its API lint is a no-op, trading-bot's because
 neither Node application has an ESLint config, so `lint` runs clippy and nothing
-else for them. cv's web job is scraped but emits no HTTP series, so the templated
-dashboard and the burn-rate alerts have nothing of it to read. trading-bot runs
+else for them. cv's web job counts its API routes through `withRouteMetrics`, and
+its page renders come from span metrics. trading-bot runs
 its integration suite against Postgres only and is scraped only locally; its
 control-plane alone goes through the OpenBao wrapper. sity's Fastify server sets
 `nosniff`, a referrer policy and a report-only CSP; trading-bot and sity are
