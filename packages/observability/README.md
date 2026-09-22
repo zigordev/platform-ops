@@ -34,6 +34,9 @@ directory is already shaped like a package.
 | `csp-reports.ts`                                     | CSP violation reports in both browser formats, counted and logged        |
 | `server-timing.ts`                                   | a response's `Server-Timing: traceparent`, for sampled spans only        |
 | `mask.ts`                                            | emails and digits masked out of browser error messages                   |
+| `probe-paths.ts`                                     | the probe paths the tracer never samples                                 |
+| `standard-events.ts`                                 | `service.started`, `service.stopping`, `request.failed` and `process.*`  |
+| `start-at-zero.ts`                                   | counters and histograms created at 0 for every label set they know       |
 | `index.nest.ts`, `index.fastify.ts`, `index.next.ts` | the entry points                                                         |
 
 `tracing.ts`, `json-logger.ts` and `metrics.registry.ts` are framework-free.

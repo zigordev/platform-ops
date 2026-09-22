@@ -34,9 +34,9 @@ lines itself. HTTP, the framework, `pg` and `kafkajs` are all covered.
 dashboard title. One name, three tools.
 
 **Every span is kept.** Sampling is parent-based and always on: at this volume
-a trace sampled away is a question nobody can answer later. cv drops the spans
-nobody reads (`/health`, `/metrics`, `/rum/*` and static files); the other
-services still trace their probes, which is noise in Tempo rather than cost.
+a trace sampled away is a question nobody can answer later. The kit's tracer
+drops the spans nobody reads (`/health`, `/metrics`, `/rum/*` and static files),
+so a service's traces are its requests and its work rather than its probes.
 
 **A log line names a trace only when that trace was sampled.** A line pointing
 at a trace Tempo never stored is a link that opens nothing.
@@ -175,11 +175,13 @@ renaming one breaks them, and a new outcome gets a new name rather than a new
 meaning for an old one. Everything else about the event goes in top-level fields
 beside it, never inside `message`.
 
-cv also writes four lifecycle events from its instrumentation:
-`service.started`, `service.stopping`, `process.uncaught_exception` and
-`process.unhandled_rejection`. The other services write none of them yet, and
-should: `UncaughtExceptions` reads the third, so today it can only fire for cv.
-Each service's own events:
+Every service also writes the kit's standard events, from `standard-events.ts`:
+`service.started` with its release and runtime, `service.stopping` with the
+signal, `request.failed` for a response the service failed to produce (a 5xx),
+and `process.uncaught_exception` and `process.unhandled_rejection`.
+`UncaughtExceptions` reads the fourth. They are observed rather than handled: a
+Node service still dies of an uncaught exception, and the log line is written on
+the way down. Each service's own events:
 
 | service           | events                                                                                                                                                                                                                                                                                                                                                                                           |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -224,6 +226,9 @@ change into a consumer is a deliberate edit there.
 | `rum-client.ts`, `RumProvider.tsx`                  | RUM in the browser                                                    |
 | `rum-ingest.ts`, `rum-metrics.ts`, `rum-details.ts` | the RUM ingest: validation, metrics, error and poor-vital logs        |
 | `csp-reports.ts`, `server-timing.ts`, `mask.ts`     | CSP reports, `Server-Timing: traceparent`, masking browser messages   |
+| `probe-paths.ts`                                    | the probe paths the tracer never samples                              |
+| `standard-events.ts`                                | start, stop, failed requests and crashes, as events                   |
+| `start-at-zero.ts`                                  | counters and histograms created at 0 for every label set they know    |
 
 Vendored rather than published because these are seven repositories across two
 GitHub owners, built by Dockerfiles whose dependency stage copies only
