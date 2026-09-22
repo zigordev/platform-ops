@@ -4,8 +4,14 @@ import * as client from 'prom-client';
 import { currentRelease } from './json-logger';
 import { registry } from './metrics.registry';
 
-/** The Fastify adapter, mirroring `nest.ts`. Only trading-bot's control-plane
- *  uses it today; everything else in the estate is Nest. */
+declare module 'fastify' {
+  interface FastifySchema {
+    hide?: boolean;
+  }
+}
+
+/** The Fastify adapter, mirroring `nest.ts`. trading-bot's control-plane and
+ *  sity's server use it. */
 
 const httpRequestsTotal = new client.Counter({
   name: 'http_requests_total',

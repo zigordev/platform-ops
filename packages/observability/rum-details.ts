@@ -113,7 +113,7 @@ async function consumerFor(file: string): Promise<SourceMapConsumer | null> {
   if (!mapPath.startsWith(`${sourceMapRoot}${path.sep}`)) return null;
   if (consumers.has(mapPath)) return consumers.get(mapPath) ?? null;
 
-  let consumer: SourceMapConsumer | null = null;
+  let consumer: SourceMapConsumer | null;
   try {
     const raw = JSON.parse(await readFile(mapPath, 'utf8')) as RawSourceMap;
     consumer = new SourceMapConsumer(raw);
