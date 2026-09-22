@@ -33,6 +33,10 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ['kini-web:3001']
+  - job_name: 'sity-web'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['sity-web:8080']
   - job_name: 'trading-bot-operator-console'
     metrics_path: /metrics
     static_configs:
