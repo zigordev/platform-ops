@@ -7,8 +7,8 @@ that dimension, and the platform cannot tell the difference between "healthy"
 and "not reporting".
 
 In production that is six services: cv-web, gpool-api, gpool-web, kini-api,
-kini-web and notifications-api. trading-bot's five run the same contract
-locally; it has no deploy yet.
+kini-web and notifications-api. trading-bot's five and sity-web run the same
+contract locally; neither has a deploy yet.
 
 ---
 
@@ -92,8 +92,19 @@ Plus `collectDefaultMetrics()` for process and runtime gauges.
 should have at least one. RED metrics tell you the API is healthy; they cannot
 tell you nobody has joined a pool in six hours. notifications counts requests,
 sends, failures, duplicates and dead letters, and times each delivery; cv counts
-questions to the answer box, what they cost, and contact submissions. gpool,
-kini and trading-bot count nothing about their own domain yet.
+questions to the answer box, what they cost, and contact submissions. gpool
+counts pool actions, predictions and notifications
+(`gpool_pool_actions_total{action}`, `gpool_predictions_total{action}`,
+`gpool_notifications_total{template,outcome}`); kini counts pool-sync runs, the
+problems they meet and notifications (`kini_pools_sync_runs_total{outcome}`,
+`kini_pools_sync_problems_total{source,problem}`,
+`kini_notifications_total{template,outcome}`), with the clients on its socket as
+the `kini_websocket_clients` gauge; the trading-bot control plane counts
+projections and configuration changes
+(`trading_bot_control_plane_projections_total{stream,outcome}`,
+`trading_bot_control_plane_config_changes_total{outcome}`). Every one of them
+starts at 0 for each label set it knows, through the kit's `startAtZero`, so
+the first event is an increase and not the birth of a series.
 
 **Every service exports `service_build_info{version}`**, from the kit's registry:
 the release from `OTEL_SERVICE_VERSION`, `APP_RELEASE` or `NEXT_PUBLIC_RELEASE`,
@@ -144,9 +155,9 @@ keeps the default rather than silencing the service.
 **`traceId` is the field that makes the platform cohere.** With it, a slow span
 in Tempo and the log lines that produced it are one query apart. Without it,
 Loki and Tempo are two tools that happen to be installed on the same host. Every
-Node service logs through the kit's `json-logger.ts` and the Rust services
-through the crate's formatter; a handful of `console.log` calls remain in gpool,
-kini and trading-bot.
+Node service logs through the kit's `json-logger.ts`, Fastify through the kit's
+pino options, and the Rust services through the crate's formatter. No service
+writes to the console directly.
 
 ### Levels
 
@@ -161,7 +172,11 @@ Four levels, and choosing one is a promise about who reads the line:
 
 The kit's Nest logger writes Nest's `log` as `info` and `verbose` as `debug`, and
 its kafkajs adapter maps the client's numeric levels, so every service writes
-the same four strings. An expected failure is a `warn`: a Tolgee timeout that
+the same four strings. Framework chatter stays out of `info`: Nest's bootstrap
+and route-mapping lines go to `debug` (`framework-logs.ts`; a gpool-api restart
+wrote 63 of them against 4 of its own), the kit's Fastify options drop Fastify's
+"Server listening at" line, and the Fastify services turn off its per-request
+lines with a `LogController`. `service.started` says once what they said. An expected failure is a `warn`: a Tolgee timeout that
 fell back to the committed copy is the design working, and logging it as an
 error teaches everyone to ignore the ticket that error lines raise.
 
@@ -181,17 +196,24 @@ signal, `request.failed` for a response the service failed to produce (a 5xx),
 and `process.uncaught_exception` and `process.unhandled_rejection`.
 `UncaughtExceptions` reads the fourth. They are observed rather than handled: a
 Node service still dies of an uncaught exception, and the log line is written on
-the way down. Each service's own events:
+the way down. The web apps write them from `instrumentation.ts`; Next keeps the
+server running after both, and the kit logs a rejection there as a `warn`
+(`rejections: 'observe'`). Each service's own events:
 
-| service           | events                                                                                                                                                                                                                                                                                                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| cv-web            | `request.failed`, `contact.rejected`, `contact.queued`, `contact.publish_failed`, `ask.configured`, `ask.completed`, `ask.budget_unreadable`, `ask.budget_unpersisted`, `flags.unavailable`, `flags.recovered`, `flags.changed`, `i18n.fallback`, `csp.violation`, `rum.client_error`, `rum.vital_poor`, `secrets.unavailable`, `secrets.missing`                                                |
-| notifications-api | `kafka.consumer_started`, `kafka.consumer_crashed`, `notification.retry_scheduled`, `notification.paused_for_relay`, `notification.routed_to_dlt`, `notification.duplicate`, `notification.already_processing`, `notification.sent`, `notification.failed`, `notification.dead_lettered`, `notification.dlt_payload_invalid`, `smtp.unavailable`, `smtp.recovered`, `postgres.idle_client_error` |
+| service                               | events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| cv-web                                | `request.failed`, `contact.rejected`, `contact.queued`, `contact.publish_failed`, `ask.configured`, `ask.completed`, `ask.budget_unreadable`, `ask.budget_unpersisted`, `flags.unavailable`, `flags.recovered`, `flags.changed`, `i18n.fallback`, `csp.violation`, `rum.client_error`, `rum.vital_poor`, `secrets.unavailable`, `secrets.missing`                                                                                                                                                                                                                                                                                             |
+| notifications-api                     | `kafka.consumer_started`, `kafka.consumer_crashed`, `notification.retry_scheduled`, `notification.paused_for_relay`, `notification.routed_to_dlt`, `notification.duplicate`, `notification.already_processing`, `notification.sent`, `notification.failed`, `notification.dead_lettered`, `notification.dlt_payload_invalid`, `smtp.unavailable`, `smtp.recovered`, `postgres.idle_client_error`, `postgres.migrations_applied`, `postgres.unavailable`, `postgres.recovered`                                                                                                                                                                 |
+| gpool-api                             | `pool.created`, `pool.updated`, `pool.configured`, `pool.deleted`, `pool.joined`, `pool.access_requested`, `pool.access_granted`, `pool.invitation_sent`, `pool.invitation_accepted`, `pool.invitation_already_member`, `match.results_recorded`, `match.results_cleared`, `bracket.phase_created`, `bracket.eliminations_synced`, `bracket.scoring_recalculated`, `auth.user_created`, `auth.login_failed`, `notification.queued`, `notification.skipped`, `notification.duplicate`, `notification.publish_failed`, `kafka.producer_connected`, `kafka.producer_disconnect_failed`, `postgres.schema_verified`, `postgres.idle_client_error` |
+| kini-api                              | `pools_sync.enabled`, `pools_sync.empty`, `pools_sync.unmapped`, `pools_sync.failed`, `team.invitation_sent`, `team.legacy_pools_adopted`, `auth.login_failed`, `notification.queued`, `notification.publish_failed`, `kafka.producer_connected`, `kafka.producer_disconnect_failed`                                                                                                                                                                                                                                                                                                                                                          |
+| trading-bot-control-plane             | `kafka.consumer_started`, `backtest.projection_hydrated`, `backtest.projection_hydration_failed`, `backtest.progress_projection_failed`, `backtest.completed_projection_failed`, `data_readiness.projection_failed`, `config.publish_failed`, `config.publish_skipped`, `kafka.producer_connected`, `kafka.producer_disconnect_failed`, `postgres.unavailable`, `postgres.recovered`                                                                                                                                                                                                                                                          |
+| trading-bot Rust services             | market-data: `subscriptions.refreshed`, `refresh.*`, `kline_backfill.*`, `trade_backfill.*`, `trade_gap_repair.*`, `compaction.*`, `binance.*`, `clickhouse.request_retry`, `data_readiness.publish_failed`; research-backtesting: `backtest.*`, `backtest_scan.*`, `trade_cache.*`, `trade_retrieval.*`, `kafka.consumer_*`; execution: `kline.*`, `trade.*`, `paper_trade.closed`, `reconciliation.no_free_balance`, `control_plane.refresh_failed`; progress lines are at `debug`                                                                                                                                                          |
+| gpool-web, kini-web, operator console | `request.failed` (a failed render, with route and digest), `i18n.fallback`, `csp.violation`, `rum.client_error`, `rum.vital_poor`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| sity-web                              | `request.failed`, `csp.violation`, `rum.client_error`, `rum.vital_poor`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Two notifications events predate the convention and should be renamed together
 with the queries that read them: `notification_failure_audit_failed` and
-`notification_failure_lease_release_failed`. gpool, kini and trading-bot write
-no events yet.
+`notification_failure_lease_release_failed`.
 
 ### Log alerts
 
@@ -342,6 +364,9 @@ What each service reports, and what it treats as fatal:
 | service                          | components                                                                    | `degraded` when |
 | -------------------------------- | ----------------------------------------------------------------------------- | --------------- |
 | cv-web                           | `kafka`, `tolgee`, `unleash`                                                  | any one down    |
+| gpool-web, kini-web              | `tolgee`                                                                      | `tolgee` down   |
+| trading-bot-operator-console     | `tolgee`, only when Tolgee is configured, which it is not today               | `tolgee` down   |
+| sity-web                         | none: it serves files and depends on nothing                                  | never           |
 | gpool-api                        | `db`, `kafka`                                                                 | `kafka` down    |
 | kini-api                         | `db`, `kafka`                                                                 | `kafka` down    |
 | notifications-api                | `db`, `kafka`, `smtp`                                                         | never           |
@@ -350,8 +375,8 @@ What each service reports, and what it treats as fatal:
 | trading-bot-execution            | `controlPlane`, `marketData`, `executionContext`, `exchange`                  | never           |
 | trading-bot-research-backtesting | `controlPlane`, `historicalStore`                                             | never           |
 
-gpool, kini and cv have optional dependencies. cv renders from committed copy
-and default flags when Tolgee or Unleash are gone, and only the contact form
+gpool, kini and cv have optional dependencies. The web apps render from
+committed copy when Tolgee is gone, and cv from default flags when Unleash is, and only the contact form
 needs the broker. Everything else cannot work without the dependencies it has,
 so their loss is a 503: notifications counts the SMTP relay among them, because
 a relay rejecting its login means no email leaves.
@@ -428,11 +453,12 @@ producers return 200 rather than 503 when the broker is gone.
 Every UI in the estate runs the same RUM client from the kit: Core Web Vitals,
 JavaScript errors, clicks, navigation, and frustration signals (rage clicks,
 dead clicks, excessive scrolling). Each UI ingests its own beacons at
-`POST /rum/events` and exposes the results on its own `/metrics`, so the four
-web apps are Prometheus targets in their own right.
+`POST /rum/events` and exposes the results on its own `/metrics`, so the five
+UIs are Prometheus targets in their own right: the four Next apps, and sity,
+whose Fastify server takes the same routes from the kit's `fastify-rum.ts`.
 
 Ingesting locally rather than posting to a backend API is what makes this
-uniform: cv and the operator console have no API of their own, and a UI that
+uniform: cv, sity and the operator console have no API of their own, and a UI that
 reports its own experience needs no cross-service hop to do it.
 
 ### This endpoint is public, and that shapes everything
@@ -561,7 +587,34 @@ what its kind needs.
   nearest half a second.
 - A registry that speaks OpenMetrics, for exemplars, and metrics recorded while
   rendering kept on `globalThis` (section 2).
-- A report-only CSP with a nonce per request and `report-uri /rum/csp`.
+- A report-only CSP with a nonce per request and `report-uri /rum/csp`. A
+  hand-written inline script takes the nonce from the request's policy. A
+  socket to another origin is named with its `ws:` or `wss:` scheme too, since
+  Chromium does not let `http://host` cover `ws://host`: kini's socket.io and
+  the console's `/ws/ops`. The console builds zod 4 object schemas, so it sets
+  `z.config({ jitless: true })`; zod otherwise probes eval and every page view
+  reports it.
+- `instrumentation.ts` starts the tracer and writes the standard events inside a
+  `NEXT_RUNTIME === 'nodejs'` block. An early return instead still lets
+  Turbopack compile the Node code into the Edge bundle, with a warning per call.
+- `OTEL_SERVICE_NAME` set in every compose file; without it the kit logs as
+  `unknown-service`.
+
+### A static site: sity-web
+
+- A Fastify server (`apps/web/server`) serves the Vite build: assets cached for
+  30 days, the page revalidated on every visit, any other path answered with the
+  page.
+- `/metrics` and the request metrics from the kit's `fastify.ts`, `/health`
+  recorded through `health-metrics.ts`, and `POST /rum/events` and
+  `POST /rum/csp` from `fastify-rum.ts`. With no proxy
+  in front, the socket address keys the RUM rate limit.
+- RUM from production builds only, with errors mapped through the Vite source
+  maps under `/assets/`.
+- A report-only CSP without a nonce, because the page has no inline script.
+  `'wasm-unsafe-eval'` and `data:` in `connect-src` are there for the scene's
+  WebAssembly decoders and the geometry its models embed.
+- No traces: the server serves files and calls nothing downstream.
 
 ### An API: gpool-api, kini-api and the trading-bot control plane
 
@@ -572,6 +625,10 @@ what its kind needs.
 - A producer probes its broker on a timer (section 5), because a kafkajs
   producer cannot tell that the broker is gone.
 - The release as `APP_RELEASE`, so `service_build_info` marks its deploys.
+- `request.failed` for a 5xx only; a 4xx is in the response and the metrics.
+- Domain counters that start at zero (section 2), and state changes logged once:
+  `postgres.unavailable` when a readiness probe first fails, `postgres.recovered`
+  when one first passes again.
 
 ### A consumer: notifications-api
 
@@ -595,5 +652,6 @@ what its kind needs.
   `NotificationsConsumerStuck` fires when it stays above zero for fifteen
   minutes, and `DeadLetterQueueGrowing` on any dead letter.
 
-Not in any profile yet: gpool, kini and trading-bot count nothing about their
-own domain, and only cv reads exemplars from its own histograms.
+Not in any profile yet: only cv reads exemplars from its own histograms, and
+only cv-web and notifications-api have dashboards of their own. The other
+services appear in the shared service, RUM and estate dashboards.
