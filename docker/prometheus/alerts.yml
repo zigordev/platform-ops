@@ -235,7 +235,7 @@ groups:
           dashboard: 'service-overview'
 
       - alert: OpenBaoSealed
-        expr: max by (job) (vault_core_unsealed) == 0
+        expr: up{job="openbao"} == 1 unless on (job) (max by (job) (vault_core_unsealed) == 1)
         for: 2m
         labels:
           severity: page

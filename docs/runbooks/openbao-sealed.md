@@ -38,7 +38,7 @@ then exits.
 ## How to see
 
 ```promql
-max by (job) (vault_core_unsealed) == 0
+up{job="openbao"} == 1 unless on (job) (max by (job) (vault_core_unsealed) == 1)
 ```
 
 `max by (job)` is load-bearing, not tidiness. OpenBao keeps publishing the
@@ -46,6 +46,15 @@ pre-unseal `vault_core_unsealed{cluster=""} 0` series alongside the live
 `cluster="<id>"` series at `1` for the whole retention window, so a bare
 `vault_core_unsealed == 0` fires permanently against a perfectly healthy
 instance. Aggregating takes the live series.
+
+Matching the value alone is not enough either. A sealed OpenBao writes
+`vault_core_unsealed 0` once and never refreshes it, and its telemetry drops any
+metric left unrefreshed for `prometheus_retention_time` (24 hours). A day into a
+seal the series is gone, `== 0` matches nothing, and the alert resolves while
+OpenBao is still sealed, as it did locally on 21 September. So the rule fires
+whenever OpenBao answers its scrape without reporting itself unsealed. The
+Secret store tiles read the same way, and show `down` when OpenBao does not
+answer at all.
 
 Directly, on the host:
 
