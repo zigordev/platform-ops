@@ -91,6 +91,32 @@ A product with no translator in the loop may bundle its messages and skip Tolgee
 entirely — kini and `trading-bot`'s console do — but that is a decision to write
 down, not a gap to leave implied.
 
+### Language tags
+
+A language has one name everywhere a product mentions it: the supported-locale
+list, the message files, the Tolgee project, cookies, URLs, event payloads and
+`<html lang>`. The name is a BCP 47 tag in its shortest form — `en` and `es`,
+never `en-US`, `es-ES` or `en_US` — because a region adds nothing while there is
+one English and one Spanish.
+
+- Add a region only for a second variant of the same language, such as `es-MX`
+  beside `es`. The bare tag stays as the general variant.
+- Match a visitor's tag by trying the whole tag and then dropping one subtag at a
+  time: `es-MX`, then `es`, then the default locale. Matching falls back from the
+  specific to the general and never sideways, so the general variant must exist.
+  Until a product publishes a regional variant, cutting a tag down to its
+  language is the same thing.
+- The underscore form belongs only at a boundary that demands it, such as Open
+  Graph's `og:locale`.
+- How numbers, dates and money look is a separate choice. `Intl` formats `en` the
+  American way and `es` the way Spain does. A product that needs a particular
+  country's conventions passes that locale where it formats: kini formats euro
+  amounts with `es-ES`, and `trading-bot`'s console formats dollars with `en-US`.
+
+On 22 September cv's Tolgee project still tagged Spanish `es-ES` while the site
+asked for `es`, so every Spanish page fell back to the committed bundle and
+reported Tolgee down.
+
 ## Schema changes
 
 Numbered SQL files with the runner notifications uses, for every service on plain
