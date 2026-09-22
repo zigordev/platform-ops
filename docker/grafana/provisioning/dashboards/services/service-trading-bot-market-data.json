@@ -1,8 +1,8 @@
 {
-  "uid": "service-overview",
-  "title": "Service overview",
-  "description": "Any service, picked from the list: health, requests, errors, latency with traces, its objectives, runtime and logs. The list is every job that announces itself the way the observability kit does, so the Rust services are in it too; their runtime row stays empty, because a Rust process publishes no event loop or process metrics.",
-  "tags": ["services", "service"],
+  "uid": "service-trading-bot-market-data",
+  "title": "trading-bot-market-data",
+  "description": "The Rust service that holds the Binance websocket open, publishes every kline and trade to Kafka, stores them in ClickHouse and backfills the gaps. Its budget against the Binance REQUEST_WEIGHT ceiling is the panel to read first. trading-bot is local only: no deploy, no production scrape job. Health, dependencies and release come from trading-bot#158 and stay empty until it merges; everything else is live now.",
+  "tags": ["services", "service", "trading-bot"],
   "timezone": "browser",
   "editable": false,
   "graphTooltip": 1,
@@ -33,7 +33,7 @@
         "iconColor": "purple",
         "target": {
           "refId": "Anno",
-          "expr": "max by (job, version) (service_build_info{job=\"$job\"}) unless on (job, version) deploy:version_seen:max3d",
+          "expr": "max by (job, version) (service_build_info{job=\"trading-bot-market-data\"}) unless on (job, version) deploy:version_seen:max3d",
           "interval": "1m"
         },
         "titleFormat": "Deploy · {{job}} {{version}}",
@@ -43,30 +43,7 @@
       }
     ]
   },
-  "templating": {
-    "list": [
-      {
-        "name": "job",
-        "label": "Service",
-        "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "definition": "label_values({__name__=~\"service_health_status|service_build_info|http_requests_total\"}, job)",
-        "query": {
-          "qryType": 1,
-          "query": "label_values({__name__=~\"service_health_status|service_build_info|http_requests_total\"}, job)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": false,
-        "multi": false,
-        "options": [],
-        "current": {},
-        "hide": 0,
-        "skipUrlSync": false
-      }
-    ]
-  },
+  "templating": { "list": [] },
   "links": [
     {
       "type": "dashboards",
@@ -188,7 +165,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max(service_health_status{job=\"$job\"})",
+          "expr": "max(service_health_status{job=\"trading-bot-market-data\"})",
           "legendFormat": "health",
           "range": false,
           "instant": true,
@@ -240,7 +217,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "min(up{job=\"$job\"})",
+          "expr": "min(up{job=\"trading-bot-market-data\"})",
           "legendFormat": "up",
           "range": false,
           "instant": true,
@@ -278,7 +255,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max by (version) (service_build_info{job=\"$job\"})",
+          "expr": "max by (version) (service_build_info{job=\"trading-bot-market-data\"})",
           "legendFormat": "{{version}}",
           "range": false,
           "instant": true,
@@ -288,51 +265,6 @@
     },
     {
       "id": 4,
-      "type": "stat",
-      "title": "Restarts · 1 hour",
-      "description": "Process starts in the last hour. A deploy counts once; more than that is a crash loop.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 0,
-          "color": { "mode": "thresholds" },
-          "custom": {},
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 2 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "value",
-        "graphMode": "none",
-        "textMode": "auto",
-        "orientation": "auto",
-        "justifyMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false
-      },
-      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 5 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(changes(process_start_time_seconds{job=\"$job\"}[1h]))",
-          "legendFormat": "restarts",
-          "range": false,
-          "instant": true,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 5,
       "type": "table",
       "title": "Dependencies",
       "description": "Each dependency as /health last saw it. A dependency that was never probed has no row.",
@@ -380,12 +312,12 @@
           }
         }
       ],
-      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 5 },
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 5 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max by (component) (service_component_up{job=\"$job\"})",
+          "expr": "max by (component) (service_component_up{job=\"trading-bot-market-data\"})",
           "legendFormat": "__auto",
           "range": false,
           "instant": true,
@@ -395,152 +327,258 @@
       ]
     },
     {
-      "id": 6,
-      "type": "timeseries",
-      "title": "Requests per second",
-      "description": "By route. Only routes the service measures appear here.",
+      "id": 5,
+      "type": "stat",
+      "title": "Klines published · 1 hour",
+      "description": "Closed candles handed to Kafka. One per subscription per timeframe, so this should track the subscription count.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "min": 0,
+          "decimals": 0,
           "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "off" }
-          },
+          "custom": {},
           "mappings": [],
           "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
         },
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
       },
-      "gridPos": { "x": 0, "y": 5, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 5, "w": 4, "h": 5 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (route) (rate(http_requests_total{job=\"$job\"}[$__rate_interval]))",
-          "legendFormat": "{{route}}",
-          "range": true,
-          "instant": false,
+          "expr": "sum(increase(trading_bot_market_data_kline_publish_total{job=\"trading-bot-market-data\"}[1h])) or vector(0)",
+          "legendFormat": "klines",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Trades published · 1 hour",
+      "description": "Aggregate trades handed to Kafka. This follows how busy the market is, not the configuration.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 4, "y": 5, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(trading_bot_market_data_trade_publish_total{job=\"trading-bot-market-data\"}[1h])) or vector(0)",
+          "legendFormat": "trades",
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
     },
     {
       "id": 7,
-      "type": "timeseries",
-      "title": "Server error ratio",
-      "description": "Share of requests answered 5xx. Empty while there is no traffic.",
+      "type": "stat",
+      "title": "Kline subscriptions",
+      "description": "Pair and timeframe combinations the stream is subscribed to right now.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
-          "min": 0,
+          "decimals": 0,
           "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
-          },
+          "custom": {},
           "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 0.005 }
-            ]
-          }
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
         },
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
       },
-      "gridPos": { "x": 8, "y": 5, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 5, "w": 4, "h": 5 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(http_requests_total{job=\"$job\", status=~\"5..\"}[$__rate_interval])) / sum(rate(http_requests_total{job=\"$job\"}[$__rate_interval]))",
-          "legendFormat": "5xx",
-          "range": true,
-          "instant": false,
+          "expr": "max(trading_bot_market_data_active_kline_subscriptions{job=\"trading-bot-market-data\"})",
+          "legendFormat": "subscriptions",
+          "range": false,
+          "instant": true,
           "exemplar": false
         }
       ]
     },
     {
       "id": 8,
-      "type": "timeseries",
-      "title": "Latency p95",
-      "description": "By route. The dots are exemplars: hover one and open its trace.",
+      "type": "stat",
+      "title": "Pair subscriptions",
+      "description": "Pairs subscribed at the pair level, for aggregate trades.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
-          "min": 0,
+          "decimals": 0,
           "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
-          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 12, "y": 5, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "max(trading_bot_market_data_active_pair_subscriptions{job=\"trading-bot-market-data\"})",
+          "legendFormat": "pairs",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "gauge",
+      "title": "Binance weight used",
+      "description": "Share of the REQUEST_WEIGHT ceiling spent in the current minute. The local limiter aims at 90% of it; past the ceiling Binance answers 429 and then bans the address.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": { "mode": "thresholds" },
+          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red", "value": 0.5 }
+              { "color": "orange", "value": 0.9 },
+              { "color": "red", "value": 1 }
             ]
           }
         },
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
-      "gridPos": { "x": 16, "y": 5, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 5, "w": 4, "h": 5 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"$job\"}[$__rate_interval])))",
-          "legendFormat": "{{route}}",
-          "range": true,
-          "instant": false,
-          "exemplar": true
+          "expr": "max(trading_bot_market_data_binance_rest_used_weight_1m{job=\"trading-bot-market-data\"}) / max(trading_bot_market_data_binance_rest_limit_weight_1m{job=\"trading-bot-market-data\"})",
+          "legendFormat": "used",
+          "range": false,
+          "instant": true,
+          "exemplar": false
         }
       ]
     },
     {
-      "id": 9,
-      "type": "timeseries",
-      "title": "Server spans p95",
-      "description": "Latency of every server span Tempo received, by span name. Hover a dot to open that trace.",
+      "id": 10,
+      "type": "stat",
+      "title": "Store failures · 1 hour",
+      "description": "Klines and trades that reached the service and could not be written to ClickHouse. Each one is a hole in the history a backtest will read.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 20, "y": 5, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(trading_bot_market_data_kline_store_failures_total{job=\"trading-bot-market-data\"}[1h])) + sum(increase(trading_bot_market_data_trade_store_failures_total{job=\"trading-bot-market-data\"}[1h]))",
+          "legendFormat": "failures",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Events published",
+      "description": "Klines and trades leaving for Kafka. Trades stop first when the websocket drops, because klines only close once a minute.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
           "min": 0,
           "color": { "mode": "palette-classic" },
           "custom": {
@@ -561,24 +599,93 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 0, "y": 13, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 10, "w": 8, "h": 8 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=\"$job\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval])))",
-          "legendFormat": "{{span_name}}",
+          "expr": "sum(rate(trading_bot_market_data_kline_publish_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "klines",
           "range": true,
           "instant": false,
-          "exemplar": true
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(trading_bot_market_data_trade_publish_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "trades",
+          "range": true,
+          "instant": false,
+          "exemplar": false
         }
       ]
     },
     {
-      "id": 10,
+      "id": 12,
       "type": "timeseries",
-      "title": "Server spans per second",
-      "description": "Traced requests by span name, including page renders that no route metric counts.",
+      "title": "Binance REQUEST_WEIGHT",
+      "description": "Weight spent in the current minute, against the target the limiter holds itself to and the ceiling Binance enforces.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 8, "y": 10, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "max(trading_bot_market_data_binance_rest_used_weight_1m{job=\"trading-bot-market-data\"})",
+          "legendFormat": "used",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "max(trading_bot_market_data_binance_rest_target_weight_1m{job=\"trading-bot-market-data\"})",
+          "legendFormat": "target",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "max(trading_bot_market_data_binance_rest_limit_weight_1m{job=\"trading-bot-market-data\"})",
+          "legendFormat": "ceiling",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Binance REST requests",
+      "description": "Calls to Binance by endpoint and outcome. Klines are the backfill; aggTrades is the trade gap repair.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -603,13 +710,13 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 8, "y": 13, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 10, "w": 8, "h": 8 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"$job\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval]))",
-          "legendFormat": "{{span_name}}",
+          "expr": "sum by (path, outcome) (rate(trading_bot_market_data_binance_rest_requests_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "{{path}} · {{outcome}}",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -617,7 +724,235 @@
       ]
     },
     {
-      "id": 11,
+      "id": 14,
+      "type": "timeseries",
+      "title": "Rate-limit responses",
+      "description": "The 429s and 418s Binance actually sent, by endpoint. Anything here means the local limiter was already too late.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 18, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (path, status) (increase(trading_bot_market_data_binance_rest_rate_limit_responses_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "{{path}} · {{status}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Limiter delays",
+      "description": "How often the local limiter held a request back, and how long it held it for on average. Rising delays mean the configured budget is too small for the subscriptions.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 8, "y": 18, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "delays per second",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(trading_bot_market_data_binance_rest_limiter_wait_ms_total{job=\"trading-bot-market-data\"}[$__rate_interval])) / sum(rate(trading_bot_market_data_binance_rest_limiter_waits_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "mean wait (ms)",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Backfill and configuration",
+      "description": "Backfill and gap-repair runs by outcome, and how the runtime configuration refresh went. A failed refresh leaves the stream subscribed to yesterday’s pairs.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 16, "y": 18, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome) (increase(trading_bot_market_data_backfill_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "backfill · {{outcome}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome) (increase(trading_bot_market_data_config_refresh_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "config · {{outcome}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Requests per second",
+      "description": "The read API the other services call: recent klines and trades, replay and backtest readiness.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 25, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (route) (rate(http_requests_total{job=\"trading-bot-market-data\"}[$__rate_interval]))",
+          "legendFormat": "{{route}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Latency p95",
+      "description": "By route. Replay reads a window out of ClickHouse, so it is the slow one by design.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 8, "y": 25, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"trading-bot-market-data\"}[$__rate_interval])))",
+          "legendFormat": "{{route}}",
+          "range": true,
+          "instant": false,
+          "exemplar": true
+        }
+      ]
+    },
+    {
+      "id": 19,
       "type": "table",
       "title": "Failing traces",
       "description": "The latest traces with a span in error. Select a trace id to open it.",
@@ -636,311 +971,46 @@
         "cellHeight": "sm",
         "footer": { "show": false, "reducer": ["sum"], "fields": "", "countRows": false }
       },
-      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 25, "w": 8, "h": 8 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "tempo", "uid": "tempo" },
           "queryType": "traceql",
-          "query": "{ resource.service.name = \"$job\" && status = error }",
+          "query": "{ resource.service.name = \"trading-bot-market-data\" && status = error }",
           "limit": 20,
           "tableType": "traces"
         }
       ]
     },
     {
-      "id": 12,
-      "type": "timeseries",
-      "title": "Availability",
-      "description": "Share of requests not answered 5xx over one hour and one day. The line is the 99.5% objective.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "max": 1,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 0.995 }
-            ]
-          }
-        },
-        "overrides": []
-      },
+      "id": 20,
+      "type": "logs",
+      "title": "Ingest and backfill",
+      "description": "Backfill plans and completions, trade gap repairs, compactions, failed readiness snapshots and every time the limiter delayed a call.",
+      "datasource": { "type": "loki", "uid": "loki" },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
       },
-      "gridPos": { "x": 0, "y": 21, "w": 8, "h": 7 },
+      "gridPos": { "x": 0, "y": 33, "w": 12, "h": 10 },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:availability:ratio_rate1h{job=\"$job\"}",
-          "legendFormat": "1h",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:availability:ratio_rate1d{job=\"$job\"}",
-          "legendFormat": "1d",
-          "range": true,
-          "instant": false,
-          "exemplar": false
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{app=\"trading-bot-market-data\"} | json | event=~\"kline_backfill.*|trade_backfill.*|trade_gap_repair.*|compaction.*|data_readiness.*|binance.limiter_delayed|subscriptions.refreshed\"",
+          "queryType": "range"
         }
       ]
     },
     {
-      "id": 13,
-      "type": "timeseries",
-      "title": "Latency",
-      "description": "Share of requests answered within 500 ms over one hour and one day. The line is the 95% objective.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "max": 1,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 0.95 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 8, "y": 21, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:latency:ratio_rate1h{job=\"$job\"}",
-          "legendFormat": "1h",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:latency:ratio_rate1d{job=\"$job\"}",
-          "legendFormat": "1d",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 14,
-      "type": "timeseries",
-      "title": "Dependencies over time",
-      "description": "Each dependency as /health saw it: 1 is up, 0 is down.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "max": 1,
-          "decimals": 0,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "off" }
-          },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 16, "y": 21, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max by (component) (service_component_up{job=\"$job\"})",
-          "legendFormat": "{{component}}",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 15,
-      "type": "timeseries",
-      "title": "CPU",
-      "description": "CPU time the process uses, in cores.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "decimals": 2,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "off" }
-          },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 0, "y": 28, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(process_cpu_seconds_total{job=\"$job\"}[$__rate_interval]))",
-          "legendFormat": "cores",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 16,
-      "type": "timeseries",
-      "title": "Memory",
-      "description": "Resident memory of the process.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "off" }
-          },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 8, "y": 28, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max(process_resident_memory_bytes{job=\"$job\"})",
-          "legendFormat": "resident",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 17,
-      "type": "timeseries",
-      "title": "Event loop lag p99",
-      "description": "How long callbacks wait for the event loop. Above 100 ms, every request is late.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "min": 0,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 0.1 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 16, "y": 28, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max(nodejs_eventloop_lag_p99_seconds{job=\"$job\"})",
-          "legendFormat": "p99",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 18,
+      "id": 21,
       "type": "logs",
       "title": "Errors and warnings",
       "description": "Error and warning lines, newest first. A line with a trace id has a button that opens the trace.",
@@ -955,12 +1025,12 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "gridPos": { "x": 0, "y": 35, "w": 24, "h": 10 },
+      "gridPos": { "x": 12, "y": 33, "w": 12, "h": 10 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{app=\"$job\"} | json | level=~\"error|warn\"",
+          "expr": "{app=\"trading-bot-market-data\"} | json | level=~\"error|warn\"",
           "queryType": "range"
         }
       ]

@@ -1,8 +1,8 @@
 {
-  "uid": "service-overview",
-  "title": "Service overview",
-  "description": "Any service, picked from the list: health, requests, errors, latency with traces, its objectives, runtime and logs. The list is every job that announces itself the way the observability kit does, so the Rust services are in it too; their runtime row stays empty, because a Rust process publishes no event loop or process metrics.",
-  "tags": ["services", "service"],
+  "uid": "service-trading-bot-control-plane",
+  "title": "trading-bot-control-plane",
+  "description": "The Fastify API the console and the three Rust services read their configuration from: its routes, the Postgres it owns, and the projections it builds from Kafka. trading-bot is local only — it has no deploy and no production scrape job, so this dashboard is empty against prod by design.",
+  "tags": ["services", "service", "trading-bot"],
   "timezone": "browser",
   "editable": false,
   "graphTooltip": 1,
@@ -33,7 +33,7 @@
         "iconColor": "purple",
         "target": {
           "refId": "Anno",
-          "expr": "max by (job, version) (service_build_info{job=\"$job\"}) unless on (job, version) deploy:version_seen:max3d",
+          "expr": "max by (job, version) (service_build_info{job=\"trading-bot-control-plane\"}) unless on (job, version) deploy:version_seen:max3d",
           "interval": "1m"
         },
         "titleFormat": "Deploy · {{job}} {{version}}",
@@ -43,30 +43,7 @@
       }
     ]
   },
-  "templating": {
-    "list": [
-      {
-        "name": "job",
-        "label": "Service",
-        "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "definition": "label_values({__name__=~\"service_health_status|service_build_info|http_requests_total\"}, job)",
-        "query": {
-          "qryType": 1,
-          "query": "label_values({__name__=~\"service_health_status|service_build_info|http_requests_total\"}, job)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": false,
-        "multi": false,
-        "options": [],
-        "current": {},
-        "hide": 0,
-        "skipUrlSync": false
-      }
-    ]
-  },
+  "templating": { "list": [] },
   "links": [
     {
       "type": "dashboards",
@@ -188,7 +165,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max(service_health_status{job=\"$job\"})",
+          "expr": "max(service_health_status{job=\"trading-bot-control-plane\"})",
           "legendFormat": "health",
           "range": false,
           "instant": true,
@@ -240,7 +217,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "min(up{job=\"$job\"})",
+          "expr": "min(up{job=\"trading-bot-control-plane\"})",
           "legendFormat": "up",
           "range": false,
           "instant": true,
@@ -278,7 +255,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max by (version) (service_build_info{job=\"$job\"})",
+          "expr": "max by (version) (service_build_info{job=\"trading-bot-control-plane\"})",
           "legendFormat": "{{version}}",
           "range": false,
           "instant": true,
@@ -323,7 +300,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(changes(process_start_time_seconds{job=\"$job\"}[1h]))",
+          "expr": "sum(changes(process_start_time_seconds{job=\"trading-bot-control-plane\"}[1h]))",
           "legendFormat": "restarts",
           "range": false,
           "instant": true,
@@ -385,7 +362,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max by (component) (service_component_up{job=\"$job\"})",
+          "expr": "max by (component) (service_component_up{job=\"trading-bot-control-plane\"})",
           "legendFormat": "__auto",
           "range": false,
           "instant": true,
@@ -398,7 +375,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Requests per second",
-      "description": "By route. Only routes the service measures appear here.",
+      "description": "By route. The Rust services poll runtime-config and the console polls the ops routes, so a flat line here is normal and a gap is not.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -428,7 +405,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (route) (rate(http_requests_total{job=\"$job\"}[$__rate_interval]))",
+          "expr": "sum by (route) (rate(http_requests_total{job=\"trading-bot-control-plane\"}[$__rate_interval]))",
           "legendFormat": "{{route}}",
           "range": true,
           "instant": false,
@@ -439,12 +416,12 @@
     {
       "id": 7,
       "type": "timeseries",
-      "title": "Server error ratio",
-      "description": "Share of requests answered 5xx. Empty while there is no traffic.",
+      "title": "Responses that are not 2xx",
+      "description": "By route and status. A 4xx here is usually the console asking for something that was deleted; a 5xx is the control-plane itself.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
+          "unit": "reqps",
           "min": 0,
           "color": { "mode": "palette-classic" },
           "custom": {
@@ -454,16 +431,10 @@
             "showPoints": "never",
             "spanNulls": false,
             "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
+            "thresholdsStyle": { "mode": "off" }
           },
           "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 0.005 }
-            ]
-          }
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
         },
         "overrides": []
       },
@@ -476,8 +447,8 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(http_requests_total{job=\"$job\", status=~\"5..\"}[$__rate_interval])) / sum(rate(http_requests_total{job=\"$job\"}[$__rate_interval]))",
-          "legendFormat": "5xx",
+          "expr": "sum by (route, status) (rate(http_requests_total{job=\"trading-bot-control-plane\", status!~\"2..\"}[$__rate_interval]))",
+          "legendFormat": "{{route}} · {{status}}",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -524,7 +495,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"$job\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket{job=\"trading-bot-control-plane\"}[$__rate_interval])))",
           "legendFormat": "{{route}}",
           "range": true,
           "instant": false,
@@ -535,12 +506,12 @@
     {
       "id": 9,
       "type": "timeseries",
-      "title": "Server spans p95",
-      "description": "Latency of every server span Tempo received, by span name. Hover a dot to open that trace.",
+      "title": "Database calls",
+      "description": "Queries and connections, by span name, from Tempo. This is the only view of what the control-plane asks Postgres for.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
+          "unit": "ops",
           "min": 0,
           "color": { "mode": "palette-classic" },
           "custom": {
@@ -566,23 +537,23 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=\"$job\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval])))",
+          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"trading-bot-control-plane\", span_kind=\"SPAN_KIND_CLIENT\"}[$__rate_interval]))",
           "legendFormat": "{{span_name}}",
           "range": true,
           "instant": false,
-          "exemplar": true
+          "exemplar": false
         }
       ]
     },
     {
       "id": 10,
       "type": "timeseries",
-      "title": "Server spans per second",
-      "description": "Traced requests by span name, including page renders that no route metric counts.",
+      "title": "Database call time p95",
+      "description": "How long a query takes. A pool that has run out of connections shows up here before it shows up in the route latency.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
+          "unit": "s",
           "min": 0,
           "color": { "mode": "palette-classic" },
           "custom": {
@@ -608,172 +579,24 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"$job\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval]))",
+          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=\"trading-bot-control-plane\", span_kind=\"SPAN_KIND_CLIENT\"}[$__rate_interval])))",
           "legendFormat": "{{span_name}}",
           "range": true,
           "instant": false,
-          "exemplar": false
+          "exemplar": true
         }
       ]
     },
     {
       "id": 11,
-      "type": "table",
-      "title": "Failing traces",
-      "description": "The latest traces with a span in error. Select a trace id to open it.",
-      "datasource": { "type": "tempo", "uid": "tempo" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": { "show": false, "reducer": ["sum"], "fields": "", "countRows": false }
-      },
-      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "tempo", "uid": "tempo" },
-          "queryType": "traceql",
-          "query": "{ resource.service.name = \"$job\" && status = error }",
-          "limit": 20,
-          "tableType": "traces"
-        }
-      ]
-    },
-    {
-      "id": 12,
       "type": "timeseries",
-      "title": "Availability",
-      "description": "Share of requests not answered 5xx over one hour and one day. The line is the 99.5% objective.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "max": 1,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 0.995 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 0, "y": 21, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:availability:ratio_rate1h{job=\"$job\"}",
-          "legendFormat": "1h",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:availability:ratio_rate1d{job=\"$job\"}",
-          "legendFormat": "1d",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 13,
-      "type": "timeseries",
-      "title": "Latency",
-      "description": "Share of requests answered within 500 ms over one hour and one day. The line is the 95% objective.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "max": 1,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "line" }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 0.95 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 8, "y": 21, "w": 8, "h": 7 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:latency:ratio_rate1h{job=\"$job\"}",
-          "legendFormat": "1h",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:latency:ratio_rate1d{job=\"$job\"}",
-          "legendFormat": "1d",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 14,
-      "type": "timeseries",
-      "title": "Dependencies over time",
-      "description": "Each dependency as /health saw it: 1 is up, 0 is down.",
+      "title": "Projection lag",
+      "description": "Messages the control-plane has not yet folded into its read models: backtest results, backtest progress and data readiness. Lag that never returns to zero means a projection consumer stopped.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
           "min": 0,
-          "max": 1,
-          "decimals": 0,
           "color": { "mode": "palette-classic" },
           "custom": {
             "drawStyle": "line",
@@ -782,10 +605,16 @@
             "showPoints": "never",
             "spanNulls": false,
             "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "off" }
+            "thresholdsStyle": { "mode": "line" }
           },
           "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1000 }
+            ]
+          }
         },
         "overrides": []
       },
@@ -793,13 +622,13 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 16, "y": 21, "w": 8, "h": 7 },
+      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 8 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max by (component) (service_component_up{job=\"$job\"})",
-          "legendFormat": "{{component}}",
+          "expr": "kafka:consumer_group_lag:sum{redpanda_group=~\"trading-bot-control-plane-.*\"}",
+          "legendFormat": "{{redpanda_group}}",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -807,7 +636,7 @@
       ]
     },
     {
-      "id": 15,
+      "id": 12,
       "type": "timeseries",
       "title": "CPU",
       "description": "CPU time the process uses, in cores.",
@@ -836,12 +665,12 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 0, "y": 28, "w": 8, "h": 7 },
+      "gridPos": { "x": 0, "y": 21, "w": 8, "h": 7 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(process_cpu_seconds_total{job=\"$job\"}[$__rate_interval]))",
+          "expr": "sum(rate(process_cpu_seconds_total{job=\"trading-bot-control-plane\"}[$__rate_interval]))",
           "legendFormat": "cores",
           "range": true,
           "instant": false,
@@ -850,7 +679,7 @@
       ]
     },
     {
-      "id": 16,
+      "id": 13,
       "type": "timeseries",
       "title": "Memory",
       "description": "Resident memory of the process.",
@@ -878,12 +707,12 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 8, "y": 28, "w": 8, "h": 7 },
+      "gridPos": { "x": 8, "y": 21, "w": 8, "h": 7 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max(process_resident_memory_bytes{job=\"$job\"})",
+          "expr": "max(process_resident_memory_bytes{job=\"trading-bot-control-plane\"})",
           "legendFormat": "resident",
           "range": true,
           "instant": false,
@@ -892,7 +721,7 @@
       ]
     },
     {
-      "id": 17,
+      "id": 14,
       "type": "timeseries",
       "title": "Event loop lag p99",
       "description": "How long callbacks wait for the event loop. Above 100 ms, every request is late.",
@@ -926,12 +755,12 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 16, "y": 28, "w": 8, "h": 7 },
+      "gridPos": { "x": 16, "y": 21, "w": 8, "h": 7 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "max(nodejs_eventloop_lag_p99_seconds{job=\"$job\"})",
+          "expr": "max(nodejs_eventloop_lag_p99_seconds{job=\"trading-bot-control-plane\"})",
           "legendFormat": "p99",
           "range": true,
           "instant": false,
@@ -940,7 +769,71 @@
       ]
     },
     {
-      "id": 18,
+      "id": 15,
+      "type": "table",
+      "title": "Failing traces",
+      "description": "The latest traces with a span in error. Select a trace id to open it.",
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false, "reducer": ["sum"], "fields": "", "countRows": false }
+      },
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "queryType": "traceql",
+          "query": "{ resource.service.name = \"trading-bot-control-plane\" && status = error }",
+          "limit": 20,
+          "tableType": "traces"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "table",
+      "title": "Slow traces",
+      "description": "The latest server spans slower than 1s. Select a trace id to open it.",
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false, "reducer": ["sum"], "fields": "", "countRows": false }
+      },
+      "gridPos": { "x": 12, "y": 28, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "queryType": "traceql",
+          "query": "{ resource.service.name = \"trading-bot-control-plane\" && kind = server && duration > 1s }",
+          "limit": 20,
+          "tableType": "traces"
+        }
+      ]
+    },
+    {
+      "id": 17,
       "type": "logs",
       "title": "Errors and warnings",
       "description": "Error and warning lines, newest first. A line with a trace id has a button that opens the trace.",
@@ -955,13 +848,60 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "gridPos": { "x": 0, "y": 35, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 38, "w": 12, "h": 10 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{app=\"$job\"} | json | level=~\"error|warn\"",
+          "expr": "{app=\"trading-bot-control-plane\"} | json | level=~\"error|warn\"",
           "queryType": "range"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Starts and stops",
+      "description": "Every time the process announced that it had started or was shutting down. From the logs.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 12, "y": 38, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "sum(count_over_time({app=\"trading-bot-control-plane\"} | json | event=\"service.started\" [$__auto]))",
+          "queryType": "range",
+          "legendFormat": "started"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "sum(count_over_time({app=\"trading-bot-control-plane\"} | json | event=\"service.stopping\" [$__auto]))",
+          "queryType": "range",
+          "legendFormat": "stopping"
         }
       ]
     }

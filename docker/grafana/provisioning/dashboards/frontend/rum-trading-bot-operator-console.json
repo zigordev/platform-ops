@@ -1,0 +1,699 @@
+{
+  "uid": "rum-trading-bot-operator-console",
+  "title": "RUM · trading-bot console",
+  "description": "The trading-bot console in the browser it is actually driven from: the vitals per page, what was clicked, what broke and what the content security policy caught. The console is an internal tool with one or two operators, so read counts here as \"did this person have a bad time\", not as traffic. trading-bot is local only, so nothing on this dashboard has a production counterpart. CSP violations and the browser log panels arrive with trading-bot#158; the vitals, navigations and errors are live now.",
+  "tags": ["frontend", "rum", "trading-bot"],
+  "timezone": "browser",
+  "editable": false,
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "weekStart": "",
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "version": 1,
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Deploys",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "enable": true,
+        "hide": false,
+        "iconColor": "purple",
+        "target": {
+          "refId": "Anno",
+          "expr": "max by (job, version) (service_build_info{job=\"trading-bot-operator-console\"}) unless on (job, version) deploy:version_seen:max3d",
+          "interval": "1m"
+        },
+        "titleFormat": "Deploy · {{job}} {{version}}",
+        "textFormat": "",
+        "tagKeys": "job,version",
+        "useValueForTime": false
+      }
+    ]
+  },
+  "templating": { "list": [] },
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Estate",
+      "tags": ["estate"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Services",
+      "tags": ["services"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Frontend",
+      "tags": ["frontend"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Platform",
+      "tags": ["platform"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Business",
+      "tags": ["business"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "link",
+      "title": "Runbooks",
+      "url": "https://github.com/zigordev/platform-ops/tree/main/docs/runbooks",
+      "targetBlank": true,
+      "icon": "doc",
+      "tags": [],
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": false,
+      "tooltip": ""
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "LCP p75 · 1 hour",
+      "description": "Largest Contentful Paint. Good is under 2.5 s.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 2.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.75, sum by (le) (rate(rum_performance_seconds_bucket{job=\"trading-bot-operator-console\", metric_name=\"LCP\"}[1h])))",
+          "legendFormat": "LCP",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "INP p75 · 1 hour",
+      "description": "Interaction to Next Paint. The console is a form-heavy tool, so this is the number an operator feels. Good is under 200 ms.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0.2 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.75, sum by (le) (rate(rum_performance_seconds_bucket{job=\"trading-bot-operator-console\", metric_name=\"INP\"}[1h])))",
+          "legendFormat": "INP",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "CLS p75 · 1 hour",
+      "description": "Cumulative Layout Shift. Good is under 0.1.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 3,
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0.1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.75, sum by (le) (rate(rum_layout_shift_score_bucket{job=\"trading-bot-operator-console\"}[1h])))",
+          "legendFormat": "CLS",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Page views · 24 hours",
+      "description": "Page views the browser reported. A console nobody opened reports none, which is normal.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(rum_navigations_total{job=\"trading-bot-operator-console\", navigation_type=\"Page View\"}[24h])) or vector(0)",
+          "legendFormat": "views",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Client errors · 24 hours",
+      "description": "Script errors and rejected promises. With this few users, one error is one operator who could not finish what they were doing.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(rum_errors_total{job=\"trading-bot-operator-console\"}[24h])) or vector(0)",
+          "legendFormat": "errors",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "CSP violations · 24 hours",
+      "description": "Scripts or resources the policy did not allow. The console’s own scripts carry a nonce, so any count here is worth reading.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(csp_violations_total{job=\"trading-bot-operator-console\"}[24h])) or vector(0)",
+          "legendFormat": "violations",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "LCP p75 by page",
+      "description": "Largest Contentful Paint per page. The configuration and promotion pages load the most from the control-plane, so they are the ones to watch.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 2.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.75, sum by (le, page) (rate(rum_performance_seconds_bucket{job=\"trading-bot-operator-console\", metric_name=\"LCP\"}[$__rate_interval])))",
+          "legendFormat": "{{page}}",
+          "range": true,
+          "instant": false,
+          "exemplar": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "INP and TTFB p75 by release",
+      "description": "Responsiveness and server response, by release. Compare a release with the one before it.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.75, sum by (le, release) (rate(rum_performance_seconds_bucket{job=\"trading-bot-operator-console\", metric_name=\"INP\"}[$__rate_interval])))",
+          "legendFormat": "INP · {{release}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.75, sum by (le, release) (rate(rum_performance_seconds_bucket{job=\"trading-bot-operator-console\", metric_name=\"TTFB\"}[$__rate_interval])))",
+          "legendFormat": "TTFB · {{release}}",
+          "range": true,
+          "instant": false,
+          "exemplar": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Where the operator went",
+      "description": "Page views and route changes per page over the time range. Pages outside the console’s own list are grouped as other.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [{ "id": "custom.hidden", "value": true }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false, "reducer": ["sum"], "fields": "", "countRows": false },
+        "sortBy": [{ "displayName": "Navigations", "desc": true }]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": { "page": "Page", "Value": "Navigations" }
+          }
+        }
+      ],
+      "gridPos": { "x": 0, "y": 13, "w": 8, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (page) (increase(rum_navigations_total{job=\"trading-bot-operator-console\"}[$__range]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Frustration",
+      "description": "Rage clicks, dead clicks, slow page loads and excessive scrolling. On an internal tool these are a feature request, not an incident.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 8, "y": 13, "w": 8, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (frustration_type) (increase(rum_frustrations_total{job=\"trading-bot-operator-console\"}[$__rate_interval]))",
+          "legendFormat": "{{frustration_type}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Client errors by type",
+      "description": "Script errors and rejected promises, by kind. The line that maps to a source file is in the log panel below.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (error_type) (increase(rum_errors_total{job=\"trading-bot-operator-console\"}[$__rate_interval]))",
+          "legendFormat": "{{error_type}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "logs",
+      "title": "Browser errors",
+      "description": "Each distinct error once per ten minutes, with the source line it maps to.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "gridPos": { "x": 0, "y": 22, "w": 8, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{app=\"trading-bot-operator-console\"} | json | event=\"rum.client_error\"",
+          "queryType": "range"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "logs",
+      "title": "Poor vitals",
+      "description": "Visits with a poor vital, and the element behind it.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "gridPos": { "x": 8, "y": 22, "w": 8, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{app=\"trading-bot-operator-console\"} | json | event=\"rum.vital_poor\"",
+          "queryType": "range"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "logs",
+      "title": "CSP violations",
+      "description": "What was blocked, where it came from and on which page.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "gridPos": { "x": 16, "y": 22, "w": 8, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{app=\"trading-bot-operator-console\"} | json | event=\"csp.violation\"",
+          "queryType": "range"
+        }
+      ]
+    }
+  ]
+}
