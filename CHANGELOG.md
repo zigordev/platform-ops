@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.1](https://github.com/zigordev/platform-ops/compare/v1.37.0...v1.37.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **observability:** register the RUM vocabulary at startup and correct stale dashboard copy ([#217](https://github.com/zigordev/platform-ops/issues/217)) ([00ebdbb](https://github.com/zigordev/platform-ops/commit/00ebdbb1ca0b1c7ac9a032ce72e9612b2e141625))
+
 ## [1.37.0](https://github.com/zigordev/platform-ops/compare/v1.36.0...v1.37.0) (2026-09-23)
 
 
