@@ -287,6 +287,52 @@ elif [ "$distinct" = 1 ]; then
   ok "all consumers on the same tag"
 fi
 
+printf '\n\033[1mvendored observability kit\033[0m\n'
+KIT_MANIFEST="$ROOT/platform-ops/packages/observability/kit.manifest.json"
+if [ ! -f "$KIT_MANIFEST" ]; then
+  skip "no kit manifest — run 'npm run kit:manifest' in platform-ops"
+else
+  if (cd "$ROOT/platform-ops" && node scripts/check-kit-parity.mjs --self >/dev/null 2>&1); then
+    ok "kit manifest matches the kit"
+  else
+    bad "kit manifest is stale — run 'npm run kit:manifest' in platform-ops"
+  fi
+  KIT_DIGEST=$(sed -n 's/.*"digest": *"\([0-9a-f]*\)".*/\1/p' "$KIT_MANIFEST" | head -1)
+  for repo in $REPOS; do
+    d="$ROOT/$repo"
+    [ -e "$d/.git" ] || continue
+    [ "$repo" = "platform-ops" ] && continue
+    cfg="$d/observability.kit.json"
+    if [ ! -f "$cfg" ]; then
+      if find "$d/apps" -maxdepth 4 -type d -name observability -not -path '*/node_modules/*' \
+           -not -path '*/dist/*' -print -quit 2>/dev/null | grep -q .; then
+        bad "$repo: vendors the kit with no observability.kit.json to check it"
+      else
+        skip "$repo: does not vendor the kit"
+      fi
+      continue
+    fi
+    pin=$(sed -n 's/.*"digest": *"\([0-9a-f]*\)".*/\1/p' "$cfg" | head -1)
+    if [ "$pin" = "$KIT_DIGEST" ]; then
+      ok "$repo: pinned at the current kit"
+    else
+      bad "$repo: pinned at ${pin:0:12}, kit is at ${KIT_DIGEST:0:12} — re-vendor and repin"
+    fi
+  done
+fi
+
+printf '\n\033[1mobservability parity\033[0m\n'
+wiring=$(cd "$ROOT/platform-ops" && node scripts/check-alert-wiring.mjs 2>&1)
+while IFS= read -r line; do
+  case "$line" in
+    '  ok    '*) ok "${line#  ok    }" ;;
+    '  FAIL  '*) bad "${line#  FAIL  }" ;;
+    *) [ -n "$line" ] && printf '      %s\n' "$line" ;;
+  esac
+done <<EOF
+$wiring
+EOF
+
 check_shared_bodies() {
   local dir="$1"
   shift
@@ -314,7 +360,7 @@ check_shared_bodies() {
 }
 
 printf '\n\033[1mshared script bodies\033[0m\n'
-check_shared_bodies scripts audit-prod-gate.mjs check-licences.mjs local-stack.sh
+check_shared_bodies scripts audit-prod-gate.mjs check-kit-parity.mjs check-licences.mjs local-stack.sh
 
 printf '\n\033[1mshared workflow bodies\033[0m\n'
 check_shared_bodies .github/workflows auto-merge.yml

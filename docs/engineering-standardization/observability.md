@@ -227,13 +227,20 @@ Three rules in `docker/loki/rules/fake/log-alerts.yml`, all tickets.
 five seconds for ten minutes, and `UncaughtExceptions` on any
 `process.uncaught_exception` line: a Next app or a Rust task goes on after one
 with nothing else firing, and a process that exits and restarts shows only as a
-gap in its metrics. Both group by `app` and match only a non-empty one, so a
-container that writes no service field cannot page under a blank name. The
-third, `NotificationsConsumerCrashLooping`, reads `kafka.consumer_crashed`,
+gap in its metrics. Both group by `app` and `environment` and match only a non-empty
+app, so a container that writes no service field cannot page under a blank name.
+The third, `NotificationsConsumerCrashLooping`, reads `kafka.consumer_crashed`,
 which the consumer writes at `warn` when the client restarts it — a level the
 error rule filters out, on a path that leaves every metric where it was. Logs never
 page: a page needs a symptom visitors feel, and that is a metric's job. The
 level policy above is what keeps the error rule worth reading.
+
+All three copy `app` into a `job` label, and `environment` reaches them because
+Alloy stamps it on every stream from `ENVIRONMENT`. Alertmanager compares
+`environment` and `job` in its inhibit rules, and Loki's ruler has no
+`external_labels` setting to supply either, so without both a log alert is never
+inhibited by the `ServiceDown` that explains it and the same outage arrives
+twice.
 
 ---
 
@@ -242,8 +249,9 @@ level policy above is what keeps the error rule worth reading.
 Every Node service runs a copy of the observability code that originated in
 `platform-ops/packages/observability/`, kept under `apps/*/src/observability/`
 and maintained by hand in each repository. Nothing propagates a change from
-here and nothing compares the copies; the kit is the reference, and carrying a
-change into a consumer is a deliberate edit there.
+here; the kit is the reference, and carrying a change into a consumer is a
+deliberate edit there. What is not left to memory is noticing that the edit
+never happened — see [the parity check](#the-parity-check).
 
 | file                                                | for                                                                   |
 | --------------------------------------------------- | --------------------------------------------------------------------- |
@@ -266,6 +274,96 @@ Vendored rather than published because these are seven repositories across two
 GitHub owners, built by Dockerfiles whose dependency stage copies only
 manifests. A private registry would mean a token in every CI run and a build
 secret in every image, for a dozen files.
+
+### The parity check
+
+A vendored copy decays in two directions, and they need different answers.
+
+An **edit** is a local change to a copy that never went back upstream. It is
+fully described by the bytes in the repository that made it, so its check is
+offline and deterministic, and it blocks the pull request that introduced it.
+
+**Staleness** is the kit moving on while a copy stayed. Nothing inside the copy
+describes it — a manifest of hashes committed beside the copy agrees with itself
+forever — so it can only be seen by comparing against the kit as it is now. That
+comparison needs the network, and a network failure must never be a red build on
+an unrelated change. So staleness is reported and not enforced: it annotates the
+run, and a weekly scheduled run is what fails.
+
+The split matters most in the case that is normal rather than exceptional:
+platform-ops merges a kit change, and for the next few days the consumers have
+not vendored it yet. Every one of them is behind, on purpose. A check that
+treated behind as a failure would turn every unrelated pull request in five
+repositories red until someone did the rounds, and would be switched off within
+a week.
+
+`packages/observability/kit.manifest.json` is what both halves read. It is
+generated from the kit by `npm run kit:manifest`, holds a SHA-256 per file and a
+`digest` over all of them, and CI regenerates and compares it, so the kit and the
+manifest cannot disagree. Each consumer commits an `observability.kit.json` that
+embeds the manifest it last vendored against, names the directories it vendors
+and under which profile, and declares its deviations. `scripts/check-kit-parity.mjs`
+is one script body shared by every repository, like `check-licences.mjs`.
+
+The kit is fetched over `raw.githubusercontent.com` rather than installed. All
+eight repositories are public, so no token is needed, which is the objection
+that ruled out publishing the kit to a registry in the first place. A submodule
+would pin honestly but would have to be cloned by every Dockerfile and every
+`actions/checkout`, and would still not let a consumer vendor a subset.
+
+#### Declared deviations
+
+A justified deviation is declared in `observability.kit.json`, where it can be
+read, rather than being pattern-matched away in the checker. Three rules exist:
+
+| rule                  | for                                                                 |
+| --------------------- | ------------------------------------------------------------------- |
+| `js-import-extension` | a copy compiled as NodeNext ESM, whose relative imports carry `.js` |
+| `alias`               | a file compared against a differently named kit file                |
+| `exempt`              | a copy deliberately forked, with a reason and an optional expiry    |
+
+The trading-bot control plane declares `js-import-extension`. A deviation that
+stops being needed fails the check, and so does one naming a file that is not
+there: the declaration is kept honest in the same pass as the copies.
+
+The Next apps' registry split is not a deviation. `kit.profiles.json` gives each
+profile a `kit` list, vendored verbatim and compared, and a `local` list of files
+the app writes itself and the profile still requires. `metrics.registry.ts` is
+`local` in the `next` profile: the app provides a re-export of the
+`metrics.registry.openmetrics.ts` it did vendor, for the reason in
+[the kit's README](../../packages/observability/README.md). Declaring it once in
+the profile beats four identical deviations that each look like a fork.
+
+The profile lists are checked for closure: a profile that carries a file must
+carry, in one list or the other, every kit file that file imports. That check
+found `route-names.ts` missing from two profiles the first time it ran.
+
+#### Adopting it in a consumer
+
+Copy `scripts/check-kit-parity.mjs` in verbatim — it is a shared body, and
+`verify-standards.sh` fails the estate if the copies differ. Then write an
+`observability.kit.json` at the repository root:
+
+```json
+{
+  "schema": 1,
+  "kit": { "repo": "zigordev/platform-ops", "ref": "main" },
+  "pinned": {},
+  "copies": [{ "path": "apps/api/src/observability", "profile": "nest" }],
+  "deviations": []
+}
+```
+
+`node scripts/check-kit-parity.mjs --repin` fills `pinned` from the kit's
+current manifest; commit the result. Add `"check:kit": "node
+./scripts/check-kit-parity.mjs"` to `package.json`, put it in the repository's
+`check:hooks` chain, and give CI two steps: `npm run check:kit -- --offline` in
+the quality job, and `npm run check:kit -- --strict-remote` in a weekly scheduled
+workflow. The first blocks an edit; the second is what eventually makes being
+behind somebody's problem.
+
+Re-vendoring is then: copy the changed files in, run `--repin`, commit both.
+The pin and the copies move together or the check fails, which is the point.
 
 ### The Rust half
 
