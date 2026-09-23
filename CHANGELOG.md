@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.39.0](https://github.com/zigordev/platform-ops/compare/v1.38.0...v1.39.0) (2026-09-23)
+
+
+### Features
+
+* **alerts:** watch the kini pool socket refusing connections ([#228](https://github.com/zigordev/platform-ops/issues/228)) ([8a760af](https://github.com/zigordev/platform-ops/commit/8a760af2c6917f342dbeef842075b03dcb9a802a))
+* **observability:** check the vendored kit for drift and staleness ([#227](https://github.com/zigordev/platform-ops/issues/227)) ([7feb0dd](https://github.com/zigordev/platform-ops/commit/7feb0ddbfa1046aa189de294c6708831e7ed5e1b))
+
+
+### Bug Fixes
+
+* **observability:** make log alerts inhibitable, stop the config mounts going stale, and check Tolgee's database ([#226](https://github.com/zigordev/platform-ops/issues/226)) ([4528578](https://github.com/zigordev/platform-ops/commit/452857859e96fb5bd1f25e5b11c49a280034f3c1))
+
 ## [1.38.0](https://github.com/zigordev/platform-ops/compare/v1.37.3...v1.38.0) (2026-09-23)
 
 
