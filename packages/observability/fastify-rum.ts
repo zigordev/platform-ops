@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { recordCspReports } from './csp-reports';
 import { clientKeyFrom, ingestRumBatch, MAX_BODY_BYTES } from './rum-ingest';
-import { allowCustomInteractions, allowPages, rumRejectedTotal } from './rum-metrics';
+import { registerRumVocabulary, rumRejectedTotal } from './rum-metrics';
 
 export interface RumRouteOptions {
   readonly allowedOrigin?: string;
@@ -11,8 +11,7 @@ export interface RumRouteOptions {
 }
 
 export function registerRumRoutes(app: FastifyInstance, options: RumRouteOptions = {}): void {
-  if (options.customInteractions?.length) allowCustomInteractions(options.customInteractions);
-  if (options.pages?.length) allowPages(options.pages);
+  registerRumVocabulary(options);
 
   void app.register(async (scope) => {
     scope.removeAllContentTypeParsers();

@@ -599,7 +599,7 @@
       "id": 11,
       "type": "timeseries",
       "title": "Outbound calls",
-      "description": "Calls cv makes, by span name: the copy from Tolgee, flags from Unleash, the model, the broker.",
+      "description": "Calls cv makes, by span name: the copy from Tolgee, flags from Unleash and the model are client spans; the contact email it publishes is a producer span, so both kinds are read here.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -629,7 +629,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"cv-web\", span_kind=\"SPAN_KIND_CLIENT\"}[$__rate_interval]))",
+          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"cv-web\", span_kind=~\"SPAN_KIND_CLIENT|SPAN_KIND_PRODUCER\"}[$__rate_interval]))",
           "legendFormat": "{{span_name}}",
           "range": true,
           "instant": false,

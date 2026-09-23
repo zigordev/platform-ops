@@ -5,6 +5,8 @@ import { logs, stat, table, timeseries, under } from '../lib/panels.ts';
 import { loki, prom } from '../lib/queries.ts';
 
 const SEL = 'job="kini-web"';
+const FUNNEL =
+  'sign-in-started|team-created|team-switched|invitation-sent|invitation-accepted|invitation-accept-failed|pool-created|pool-create-failed|available-pools-synced|available-pool-added|results-checked|match-result-set|match-assigned|language-switched';
 
 function p75(metric: string): string {
   return `histogram_quantile(0.75, sum by (le) (rate(rum_performance_seconds_bucket{${SEL}, metric_name="${metric}"}[1h])))`;
@@ -14,7 +16,7 @@ export const rumKini: DashboardSpec = {
   uid: 'rum-kini',
   title: 'RUM · kini',
   description:
-    'kini as visitors experience it: the vitals by release, which routes they reach, what broke in their browser and what the content security policy caught. There is no "what visitors did" table because kini-web declares no business events of its own — every interaction is a Click or a Form Submit, which says nothing a page view does not already say. The release label, the CSP panels and the log panels arrive with kini#150; the vitals, navigations, errors and frustration counters read today.',
+    'kini as its players experience it: the vitals by release, what they did, which routes they reach, what broke in their browser and what the content security policy caught.',
   folder: FRONTEND,
   tags: ['rum', 'kini'],
   time: { from: 'now-24h', to: 'now' },
@@ -46,13 +48,18 @@ export const rumKini: DashboardSpec = {
       ], { unit: 's', min: 0 }),
     ],
     [
-      table('Where visitors went', 'Page views by route over the time range, busiest first. The routes are an allow-list, so a path that is not one of kini’s own is counted as other rather than becoming its own row.', { w: 8, h: 9 }, [
+      table('What players did', 'kini declares its own event names, so these are the product steps rather than raw clicks. Most frequent first.', { w: 12, h: 9 }, [
+        prom(`sum by (interaction_type) (increase(rum_interactions_total{${SEL}, interaction_type=~"${FUNNEL}"}[$__range]))`, { instant: true, table: true }),
+      ], { decimals: 0, hide: ['Time'], rename: { interaction_type: 'Event', Value: 'Count' }, sortBy: 'Count' }),
+      table('Where visitors went', 'Page views by route over the time range, busiest first. The routes are an allow-list, so a path that is not one of kini’s own is counted as other rather than becoming its own row.', { w: 12, h: 9 }, [
         prom(`sum by (page) (increase(rum_navigations_total{${SEL}, navigation_type="Page View"}[$__range]))`, { instant: true, table: true }),
       ], { decimals: 0, hide: ['Time'], rename: { page: 'Route', Value: 'Views' }, sortBy: 'Views' }),
-      timeseries('Frustration', 'Rage clicks, dead clicks, slow page loads and excessive scrolling.', { w: 8, h: 9 }, [
+    ],
+    [
+      timeseries('Frustration', 'Rage clicks, dead clicks, slow page loads and excessive scrolling.', { w: 12, h: 9 }, [
         prom(`sum by (frustration_type) (increase(rum_frustrations_total{${SEL}}[${RATE_INTERVAL}]))`, { legend: '{{frustration_type}}' }),
       ], { unit: 'short', min: 0, bars: true }),
-      timeseries('CSP violations by directive', 'Which rule of the policy was broken.', { w: 8, h: 9 }, [
+      timeseries('CSP violations by directive', 'Which rule of the policy was broken.', { w: 12, h: 9 }, [
         prom(`sum by (directive) (increase(csp_violations_total{${SEL}}[${RATE_INTERVAL}]))`, { legend: '{{directive}}' }),
       ], { unit: 'short', min: 0, bars: true }),
     ],
