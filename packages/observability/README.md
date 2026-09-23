@@ -37,6 +37,7 @@ directory is already shaped like a package.
 | `server-timing.ts`                                   | a response's `Server-Timing: traceparent`, for sampled spans only        |
 | `mask.ts`                                            | emails and digits masked out of browser error messages                   |
 | `probe-paths.ts`                                     | the probe paths the tracer never samples                                 |
+| `route-names.ts`                                     | the route a Nest server span is named after, promoted from the router    |
 | `standard-events.ts`                                 | `service.started`, `service.stopping`, `request.failed` and `process.*`  |
 | `start-at-zero.ts`                                   | counters and histograms created at 0 for every label set they know       |
 | `framework-logs.ts`                                  | Nest bootstrap and Fastify's listen line, kept out of the info logs      |
@@ -45,6 +46,42 @@ directory is already shaped like a package.
 `tracing.ts`, `json-logger.ts` and `metrics.registry.ts` are framework-free.
 The adapters, `nest.ts`, `fastify.ts`, `next.ts` and `http-metrics.middleware.ts`,
 assume their frameworks.
+
+## How a server span is named
+
+Every HTTP server span is named `{METHOD} {route}` — `GET /fut-pools/stats`,
+not a bare `GET` — so one query reads the same across the Node services and the
+Rust crate, and an SLI can name a route.
+
+Next.js already names its own server spans that way. The Nest services did not.
+Express 5 moved its routing into the standalone `router` package, so
+`@opentelemetry/instrumentation-express` — the one piece that publishes the
+resolved route onto the request — emits nothing at all, and
+`@opentelemetry/instrumentation-router` handles the routing instead while
+keeping the route on its own internal span. `instrumentation-http` looks on the
+request for a route to rename the server span after, finds none, and leaves
+`GET`.
+
+`route-names.ts` bridges the two. It copies the route off the router's
+request-handler span onto the request, and the HTTP instrumentation's own rename
+then fires unchanged. Nothing in the kit formats `{METHOD} {route}` a second
+time, which is how the Node and Rust halves stay identical by construction. The
+route also reaches `http.server.request.duration`, which the SDK derives from
+the same place.
+
+The processor acts only on spans whose `router.type` is `request_handler`. That
+guard is load-bearing: the router instrumentation emits a span per middleware
+too, each carrying the mount point as its `http.route`, and one running after the
+handler would collapse every route to `GET /`. Where there is no router
+instrumentation it never fires, so the Next apps are untouched.
+
+`tracing.ts` registers it under `spanProcessors`. That key and `traceExporter`
+are alternatives rather than a pair — the SDK ignores the exporter once
+`spanProcessors` is set — so the batch processor listed beside it is what
+exports, and adding `traceExporter` back would stop every span with no error.
+`@opentelemetry/sdk-node` installs the `@opentelemetry/core` and
+`@opentelemetry/sdk-trace-base` this file imports, but a service vendoring it
+should declare both rather than reach through the SDK.
 
 ## Which registry a service uses
 
