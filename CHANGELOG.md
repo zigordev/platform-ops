@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.0](https://github.com/zigordev/platform-ops/compare/v1.35.0...v1.36.0) (2026-09-23)
+
+
+### Features
+
+* **observability:** dashboards for trading-bot, and a service picker the Rust services fit in ([#209](https://github.com/zigordev/platform-ops/issues/209)) ([077601b](https://github.com/zigordev/platform-ops/commit/077601bf9a815e4ad179824b89588313e28d338a))
+
 ## [1.35.0](https://github.com/zigordev/platform-ops/compare/v1.34.0...v1.35.0) (2026-09-23)
 
 
