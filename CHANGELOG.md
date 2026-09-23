@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.35.0](https://github.com/zigordev/platform-ops/compare/v1.34.0...v1.35.0) (2026-09-23)
+
+
+### Features
+
+* **observability:** give gpool its own dashboards and mail alerts ([#207](https://github.com/zigordev/platform-ops/issues/207)) ([709cb00](https://github.com/zigordev/platform-ops/commit/709cb003679546369a173eecb71a1118e7009447))
+
 ## [1.34.0](https://github.com/zigordev/platform-ops/compare/v1.33.0...v1.34.0) (2026-09-23)
 
 
