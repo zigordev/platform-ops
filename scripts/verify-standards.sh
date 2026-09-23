@@ -287,27 +287,37 @@ elif [ "$distinct" = 1 ]; then
   ok "all consumers on the same tag"
 fi
 
-printf '\n\033[1mshared script bodies\033[0m\n'
-for f in audit-prod-gate.mjs check-licences.mjs local-stack.sh; do
-  hashes=""
-  present=0
-  for repo in $REPOS; do
-    src="$ROOT/$repo/scripts/$f"
-    [ -f "$src" ] || continue
-    present=$((present + 1))
-    hashes="$hashes $(shasum "$src" | cut -d' ' -f1)"
+check_shared_bodies() {
+  local dir="$1"
+  shift
+  local f repo src hashes present distinct
+  for f in "$@"; do
+    hashes=""
+    present=0
+    for repo in $REPOS; do
+      src="$ROOT/$repo/$dir/$f"
+      [ -f "$src" ] || continue
+      present=$((present + 1))
+      hashes="$hashes $(shasum "$src" | cut -d' ' -f1)"
+    done
+    if [ "$present" -eq 0 ]; then
+      skip "$f: not present anywhere"
+      continue
+    fi
+    distinct=$(printf '%s\n' $hashes | sort -u | wc -l | tr -d ' ')
+    if [ "$distinct" -eq 1 ]; then
+      ok "$f: one body across $present repositories"
+    else
+      bad "$f: $distinct different bodies across $present repositories — they are meant to be identical"
+    fi
   done
-  if [ "$present" -eq 0 ]; then
-    skip "$f: not present anywhere"
-    continue
-  fi
-  distinct=$(printf '%s\n' $hashes | sort -u | wc -l | tr -d ' ')
-  if [ "$distinct" -eq 1 ]; then
-    ok "$f: one body across $present repositories"
-  else
-    bad "$f: $distinct different bodies across $present repositories — they are meant to be identical"
-  fi
-done
+}
+
+printf '\n\033[1mshared script bodies\033[0m\n'
+check_shared_bodies scripts audit-prod-gate.mjs check-licences.mjs local-stack.sh
+
+printf '\n\033[1mshared workflow bodies\033[0m\n'
+check_shared_bodies .github/workflows auto-merge.yml
 
 printf '\n\033[1maction pins\033[0m\n'
 pins=$(for repo in $REPOS; do
