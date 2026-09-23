@@ -3,7 +3,9 @@
 One file per alert. Every `runbook_url` in
 [`docker/prometheus/alerts.yml`](../../docker/prometheus/alerts.yml) resolves to
 a file here — that is checked by `scripts/verify-standards.sh`, because a
-runbook link that 404s is worse than no link at all.
+runbook link that 404s is worse than no link at all. The same check reads the
+table below in the other direction: an alert with no row here fails it, so an
+alert cannot ship without somewhere to start.
 
 A runbook is written for the version of you that is reading it at an
 inconvenient moment. Each one answers four questions in the same order:

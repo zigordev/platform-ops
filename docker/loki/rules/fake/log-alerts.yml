@@ -4,13 +4,13 @@ groups:
     rules:
       - alert: ErrorLogsSpiking
         expr: |
-          sum by (app) (
+          sum by (app, environment) (
             rate({job="docker-json-logs", app!=""} | json | level = "error" [5m])
           ) > 0.2
         for: 10m
         labels:
           severity: ticket
-          environment: '{{ $externalLabels.environment }}'
+          job: '{{ $labels.app }}'
         annotations:
           summary: '{{ $labels.app }} is writing errors continuously'
           description: >-
@@ -22,13 +22,13 @@ groups:
 
       - alert: UncaughtExceptions
         expr: |
-          sum by (app) (
+          sum by (app, environment) (
             count_over_time({job="docker-json-logs", app!=""} | json | event = "process.uncaught_exception" [10m])
           ) > 0
         for: 0m
         labels:
           severity: ticket
-          environment: '{{ $externalLabels.environment }}'
+          job: '{{ $labels.app }}'
         annotations:
           summary: '{{ $labels.app }} hit an uncaught exception'
           description: >-
@@ -41,13 +41,13 @@ groups:
 
       - alert: NotificationsConsumerCrashLooping
         expr: |
-          sum by (app) (
+          sum by (app, environment) (
             count_over_time({job="docker-json-logs", app="notifications-api"} | json | event = "kafka.consumer_crashed" [15m])
           ) > 3
         for: 5m
         labels:
           severity: ticket
-          environment: '{{ $externalLabels.environment }}'
+          job: '{{ $labels.app }}'
         annotations:
           summary: 'the notifications consumer is crashing and restarting in a loop'
           description: >-
