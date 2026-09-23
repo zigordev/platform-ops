@@ -47,6 +47,48 @@ export function readAlerts(root) {
   return alerts;
 }
 
+export function declaredLabels(text) {
+  const out = new Map();
+  const lines = text.split('\n');
+  let current = null;
+  let inLabels = false;
+  let labelIndent = 0;
+  for (const line of lines) {
+    const alert = /^(\s*)-\s+alert:\s*([A-Za-z0-9_]+)\s*$/.exec(line);
+    if (alert) {
+      current = alert[2];
+      out.set(current, new Set());
+      inLabels = false;
+      continue;
+    }
+    if (!current) continue;
+    const labels = /^(\s*)labels:\s*$/.exec(line);
+    if (labels) {
+      inLabels = true;
+      labelIndent = labels[1].length;
+      continue;
+    }
+    if (!inLabels) continue;
+    const entry = /^(\s*)([A-Za-z0-9_]+):\s*\S/.exec(line);
+    if (!entry || entry[1].length <= labelIndent) {
+      inLabels = false;
+      continue;
+    }
+    out.get(current).add(entry[2]);
+  }
+  return out;
+}
+
+export function lokiAlertLabels(root) {
+  const out = new Map();
+  for (const file of yamlFilesUnder(join(root, PATHS.lokiRules))) {
+    for (const [name, labels] of declaredLabels(readFileSync(file, 'utf8'))) {
+      out.set(name, labels);
+    }
+  }
+  return out;
+}
+
 export function inhibitBlock(text) {
   const start = text.indexOf('\ninhibit_rules:');
   if (start === -1) return '';
@@ -108,13 +150,16 @@ function expand(patterns, alertNames) {
   return [...out].sort();
 }
 
-function allowed(exceptions, check, key) {
-  return (exceptions[check] ?? []).some((entry) => entry.name === key);
+function allowed(used, exceptions, check, key) {
+  const hit = (exceptions[check] ?? []).some((entry) => entry.name === key);
+  if (hit) used.add(`${check}/${key}`);
+  return hit;
 }
 
 export function audit(root) {
   const findings = [];
   const ok = [];
+  const used = new Set();
   const exceptions = existsSync(join(root, PATHS.exceptions))
     ? JSON.parse(readFileSync(join(root, PATHS.exceptions), 'utf8'))
     : {};
@@ -130,7 +175,7 @@ export function audit(root) {
   ]) {
     for (const job of a) {
       if (b.includes(job)) continue;
-      if (allowed(exceptions, 'scrape-parity', job)) continue;
+      if (allowed(used, exceptions, 'scrape-parity', job)) continue;
       findings.push(`${job} is scraped but is in no ${where} config`);
       scrapeGaps += 1;
     }
@@ -155,16 +200,20 @@ export function audit(root) {
   }
   if (unknown === 0) ok.push(`${rules.length} inhibit rules name only defined alerts`);
 
+  const logLabels = lokiAlertLabels(root);
   let unmatchable = 0;
   for (const rule of rules) {
-    if (!rule.equal.includes('job')) continue;
-    for (const name of expand(rule.targets, alertNames)) {
-      if (alerts.get(name) !== 'loki') continue;
-      if (allowed(exceptions, 'inhibit-labels', name)) continue;
-      findings.push(
-        `inhibit rule ${rule.index} matches ${name} on job, which a log alert never carries`
-      );
-      unmatchable += 1;
+    for (const label of rule.equal) {
+      if (label === 'environment' || label === 'alertname') continue;
+      for (const name of expand(rule.targets, alertNames)) {
+        if (alerts.get(name) !== 'loki') continue;
+        if (logLabels.get(name)?.has(label)) continue;
+        if (allowed(used, exceptions, 'inhibit-labels', name)) continue;
+        findings.push(
+          `inhibit rule ${rule.index} matches ${name} on ${label}, which its rule does not set`
+        );
+        unmatchable += 1;
+      }
     }
   }
   if (unmatchable === 0) ok.push('every inhibited alert carries the labels its rule compares');
@@ -180,7 +229,7 @@ export function audit(root) {
       const inside = members.filter((name) => targets.has(name));
       if (inside.length === 0 || inside.length === members.length) continue;
       for (const name of members.filter((entry) => !targets.has(entry))) {
-        if (allowed(exceptions, 'inhibit-siblings', `${rule.index}:${name}`)) continue;
+        if (allowed(used, exceptions, 'inhibit-siblings', `${rule.index}:${name}`)) continue;
         findings.push(
           `inhibit rule ${rule.index} covers ${inside.join(', ')} but not its sibling ${name}`
         );
@@ -194,23 +243,28 @@ export function audit(root) {
   let orphans = 0;
   for (const name of alertNames) {
     if (covered.has(name)) continue;
-    if (allowed(exceptions, 'runbook-rows', name)) continue;
+    if (allowed(used, exceptions, 'runbook-rows', name)) continue;
     findings.push(`${name} has no row in ${PATHS.runbooks}`);
     orphans += 1;
   }
   if (orphans === 0) ok.push(`${alertNames.length} alerts each have a runbook row`);
 
   let dead = 0;
+  let declared = 0;
   for (const [check, entries] of Object.entries(exceptions)) {
     for (const entry of entries) {
+      declared += 1;
       if (!entry.reason) {
         findings.push(`exception ${check}/${entry.name} has no reason`);
+        dead += 1;
+      } else if (!used.has(`${check}/${entry.name}`)) {
+        findings.push(`exception ${check}/${entry.name} suppresses nothing — remove it`);
         dead += 1;
       }
     }
   }
-  if (dead === 0 && Object.keys(exceptions).length > 0)
-    ok.push('every declared exception has a reason');
+  if (dead === 0 && declared > 0)
+    ok.push(`${declared} declared exceptions each have a reason and still apply`);
 
   return { findings, ok };
 }

@@ -51,12 +51,17 @@ const PROM_ALERTS = [
   .map((name) => `      - alert: ${name}\n        expr: up == 0\n`)
   .join('');
 
-const LOKI_ALERTS = ['ErrorLogsSpiking', 'UncaughtExceptions']
-  .map(
-    (name) =>
-      `      - alert: ${name}\n        expr: sum by (app) (rate({job="docker-json-logs"}[5m])) > 1\n`
-  )
-  .join('');
+function lokiAlerts(withLabels) {
+  return ['ErrorLogsSpiking', 'UncaughtExceptions']
+    .map(
+      (name) =>
+        `      - alert: ${name}\n        expr: sum by (app) (rate({job="docker-json-logs"}[5m])) > 1\n` +
+        (withLabels ? `        labels:\n          job: '{{ $labels.app }}'\n` : '')
+    )
+    .join('');
+}
+
+const LOKI_ALERTS = lokiAlerts(false);
 
 let root;
 
@@ -70,13 +75,20 @@ function scrape(jobs) {
   return `scrape_configs:\n${jobs.map((job) => `  - job_name: '${job}'\n`).join('')}`;
 }
 
-function build({ localJobs, prodJobs, exceptions, inhibit = INHIBIT, prodInhibit = INHIBIT }) {
+function build({
+  localJobs,
+  prodJobs,
+  exceptions,
+  lokiLabels = false,
+  inhibit = INHIBIT,
+  prodInhibit = INHIBIT,
+}) {
   put(PATHS.scrapeLocal, scrape(localJobs));
   put(PATHS.scrapeProd, scrape(prodJobs));
   put(PATHS.alerts, `groups:\n  - name: a\n    rules:\n${PROM_ALERTS}`);
   put(
     `${PATHS.lokiRules}/fake/log-alerts.yml`,
-    `groups:\n  - name: logs\n    rules:\n${LOKI_ALERTS}`
+    `groups:\n  - name: logs\n    rules:\n${lokiAlerts(lokiLabels)}`
   );
   put(PATHS.alertmanagerLocal, `route:\n  receiver: sink\n\n${inhibit}`);
   put(PATHS.alertmanagerProd, `route:\n  receiver: mail\n\n${prodInhibit}`);
@@ -182,10 +194,27 @@ describe('audit', () => {
     );
   });
 
-  it('catches a log alert inhibited on a label it cannot carry', () => {
+  it('catches a log alert inhibited on a label its rule does not set', () => {
     build({ localJobs: ['cv-web'], prodJobs: ['cv-web'] });
     expect(audit(root).findings).toContain(
-      'inhibit rule 1 matches ErrorLogsSpiking on job, which a log alert never carries'
+      'inhibit rule 1 matches ErrorLogsSpiking on job, which its rule does not set'
+    );
+  });
+
+  it('accepts a log alert whose rule sets the label the inhibit compares', () => {
+    build({ localJobs: ['cv-web'], prodJobs: ['cv-web'], lokiLabels: true });
+    expect(audit(root).findings.join(' ')).not.toContain('on job');
+  });
+
+  it('catches an exception that no longer suppresses anything', () => {
+    build({
+      localJobs: ['cv-web'],
+      prodJobs: ['cv-web'],
+      lokiLabels: true,
+      exceptions: { 'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'was the job gap' }] },
+    });
+    expect(audit(root).findings).toContain(
+      'exception inhibit-labels/ErrorLogsSpiking suppresses nothing — remove it'
     );
   });
 
