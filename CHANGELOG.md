@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.2](https://github.com/zigordev/platform-ops/compare/v1.37.1...v1.37.2) (2026-09-23)
+
+
+### Bug Fixes
+
+* **observability:** correct alert coverage, sli scope and business panels ([#219](https://github.com/zigordev/platform-ops/issues/219)) ([5ff2c20](https://github.com/zigordev/platform-ops/commit/5ff2c206bd8d1dffcebede449ba21b8edd020c52))
+
 ## [1.37.1](https://github.com/zigordev/platform-ops/compare/v1.37.0...v1.37.1) (2026-09-23)
 
 
