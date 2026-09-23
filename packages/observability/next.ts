@@ -14,7 +14,7 @@ import { allowCustomInteractions, allowPages, rumRejectedTotal } from './rum-met
 export function createMetricsRoute() {
   return async function GET(): Promise<Response> {
     return new Response(await registry.metrics(), {
-      headers: { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8' },
+      headers: { 'Content-Type': registry.contentType },
     });
   };
 }

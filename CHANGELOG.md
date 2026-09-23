@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.32.0](https://github.com/zigordev/platform-ops/compare/v1.31.1...v1.32.0) (2026-09-23)
+
+
+### Features
+
+* **observability:** standard events, probe-free traces and zero-start metrics in the kit ([#204](https://github.com/zigordev/platform-ops/issues/204)) ([2757c2b](https://github.com/zigordev/platform-ops/commit/2757c2bb24b3f1adb99d1d2a9e35d17f7e2aea24))
+
+
+### Bug Fixes
+
+* **observability:** scrape the control plane by name and drop probes from the SLIs ([#206](https://github.com/zigordev/platform-ops/issues/206)) ([c44805a](https://github.com/zigordev/platform-ops/commit/c44805a6ba3cfd95e64f325e26632564a6f33e3b))
+
 ## [1.31.1](https://github.com/zigordev/platform-ops/compare/v1.31.0...v1.31.1) (2026-09-22)
 
 

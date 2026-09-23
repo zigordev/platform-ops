@@ -57,45 +57,45 @@ groups:
     rules:
       - record: slo:availability:ratio_rate5m
         expr: |
-          sum by (job) (rate(http_requests_total{status!~"5.."}[5m]))
+          sum by (job) (rate(http_requests_total{status!~"5..", route!~"/health|/api/health|/metrics"}[5m]))
           /
-          sum by (job) (rate(http_requests_total[5m]))
+          sum by (job) (rate(http_requests_total{route!~"/health|/api/health|/metrics"}[5m]))
 
       - record: slo:availability:ratio_rate30m
         expr: |
-          sum by (job) (rate(http_requests_total{status!~"5.."}[30m]))
+          sum by (job) (rate(http_requests_total{status!~"5..", route!~"/health|/api/health|/metrics"}[30m]))
           /
-          sum by (job) (rate(http_requests_total[30m]))
+          sum by (job) (rate(http_requests_total{route!~"/health|/api/health|/metrics"}[30m]))
 
       - record: slo:availability:ratio_rate1h
         expr: |
-          sum by (job) (rate(http_requests_total{status!~"5.."}[1h]))
+          sum by (job) (rate(http_requests_total{status!~"5..", route!~"/health|/api/health|/metrics"}[1h]))
           /
-          sum by (job) (rate(http_requests_total[1h]))
+          sum by (job) (rate(http_requests_total{route!~"/health|/api/health|/metrics"}[1h]))
 
       - record: slo:availability:ratio_rate2h
         expr: |
-          sum by (job) (rate(http_requests_total{status!~"5.."}[2h]))
+          sum by (job) (rate(http_requests_total{status!~"5..", route!~"/health|/api/health|/metrics"}[2h]))
           /
-          sum by (job) (rate(http_requests_total[2h]))
+          sum by (job) (rate(http_requests_total{route!~"/health|/api/health|/metrics"}[2h]))
 
       - record: slo:availability:ratio_rate6h
         expr: |
-          sum by (job) (rate(http_requests_total{status!~"5.."}[6h]))
+          sum by (job) (rate(http_requests_total{status!~"5..", route!~"/health|/api/health|/metrics"}[6h]))
           /
-          sum by (job) (rate(http_requests_total[6h]))
+          sum by (job) (rate(http_requests_total{route!~"/health|/api/health|/metrics"}[6h]))
 
       - record: slo:availability:ratio_rate1d
         expr: |
-          sum by (job) (rate(http_requests_total{status!~"5.."}[1d]))
+          sum by (job) (rate(http_requests_total{status!~"5..", route!~"/health|/api/health|/metrics"}[1d]))
           /
-          sum by (job) (rate(http_requests_total[1d]))
+          sum by (job) (rate(http_requests_total{route!~"/health|/api/health|/metrics"}[1d]))
 
       - record: slo:availability:ratio_rate3d
         expr: |
-          sum by (job) (rate(http_requests_total{status!~"5.."}[3d]))
+          sum by (job) (rate(http_requests_total{status!~"5..", route!~"/health|/api/health|/metrics"}[3d]))
           /
-          sum by (job) (rate(http_requests_total[3d]))
+          sum by (job) (rate(http_requests_total{route!~"/health|/api/health|/metrics"}[3d]))
 
   # ---------------------------------------------------------------------------
   # SLI: latency. The SLO is "95% of requests complete within 500ms", so the
@@ -110,45 +110,45 @@ groups:
     rules:
       - record: slo:latency:ratio_rate5m
         expr: |
-          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5"}[5m]))
+          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5", route!~"/health|/api/health|/metrics"}[5m]))
           /
-          sum by (job) (rate(http_request_duration_seconds_count[5m]))
+          sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[5m]))
 
       - record: slo:latency:ratio_rate30m
         expr: |
-          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5"}[30m]))
+          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5", route!~"/health|/api/health|/metrics"}[30m]))
           /
-          sum by (job) (rate(http_request_duration_seconds_count[30m]))
+          sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[30m]))
 
       - record: slo:latency:ratio_rate1h
         expr: |
-          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5"}[1h]))
+          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5", route!~"/health|/api/health|/metrics"}[1h]))
           /
-          sum by (job) (rate(http_request_duration_seconds_count[1h]))
+          sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[1h]))
 
       - record: slo:latency:ratio_rate2h
         expr: |
-          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5"}[2h]))
+          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5", route!~"/health|/api/health|/metrics"}[2h]))
           /
-          sum by (job) (rate(http_request_duration_seconds_count[2h]))
+          sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[2h]))
 
       - record: slo:latency:ratio_rate6h
         expr: |
-          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5"}[6h]))
+          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5", route!~"/health|/api/health|/metrics"}[6h]))
           /
-          sum by (job) (rate(http_request_duration_seconds_count[6h]))
+          sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[6h]))
 
       - record: slo:latency:ratio_rate1d
         expr: |
-          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5"}[1d]))
+          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5", route!~"/health|/api/health|/metrics"}[1d]))
           /
-          sum by (job) (rate(http_request_duration_seconds_count[1d]))
+          sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[1d]))
 
       - record: slo:latency:ratio_rate3d
         expr: |
-          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5"}[3d]))
+          sum by (job) (rate(http_request_duration_seconds_bucket{le="0.5", route!~"/health|/api/health|/metrics"}[3d]))
           /
-          sum by (job) (rate(http_request_duration_seconds_count[3d]))
+          sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[3d]))
 
   # ---------------------------------------------------------------------------
   # Traffic gate.
@@ -164,22 +164,22 @@ groups:
   - name: slo_traffic
     rules:
       - record: slo:traffic:rate5m
-        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[5m]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[5m]))
 
       - record: slo:traffic:rate30m
-        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[30m]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[30m]))
 
       - record: slo:traffic:rate1h
-        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[1h]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[1h]))
 
       - record: slo:traffic:rate2h
-        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[2h]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[2h]))
 
       - record: slo:traffic:rate6h
-        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[6h]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[6h]))
 
       - record: slo:traffic:rate1d
-        expr: sum by (job) (rate(http_request_duration_seconds_count{job!="notifications-api"}[1d]))
+        expr: sum by (job) (rate(http_request_duration_seconds_count{route!~"/health|/api/health|/metrics"}[1d]))
 
   # ---------------------------------------------------------------------------
   # Host filesystems.
