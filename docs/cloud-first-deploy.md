@@ -325,11 +325,22 @@ These domains come from `docker/.env.ops.prod`:
 
 - `GPOOL_WEB_DOMAIN`
 - `GPOOL_API_DOMAIN`
+- `KINI_WEB_DOMAIN`
+- `KINI_API_DOMAIN`
+- `CV_WEB_DOMAIN`
+- `SITY_WEB_DOMAIN`
+- `TRADING_BOT_CONSOLE_DOMAIN`
+- `TRADING_BOT_API_DOMAIN`
 - `OPS_GRAFANA_DOMAIN`
 - `OPS_TOLGEE_DOMAIN`
 - `OPS_OPENBAO_DOMAIN`
+- `OPS_UNLEASH_DOMAIN`
 
 Create DNS records pointing those hostnames at the production EC2 public IP or public DNS name.
+
+Every one of these needs three edits in this repo to exist at all: the vhost in `docker/caddy/Caddyfile.ops.ingress.prod`, the passthrough in the `central-ingress` environment block of `docker/compose.ops.prod.yml`, and the value in `docker/.env.ops.prod`. Miss the compose one and the Caddyfile placeholder expands to an empty site address. Caddy then rejects the whole file — `server block without any key is global configuration, and if used, it must be first` — so the ingress does not start and every site goes down, not just the new one. `npm run check:compose` fails on exactly that.
+
+Three of those hostnames have a vhost but nothing behind them yet, so each answers 502 until its product deploys. `SITY_WEB_DOMAIN` waits on a deploy workflow and a production compose manifest in the `sity` repository, which do not exist yet. `TRADING_BOT_CONSOLE_DOMAIN` and `TRADING_BOT_API_DOMAIN` wait on a larger host — read [docs/host-capacity.md](host-capacity.md) before creating those records.
 
 If you use Cloudflare:
 

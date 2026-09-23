@@ -6,27 +6,27 @@
     },
     {
       "name": "sity-web",
-      "reason": "OPEN GAP: sity has no prod deploy yet, so the job would scrape an address that does not exist. Remove this entry when sity ships to prod."
+      "reason": "sity has an ingress route, an ECR repository and a deploy role, but no deploy workflow and no production compose in the sity repo, so nothing ever runs sity-web in prod. A prod job would scrape an address that does not exist and ServiceDown would page forever. Remove this entry in the same change that adds sity's own deploy workflow."
     },
     {
       "name": "trading-bot-operator-console",
-      "reason": "OPEN GAP: trading-bot has no prod deploy path. Remove the five trading-bot entries together when it ships."
+      "reason": "trading-bot has an ingress route, an ECR repository and a manual-dispatch deploy, but nothing runs it: its seven containers need ~10.6 GiB and the host has 8. A prod job would scrape an address that does not exist and ServiceDown would fire forever. Remove the five trading-bot entries together once the host is large enough to run it."
     },
     {
       "name": "trading-bot-control-plane",
-      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+      "reason": "the prod path exists but is not enabled; see docs/host-capacity.md."
     },
     {
       "name": "trading-bot-market-data",
-      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+      "reason": "the prod path exists but is not enabled; see docs/host-capacity.md."
     },
     {
       "name": "trading-bot-research-backtesting",
-      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+      "reason": "the prod path exists but is not enabled; see docs/host-capacity.md."
     },
     {
       "name": "trading-bot-execution",
-      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+      "reason": "the prod path exists but is not enabled; see docs/host-capacity.md."
     }
   ],
   "inhibit-labels": [],
@@ -41,15 +41,15 @@
     },
     {
       "name": "1:UncaughtExceptions",
-      "reason": "UncaughtExceptions is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap \u2014 decide whether a service being down should hide it"
+      "reason": "UncaughtExceptions is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap — decide whether a service being down should hide it"
     },
     {
       "name": "1:NotificationsConsumerCrashLooping",
-      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap \u2014 decide whether a service being down should hide it"
+      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap — decide whether a service being down should hide it"
     },
     {
       "name": "2:NotificationsConsumerCrashLooping",
-      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap \u2014 decide whether a service being down should hide it"
+      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap — decide whether a service being down should hide it"
     },
     {
       "name": "2:GpoolMailPublishFailing",

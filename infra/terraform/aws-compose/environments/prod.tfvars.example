@@ -48,6 +48,22 @@ gpool_ecr_api_repository_name  = "gpool/prod/api"
 gpool_ecr_web_repository_name  = "gpool/prod/web"
 gpool_ssm_app_parameter_prefix = "/gpool/prod/app"
 
+sity_github_repository        = "your-org/sity"
+sity_github_environment       = "production"
+sity_ecr_web_repository_name  = "sity/prod/web"
+sity_ssm_app_parameter_prefix = "/sity/prod/app"
+
+trading_bot_github_repository                    = "your-org/trading-bot"
+trading_bot_github_environment                   = "production"
+trading_bot_ecr_repository_names = {
+  control_plane        = "trading-bot/prod/control-plane"
+  operator_console     = "trading-bot/prod/operator-console"
+  market_data          = "trading-bot/prod/market-data"
+  research_backtesting = "trading-bot/prod/research-backtesting"
+  execution            = "trading-bot/prod/execution"
+}
+trading_bot_ssm_app_parameter_prefix             = "/trading-bot/prod/app"
+
 # Dedicated notifications deploy role + repository.
 notifications_github_repository        = "your-org/notifications"
 notifications_github_environment       = "production"
