@@ -110,6 +110,13 @@ export function validateConfig(config) {
   }
   if (!config.pinned || !config.pinned.files || !config.pinned.profiles) {
     problems.push('pinned.files and pinned.profiles are both required');
+  } else if (typeof config.pinned.digest === 'string') {
+    const recomputed = manifestDigest(config.pinned);
+    if (recomputed !== config.pinned.digest) {
+      problems.push(
+        `pinned.digest ${config.pinned.digest.slice(0, 12)} does not describe pinned.files and pinned.profiles, which hash to ${recomputed.slice(0, 12)} — run --repin instead of editing the pin`
+      );
+    }
   }
   if (!Array.isArray(config.copies) || config.copies.length === 0) {
     problems.push('copies must list at least one vendored directory');

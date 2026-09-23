@@ -376,6 +376,26 @@ describe('config validation', () => {
     expect(problems).toEqual(['copy a names unknown profile django']);
   });
 
+  it('rejects a hash edited into the pin without the digest following it', () => {
+    const doctored = config();
+    doctored.pinned.files['json-logger.ts'] = 'a'.repeat(64);
+    const problems = validateConfig(doctored);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('does not describe pinned.files and pinned.profiles');
+  });
+
+  it('rejects a profile edited into the pin without the digest following it', () => {
+    const doctored = config();
+    doctored.pinned.profiles.fastify.kit = ['json-logger.ts'];
+    expect(validateConfig(doctored).join(' ')).toContain('run --repin');
+  });
+
+  it('says nothing about the digest when it is missing', () => {
+    const problems = validateConfig(config({ pinned: { files: {}, profiles: {} } }));
+    expect(problems).toContain('pinned.digest is missing');
+    expect(problems.join(' ')).not.toContain('run --repin');
+  });
+
   it('rejects an alias with no kit file and a wrong schema', () => {
     const problems = validateConfig(
       config({
