@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.0](https://github.com/zigordev/platform-ops/compare/v1.36.0...v1.37.0) (2026-09-23)
+
+
+### Features
+
+* **prometheus:** scrape sity-web and expect health from every web app ([#205](https://github.com/zigordev/platform-ops/issues/205)) ([41430e2](https://github.com/zigordev/platform-ops/commit/41430e2286b164c31114955a908d1fbe5019531f))
+
 ## [1.36.0](https://github.com/zigordev/platform-ops/compare/v1.35.0...v1.36.0) (2026-09-23)
 
 
