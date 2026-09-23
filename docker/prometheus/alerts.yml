@@ -804,3 +804,92 @@ groups:
             two seconds for fifteen minutes.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/edge-slis.md'
           dashboard: 'platform-edge'
+
+  - name: trading_bot
+    rules:
+      - alert: MarketStreamDisconnected
+        expr: service_component_up{job="trading-bot-market-data", component="marketStream"} == 0
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data has lost the Binance websocket'
+          description: >-
+            trading-bot-market-data has reported its market stream down for ten
+            minutes. No fresh klines or trades are arriving: execution is
+            evaluating stale candles, and the stored history is growing a gap
+            that only a backfill will close.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/market-stream.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: MarketDataProducerDisconnected
+        expr: service_component_up{job="trading-bot-market-data", component="kafkaProducer"} == 0
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data cannot publish to Kafka'
+          description: >-
+            trading-bot-market-data has reported its Kafka producer down for ten
+            minutes. It may still be receiving the stream, but nothing is
+            reaching execution or the control-plane projections.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/market-data-stalled.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: MarketDataNotPublishing
+        expr: |
+          sum by (job) (increase(trading_bot_market_data_kline_publish_total[15m])) == 0
+          and on (job)
+          max by (job) (trading_bot_market_data_active_kline_subscriptions) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data has published no klines for fifteen minutes'
+          description: >-
+            market-data holds kline subscriptions and has published nothing for
+            fifteen minutes. Every subscription closes a candle at least once a
+            minute, so silence this long is the stream, the store or the
+            producer, whatever the health endpoint says about them.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/market-data-stalled.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: BinanceRateLimitNearCap
+        expr: |
+          (
+            max by (job) (trading_bot_market_data_binance_rest_used_weight_1m)
+            /
+            max by (job) (trading_bot_market_data_binance_rest_limit_weight_1m)
+          ) > 0.9
+          and
+          max by (job) (trading_bot_market_data_binance_rest_limit_weight_1m) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data has spent {{ $value | humanizePercentage }} of the Binance weight ceiling'
+          description: >-
+            REQUEST_WEIGHT usage has been above 90% of the configured ceiling
+            for five minutes, which is past the budget the local limiter holds
+            itself to. Binance answers 429 at the ceiling and bans the address
+            shortly after.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/binance-rate-limit.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: ExecutionLeftPaperMode
+        expr: |
+          trading_bot_execution_paper_mode_enabled == 0
+          and on (job, instance)
+          trading_bot_execution_active_promotion_loaded == 1
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: 'execution is trading live, not on paper'
+          description: >-
+            trading-bot-execution has an active promotion loaded and its mode is
+            live, so every signal it acts on places a real order against the
+            Binance account. Nothing else in the estate spends money on its own.
+            If this was not deliberate, stop the service now.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/execution-live-mode.md'
+          dashboard: 'service-trading-bot-execution'

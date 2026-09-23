@@ -45,6 +45,10 @@ says what it depends on.
 | `GpoolMailPublishFailing`, `GpoolMailRequestedButNotSent`       | [gpool-mail.md](gpool-mail.md)                       |
 | `ErrorLogsSpiking`, `UncaughtExceptions`                        | [error-logs.md](error-logs.md)                       |
 | `EdgeErrorRatioHigh`, `EdgeLatencyHigh`                         | [edge-slis.md](edge-slis.md)                         |
+| `MarketStreamDisconnected`                                      | [market-stream.md](market-stream.md)                 |
+| `MarketDataNotPublishing`, `MarketDataProducerDisconnected`     | [market-data-stalled.md](market-data-stalled.md)     |
+| `BinanceRateLimitNearCap`                                       | [binance-rate-limit.md](binance-rate-limit.md)       |
+| `ExecutionLeftPaperMode`                                        | [execution-live-mode.md](execution-live-mode.md)     |
 
 ## Procedures
 
