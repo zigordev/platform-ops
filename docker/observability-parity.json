@@ -29,12 +29,7 @@
       "reason": "OPEN GAP: trading-bot has no prod deploy path."
     }
   ],
-  "inhibit-labels": [
-    {
-      "name": "ErrorLogsSpiking",
-      "reason": "OPEN GAP: the log alerts group by app, so they carry no job and the ServiceDown inhibit has never matched them — every outage pages twice. Remove this entry once the Loki rules emit job."
-    }
-  ],
+  "inhibit-labels": [],
   "inhibit-siblings": [
     {
       "name": "1:AskBudgetExhausted",
@@ -46,15 +41,15 @@
     },
     {
       "name": "1:UncaughtExceptions",
-      "reason": "OPEN GAP: same root cause as ErrorLogsSpiking — a log alert carries no job, so listing it here would inhibit nothing"
+      "reason": "UncaughtExceptions is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap \u2014 decide whether a service being down should hide it"
     },
     {
       "name": "1:NotificationsConsumerCrashLooping",
-      "reason": "OPEN GAP: same root cause as ErrorLogsSpiking — a log alert carries no job"
+      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap \u2014 decide whether a service being down should hide it"
     },
     {
       "name": "2:NotificationsConsumerCrashLooping",
-      "reason": "OPEN GAP: same root cause as ErrorLogsSpiking — a log alert carries no job"
+      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap \u2014 decide whether a service being down should hide it"
     },
     {
       "name": "2:GpoolMailPublishFailing",
