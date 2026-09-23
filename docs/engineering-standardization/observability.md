@@ -99,7 +99,8 @@ counts pool actions, predictions and notifications
 problems they meet and notifications (`kini_pools_sync_runs_total{outcome}`,
 `kini_pools_sync_problems_total{source,problem}`,
 `kini_notifications_total{template,outcome}`), with the clients on its socket as
-the `kini_websocket_clients` gauge; the trading-bot control plane counts
+the `kini_websocket_clients` gauge and every attempt to open it as
+`kini_websocket_connections_total{outcome,reason}`; the trading-bot control plane counts
 projections and configuration changes
 (`trading_bot_control_plane_projections_total{stream,outcome}`,
 `trading_bot_control_plane_config_changes_total{outcome}`). Every one of them

@@ -43,6 +43,7 @@ const APP = [
   'kini_pools_sync_problems_total',
   'kini_notifications_total',
   'kini_websocket_clients',
+  'kini_websocket_connections_total',
   'trading_bot_market_data_active_kline_subscriptions',
   'trading_bot_market_data_active_pair_subscriptions',
   'trading_bot_market_data_kline_publish_total',
