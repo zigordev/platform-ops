@@ -378,6 +378,26 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/notifications-stalled.md'
           dashboard: 'service-notifications-api'
 
+      - alert: NotificationsDeadLetterUnread
+        expr: |
+          label_replace(
+            kafka:consumer_group_lag:sum{redpanda_group="notifications-api", redpanda_topic="notification.email.requested.v1.DLT"} > 0,
+            "job", "notifications-api", "", ""
+          )
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'a dead letter has sat unread on the DLT for fifteen minutes'
+          description: >-
+            {{ $value | humanize }} records on
+            notification.email.requested.v1.DLT are behind the notifications
+            consumer group and are not being cleared. Nothing retries a dead
+            letter on its own, so this will not resolve itself and the record
+            will keep being re-read until someone acts on it.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/dead-letters.md'
+          dashboard: 'service-notifications-api'
+
       - alert: DeadLetterQueueGrowing
         expr: increase(notifications_dlq_total[1h]) > 0
         for: 5m
