@@ -522,6 +522,48 @@
     {
       "id": 10,
       "type": "timeseries",
+      "title": "Pool settings changed and pools deleted",
+      "description": "The three actions the lifecycle chart above buries in a nine-series stack. configured is an admin changing a pool’s rules; when it lowers the player-selection limits it deletes every pick above them outright and counts none of the deletions, so this bar is the only trace they happened. deleted ends the pool.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 13, "w": 24, "h": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (action) (increase(gpool_pool_actions_total{action=~\"configured|updated|deleted\"}[$__rate_interval]))",
+          "legendFormat": "{{action}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
       "title": "Predictions",
       "description": "Submitted and cleared. Clearing is a player changing their mind before kickoff, not an error.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -548,7 +590,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 0, "y": 13, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 19, "w": 8, "h": 8 },
       "targets": [
         {
           "refId": "A",
@@ -562,7 +604,7 @@
       ]
     },
     {
-      "id": 11,
+      "id": 12,
       "type": "timeseries",
       "title": "Emails gpool asked for",
       "description": "By outcome, as gpool saw it: queued reached the broker, skipped is gpool having no address for the person it wanted to write to, failed never left. A repeat of the same event is dropped earlier and is counted in none of these.",
@@ -590,7 +632,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 8, "y": 13, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 19, "w": 8, "h": 8 },
       "targets": [
         {
           "refId": "A",
@@ -604,7 +646,7 @@
       ]
     },
     {
-      "id": 12,
+      "id": 13,
       "type": "timeseries",
       "title": "Emails at the other end",
       "description": "The same mail as notifications handled it: sent by the relay, a failed attempt, or given up on.",
@@ -632,7 +674,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 19, "w": 8, "h": 8 },
       "targets": [
         {
           "refId": "A",
@@ -664,7 +706,7 @@
       ]
     },
     {
-      "id": 13,
+      "id": 14,
       "type": "table",
       "title": "The email loop, by template",
       "description": "Both halves of the same email side by side. gpool labels its counter template where notifications labels it template_id, so the first column is renamed before the join; a row where queued and requested disagree means mail was lost between gpool and the broker.",
@@ -707,7 +749,7 @@
           }
         }
       ],
-      "gridPos": { "x": 0, "y": 21, "w": 12, "h": 9 },
+      "gridPos": { "x": 0, "y": 27, "w": 12, "h": 9 },
       "targets": [
         {
           "refId": "A",
@@ -752,7 +794,7 @@
       ]
     },
     {
-      "id": 14,
+      "id": 15,
       "type": "timeseries",
       "title": "How long gpool mail takes",
       "description": "From gpool asking to the relay accepting, for gpool templates only. The line is the two-minute objective every product shares.",
@@ -786,7 +828,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 12, "y": 21, "w": 12, "h": 9 },
+      "gridPos": { "x": 12, "y": 27, "w": 12, "h": 9 },
       "targets": [
         {
           "refId": "A",
@@ -809,7 +851,7 @@
       ]
     },
     {
-      "id": 15,
+      "id": 16,
       "type": "timeseries",
       "title": "The same steps in the browser",
       "description": "What players clicked, reported by their browsers, including the two steps that failed in front of them. It should track the server counts above; a gap means a step failed after the click. All of this reads today.",
@@ -837,7 +879,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 0, "y": 30, "w": 12, "h": 9 },
+      "gridPos": { "x": 0, "y": 36, "w": 12, "h": 9 },
       "targets": [
         {
           "refId": "A",
@@ -851,7 +893,7 @@
       ]
     },
     {
-      "id": 16,
+      "id": 17,
       "type": "logs",
       "title": "Pools and the emails they trigger",
       "description": "Every pool action and every email decision, newest first, with the pool and user ids. Email addresses are never logged.",
@@ -866,7 +908,7 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "gridPos": { "x": 12, "y": 30, "w": 12, "h": 9 },
+      "gridPos": { "x": 12, "y": 36, "w": 12, "h": 9 },
       "targets": [
         {
           "refId": "A",

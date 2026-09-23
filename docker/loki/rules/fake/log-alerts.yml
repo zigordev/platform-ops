@@ -5,7 +5,7 @@ groups:
       - alert: ErrorLogsSpiking
         expr: |
           sum by (app) (
-            rate({job="docker-json-logs"} | json | level = "error" [5m])
+            rate({job="docker-json-logs", app!=""} | json | level = "error" [5m])
           ) > 0.2
         for: 10m
         labels:
@@ -23,7 +23,7 @@ groups:
       - alert: UncaughtExceptions
         expr: |
           sum by (app) (
-            count_over_time({job="docker-json-logs"} | json | event = "process.uncaught_exception" [10m])
+            count_over_time({job="docker-json-logs", app!=""} | json | event = "process.uncaught_exception" [10m])
           ) > 0
         for: 0m
         labels:
@@ -38,3 +38,23 @@ groups:
             restarted it.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/error-logs.md'
           dashboard: 'service-overview'
+
+      - alert: NotificationsConsumerCrashLooping
+        expr: |
+          sum by (app) (
+            count_over_time({job="docker-json-logs", app="notifications-api"} | json | event = "kafka.consumer_crashed" [15m])
+          ) > 3
+        for: 5m
+        labels:
+          severity: ticket
+          environment: '{{ $externalLabels.environment }}'
+        annotations:
+          summary: 'the notifications consumer is crashing and restarting in a loop'
+          description: >-
+            The email consumer has crashed and restarted more than three times
+            in fifteen minutes. The client restarts it each time, so the process
+            stays up and the kafka health component is back before ComponentDown
+            wants five minutes of it, while a quiet topic keeps the group lag at
+            zero. Mail stops the moment somebody sends one.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/notifications-stalled.md'
+          dashboard: 'service-notifications-api'

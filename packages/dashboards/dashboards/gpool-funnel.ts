@@ -62,6 +62,11 @@ export const gpoolFunnel: DashboardSpec = {
       ], { unit: 'short', min: 0, bars: true }),
     ],
     [
+      timeseries('Pool settings changed and pools deleted', 'The three actions the lifecycle chart above buries in a nine-series stack. configured is an admin changing a pool’s rules; when it lowers the player-selection limits it deletes every pick above them outright and counts none of the deletions, so this bar is the only trace they happened. deleted ends the pool.', { w: 24, h: 6 }, [
+        prom(`sum by (action) (increase(gpool_pool_actions_total{action=~"configured|updated|deleted"}[${RATE_INTERVAL}]))`, { legend: '{{action}}' }),
+      ], { unit: 'short', min: 0, bars: true }),
+    ],
+    [
       timeseries('Predictions', 'Submitted and cleared. Clearing is a player changing their mind before kickoff, not an error.', { w: 8, h: 8 }, [
         prom(`sum by (action) (increase(gpool_predictions_total[${RATE_INTERVAL}]))`, { legend: '{{action}}' }),
       ], { unit: 'short', min: 0, bars: true }),

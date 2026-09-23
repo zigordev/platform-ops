@@ -1,7 +1,7 @@
 import { deploys, RATE_INTERVAL } from '../lib/dashboard.ts';
 import { BUSINESS } from '../lib/folders.ts';
 import type { DashboardSpec } from '../lib/model.ts';
-import { atLeast, gauge, logs, stat, timeseries, under, type Step } from '../lib/panels.ts';
+import { atLeast, gauge, logs, stat, timeseries, under, valueMap, type Step } from '../lib/panels.ts';
 import { loki, prom } from '../lib/queries.ts';
 
 const BUDGET: Step[] = [
@@ -75,6 +75,18 @@ export const cvFunnel: DashboardSpec = {
       timeseries('Visitor steps', 'Opening the box or the form, sending, downloading, reading a case study. From the browser.', { w: 8, h: 8 }, [
         prom(`sum by (interaction_type) (increase(rum_interactions_total{job="cv-web", interaction_type=~"ask-opened|ask-submitted|contact-opened|contact-sent|cv-downloaded|case-study-opened"}[${RATE_INTERVAL}]))`, { legend: '{{interaction_type}}' }),
       ], { unit: 'short', min: 0, bars: true }),
+    ],
+    [
+      timeseries('Contact messages that never arrived', 'Contact mail notifications gave up on after every retry. It is the one outcome here that loses a visitor for good: the message is in the dead-letter table and nowhere else, and nobody is told.', { w: 8, h: 8 }, [
+        prom(`sum(increase(notifications_dlq_total{source_app="cv"}[${RATE_INTERVAL}]))`, { legend: 'dead-lettered' }),
+      ], { unit: 'short', min: 0, bars: true }),
+      timeseries('How long contact mail takes', 'From cv asking to the relay accepting, for cv templates only. The line is the two-minute objective every product shares.', { w: 8, h: 8 }, [
+        prom(`histogram_quantile(0.95, sum by (le) (rate(notification_delivery_duration_seconds_bucket{source_app="cv"}[${RATE_INTERVAL}])))`, { legend: 'p95' }),
+        prom(`histogram_quantile(0.5, sum by (le) (rate(notification_delivery_duration_seconds_bucket{source_app="cv"}[${RATE_INTERVAL}])))`, { legend: 'p50' }),
+      ], { unit: 's', min: 0, steps: under(120), lines: true }),
+      stat('The answer box switch', 'Whether cv-ask was on when cv last read it. Read the Ask panels above through this one: off means an empty row is a setting, not a bug.', { w: 8, h: 8 }, [
+        prom('max(cv_feature_flag_enabled{job="cv-web", flag="cv-ask"})', { legend: 'cv-ask' }),
+      ], { mappings: valueMap({ '0': ['off', 'text'], '1': ['on', 'green'] }), decimals: 0 }),
     ],
     [
       logs('Questions and outcomes', 'Each question the box handled, with its outcome, citations and cost. Kept for 14 days.', { w: 24, h: 10 }, [
