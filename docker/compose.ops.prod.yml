@@ -285,6 +285,8 @@ services:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - ops-local-alloy-data:/var/lib/alloy/data
+    environment:
+      ENVIRONMENT: prod
     depends_on:
       - loki
     networks: [platform_ops_shared]
