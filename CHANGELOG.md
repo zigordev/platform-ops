@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.38.0](https://github.com/zigordev/platform-ops/compare/v1.37.3...v1.38.0) (2026-09-23)
+
+
+### Features
+
+* **observability:** name server spans by route and end the vendored-kit forks ([#223](https://github.com/zigordev/platform-ops/issues/223)) ([2ea9944](https://github.com/zigordev/platform-ops/commit/2ea9944c799bd1a91d874394fb5d8019a3410962))
+
 ## [1.37.3](https://github.com/zigordev/platform-ops/compare/v1.37.2...v1.37.3) (2026-09-23)
 
 
