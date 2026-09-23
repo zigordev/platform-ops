@@ -67,14 +67,27 @@ test('a request is counted by its route pattern, never the path it was called wi
     { statusCode: 200, elapsedTime: 12 }
   );
   await hooks.onResponse(
-    { method: 'GET', url: '/unmatched?secret=1' },
+    { method: 'GET', url: '/wp-login.php?secret=1' },
     { statusCode: 404, elapsedTime: 1 }
   );
-  await hooks.onResponse({ method: 'GET', url: '?secret=1' }, { statusCode: 400, elapsedTime: 1 });
+  await hooks.onResponse({ method: 'GET', url: '/.env' }, { statusCode: 404, elapsedTime: 1 });
 
   assert.equal(await requests('/v1/pairs/:id', '200'), 1);
-  assert.equal(await requests('/unmatched', '404'), 1);
-  assert.equal(await requests('', '400'), 0);
+  assert.equal(await requests('unmatched', '404'), 2);
+  assert.equal(await requests('/wp-login.php', '404'), 0);
+});
+
+test('an error in a Fastify log line has the shape every other service writes', () => {
+  const error = new RangeError('out of range');
+
+  const formatted = fastifyLoggerOptions.formatters.log({ event: 'backtest.failed', error });
+
+  assert.deepEqual(formatted, {
+    event: 'backtest.failed',
+    error: { name: 'RangeError', message: 'out of range' },
+    stack: error.stack,
+  });
+  assert.deepEqual(fastifyLoggerOptions.formatters.log({ event: 'ok' }), { event: 'ok' });
 });
 
 test('the metrics route serves the registry in the format Prometheus scrapes', async () => {
@@ -92,4 +105,20 @@ test('the metrics route serves the registry in the format Prometheus scrapes', a
 
   assert.match(headers['Content-Type'] ?? '', /^text\/plain; version=0\.0\.4/);
   assert.match(String(body), /http_request_duration_seconds/);
+});
+
+test('Fastify announcing its address is left out, since service.started carries the port', () => {
+  const written: unknown[][] = [];
+  const method = (...args: unknown[]) => {
+    written.push(args);
+  };
+
+  fastifyLoggerOptions.hooks.logMethod(['Server listening at http://0.0.0.0:8080'], method, 30);
+  fastifyLoggerOptions.hooks.logMethod([{ event: 'config.publish_failed' }, 'failed'], method, 50);
+  fastifyLoggerOptions.hooks.logMethod(['Server listening at http://0.0.0.0:8080'], method, 20);
+
+  assert.deepEqual(written, [
+    [{ event: 'config.publish_failed' }, 'failed'],
+    ['Server listening at http://0.0.0.0:8080'],
+  ]);
 });

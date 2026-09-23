@@ -612,6 +612,68 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/contact-publish.md'
           dashboard: 'service-cv-web'
 
+  - name: kini
+    rules:
+      - alert: PoolsSyncSchedulerDead
+        expr: |
+          sum by (job) (increase(kini_pools_sync_runs_total{outcome="completed"}[8d])) == 0
+          and on (job)
+          max by (job) (kini_pools_sync_runs_total{outcome="completed"} offset 8d)
+        for: 1h
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} has not finished a pool sync in over a week'
+          description: >-
+            The weekly pool sync has not completed once in eight days. Nothing
+            else notices: the API is up, health is ok, and the site keeps serving
+            whatever the last successful run wrote. The pools it shows are going
+            stale.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/pools-sync.md'
+          dashboard: 'service-kini-api'
+
+      - alert: PoolsSyncRunFailed
+        expr: sum by (job) (increase(kini_pools_sync_runs_total{outcome="failed"}[2h])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} could not finish its weekly pool sync'
+          description: >-
+            The scheduled sync threw before it finished. kini is showing whatever
+            the previous run left behind, and the next attempt is a week away
+            unless someone asks for one.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/pools-sync.md'
+          dashboard: 'service-kini-api'
+
+      - alert: PoolsSyncFeedBroken
+        expr: |
+          sum by (job, source) (increase(kini_pools_sync_problems_total{source!="all"}[24h])) >= 3
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.source }} has given kini {{ $value | humanize }} problems in a day'
+          description: >-
+            One upstream feed failed to fetch, answered with nothing in it, or
+            returned a document kini could not read, three or more times in the
+            last day. A feed that misbehaves that often has usually changed
+            shape rather than blipped.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/pools-sync.md'
+          dashboard: 'service-kini-api'
+
+      - alert: TeamInvitationsNotQueued
+        expr: sum by (job) (increase(kini_notifications_total{outcome="failed"}[15m])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} could not queue {{ $value | humanize }} invitation emails'
+          description: >-
+            Publishing a team invitation to the broker failed in the last fifteen
+            minutes. The person who sent it saw an error, the invited person got
+            no email, and nothing retries it.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kini-invitations.md'
+          dashboard: 'service-kini-api'
+
   - name: notifications_delivery_burn
     rules:
       - alert: EmailDeliveryBudgetBurningFast

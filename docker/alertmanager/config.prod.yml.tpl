@@ -57,7 +57,7 @@ inhibit_rules:
   - source_matchers:
       - alertname="ServiceDown"
     target_matchers:
-      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking|PageLatencyBudget.*|AskSlow|AskUpstreamFailing|ContactPublishFailing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*"
+      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking|PageLatencyBudget.*|AskSlow|AskUpstreamFailing|ContactPublishFailing|PoolsSync.*|TeamInvitationsNotQueued|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*"
     equal: ['environment', 'job']
   - source_matchers:
       - alertname="ServiceUnhealthy"
@@ -68,7 +68,7 @@ inhibit_rules:
   - source_matchers:
       - alertname="RedpandaDown"
     target_matchers:
-      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing"
+      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing|TeamInvitationsNotQueued"
     equal: ['environment']
   - source_matchers:
       - alertname="RedpandaDown"

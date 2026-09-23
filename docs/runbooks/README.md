@@ -24,6 +24,7 @@ says what it depends on.
 | `ServiceUnhealthy`                                              | [service-unhealthy.md](service-unhealthy.md)         |
 | `ServiceDegraded`                                               | [service-degraded.md](service-degraded.md)           |
 | `ComponentDown`                                                 | [component-down.md](component-down.md)               |
+| `HealthSignalMissing`                                           | [health-signal-missing.md](health-signal-missing.md) |
 | `OpenBaoSealed`                                                 | [openbao-sealed.md](openbao-sealed.md)               |
 | `HostDisk*`, `HostFilesystemWillFillIn24h`                      | [host-disk.md](host-disk.md)                         |
 | `HostMemoryPressure`                                            | [host-memory.md](host-memory.md)                     |
@@ -39,6 +40,8 @@ says what it depends on.
 | `PageLatencyBudget*`                                            | [page-latency.md](page-latency.md)                   |
 | `AskSlow`, `AskUpstreamFailing`, `AskBudget*`                   | [ask.md](ask.md)                                     |
 | `ContactPublishFailing`                                         | [contact-publish.md](contact-publish.md)             |
+| `PoolsSync*`                                                    | [pools-sync.md](pools-sync.md)                       |
+| `TeamInvitationsNotQueued`                                      | [kini-invitations.md](kini-invitations.md)           |
 | `ErrorLogsSpiking`, `UncaughtExceptions`                        | [error-logs.md](error-logs.md)                       |
 | `EdgeErrorRatioHigh`, `EdgeLatencyHigh`                         | [edge-slis.md](edge-slis.md)                         |
 

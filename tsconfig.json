@@ -13,12 +13,12 @@
   },
   // Only the framework-free half of the kit.
   //
-  // `nest.ts`, `fastify.ts`, `next.ts` and `tracing.ts` need their frameworks'
-  // type definitions, and installing NestJS, Fastify, Next and the OpenTelemetry
-  // SDK here — in a repository that ships no application — to typecheck four
-  // adapters would be a large node_modules for very little. Those files are
-  // typechecked in every consumer repo, which is where the framework actually
-  // is; `verify-standards.sh` guarantees the copies are identical.
+  // `nest.ts`, `fastify.ts`, `fastify-rum.ts`, `next.ts` and `tracing.ts` need
+  // their frameworks' type definitions, and installing NestJS, Fastify, Next and
+  // the OpenTelemetry SDK here — in a repository that ships no application — to
+  // typecheck five adapters would be a large node_modules for very little. Those
+  // files are typechecked in every consumer repo, which is where the framework
+  // actually is.
   //
   // What is checked here is the part with the security-critical logic and the
   // unit tests: label normalisation, ingest validation, the registry.
@@ -36,6 +36,14 @@
     "packages/observability/metrics.registry.test.ts",
     "packages/observability/feature-flags.ts",
     "packages/observability/feature-flags.test.ts",
+    "packages/observability/probe-paths.ts",
+    "packages/observability/probe-paths.test.ts",
+    "packages/observability/standard-events.ts",
+    "packages/observability/standard-events.test.ts",
+    "packages/observability/start-at-zero.ts",
+    "packages/observability/start-at-zero.test.ts",
+    "packages/observability/framework-logs.ts",
+    "packages/observability/framework-logs.test.ts",
     "packages/dashboards/**/*.ts"
   ],
   "exclude": ["node_modules"]

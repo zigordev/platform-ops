@@ -29,11 +29,16 @@ directory is already shaped like a package.
 | `http-metrics.middleware.ts`                         | request counter and duration histogram (Express)                         |
 | `nest.ts`, `fastify.ts`                              | the NestJS and Fastify adapters                                          |
 | `next.ts`                                            | the Next.js adapter: `/metrics`, the RUM ingest and the CSP report route |
+| `fastify-rum.ts`                                     | the RUM ingest and the CSP report route for a frontend Fastify serves    |
 | `rum-client.ts`, `RumProvider.tsx`                   | RUM in the browser: web-vitals, error details, the funnel                |
 | `rum-ingest.ts`, `rum-metrics.ts`, `rum-details.ts`  | validation, metrics by page and release, error and poor-vital logs       |
 | `csp-reports.ts`                                     | CSP violation reports in both browser formats, counted and logged        |
 | `server-timing.ts`                                   | a response's `Server-Timing: traceparent`, for sampled spans only        |
 | `mask.ts`                                            | emails and digits masked out of browser error messages                   |
+| `probe-paths.ts`                                     | the probe paths the tracer never samples                                 |
+| `standard-events.ts`                                 | `service.started`, `service.stopping`, `request.failed` and `process.*`  |
+| `start-at-zero.ts`                                   | counters and histograms created at 0 for every label set they know       |
+| `framework-logs.ts`                                  | Nest bootstrap and Fastify's listen line, kept out of the info logs      |
 | `index.nest.ts`, `index.fastify.ts`, `index.next.ts` | the entry points                                                         |
 
 `tracing.ts`, `json-logger.ts` and `metrics.registry.ts` are framework-free.
