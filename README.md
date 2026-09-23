@@ -150,7 +150,7 @@ Notes:
 ## Release Automation
 
 - `.github/workflows/release-please.yml` runs on pushes to `main` and creates/updates the Release Please PR.
-- `.github/workflows/auto-approve-release-please.yml` auto-approves and enables auto-merge for Release Please PRs after checks pass.
+- `.github/workflows/auto-merge.yml` enables auto-merge for pull requests opened from this repository by its owner, Release Please's included, and for Dependabot's patch and minor updates. A pull request from anyone else waits for a person to merge it, and only collaborators can open one.
 - `.github/workflows/deploy-ops.yml` triggers on `release.published` and deploys the published tag automatically.
 - Manual deploy remains available via `workflow_dispatch` in `.github/workflows/deploy-ops.yml`.
 - Required secret for Release Please merge/release operations: `RELEASE_PLEASE_TOKEN` (PAT with `contents:write`; do not use `GITHUB_TOKEN`).
