@@ -673,6 +673,39 @@ groups:
             no email, and nothing retries it.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kini-invitations.md'
           dashboard: 'service-kini-api'
+
+      - alert: PoolSocketOriginRefused
+        expr: |
+          sum by (job) (increase(kini_websocket_connections_total{outcome="rejected", reason="bad_origin"}[15m])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} refused {{ $value | humanize }} socket connections from another origin'
+          description: >-
+            The live pool socket turned away a browser whose page was not on
+            one of kini's own origins. Either a page on another site tried to
+            open it with a visitor's cookies, or AUTH_CORS_ORIGINS no longer
+            lists the origin kini is served from, and then every visitor has
+            lost live updates.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kini-socket.md'
+          dashboard: 'service-kini-api'
+
+      - alert: PoolSocketRefusingConnections
+        expr: |
+          sum by (job) (rate(kini_websocket_connections_total{outcome="rejected", reason="no_session"}[5m])) > 0.2
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} keeps refusing socket connections that carry no session'
+          description: >-
+            The live pool socket has refused more than one connection every
+            five seconds for ten minutes because it carried no signed-in
+            session. A signed-out visitor on the pools page is refused once
+            and does not retry, so a steady rate is a script probing the socket
+            or a client stuck in a loop.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kini-socket.md'
+          dashboard: 'service-kini-api'
   - name: gpool
     rules:
       - alert: GpoolMailPublishFailing

@@ -44,6 +44,7 @@ says what it depends on.
 | `ContactPublishFailing`                                                                              | [contact-publish.md](contact-publish.md)             |
 | `PoolsSync*`                                                                                         | [pools-sync.md](pools-sync.md)                       |
 | `TeamInvitationsNotQueued`                                                                           | [kini-invitations.md](kini-invitations.md)           |
+| `PoolSocketOriginRefused`, `PoolSocketRefusingConnections`                                           | [kini-socket.md](kini-socket.md)                     |
 | `GpoolMailPublishFailing`, `GpoolMailRequestedButNotSent`                                            | [gpool-mail.md](gpool-mail.md)                       |
 | `ErrorLogsSpiking`, `UncaughtExceptions`                                                             | [error-logs.md](error-logs.md)                       |
 | `EdgeErrorRatioHigh`, `EdgeLatencyHigh`                                                              | [edge-slis.md](edge-slis.md)                         |

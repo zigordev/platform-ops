@@ -42,15 +42,18 @@ export const serviceKiniApi: DashboardSpec = {
       ], { unit: 'short', min: 0, bars: true }),
     ],
     [
-      timeseries('Scheduled syncs', 'The weekly cron, Mondays at 08:00. One bar a week is the whole of the expected traffic. A gap longer than a week means the scheduler is not running, which is what PoolsSyncSchedulerDead watches for.', { w: 8, h: 7 }, [
+      timeseries('Scheduled syncs', 'The weekly cron, Mondays at 08:00. One bar a week is the whole of the expected traffic. A gap longer than a week means the scheduler is not running, which is what PoolsSyncSchedulerDead watches for.', { w: 6, h: 7 }, [
         prom(`sum by (outcome) (increase(kini_pools_sync_runs_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{outcome}}' }),
       ], { unit: 'short', min: 0, bars: true }),
-      timeseries('Invitation emails', 'Team invitations kini handed to the broker for notifications to send. failed means the publish threw, so the invitation was never queued and the person who sent it saw an error.', { w: 8, h: 7 }, [
+      timeseries('Invitation emails', 'Team invitations kini handed to the broker for notifications to send. failed means the publish threw, so the invitation was never queued and the person who sent it saw an error.', { w: 6, h: 7 }, [
         prom(`sum by (template, outcome) (increase(kini_notifications_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{template}} · {{outcome}}' }),
       ], { unit: 'short', min: 0, bars: true }),
-      timeseries('Socket clients over time', 'Connected browsers. A drop to zero while the site is being used means the gateway restarted and every client has to reconnect.', { w: 8, h: 7 }, [
+      timeseries('Socket clients over time', 'Connected browsers. A drop to zero while the site is being used means the gateway restarted and every client has to reconnect.', { w: 6, h: 7 }, [
         prom(`max(kini_websocket_clients{job="${JOB}"})`, { legend: 'connected' }),
       ], { unit: 'short', min: 0 }),
+      timeseries('Socket connections', 'Attempts to open the pool socket. accepted is a signed-in browser on one of the allowed origins, and it only receives the updates of its own teams. rejected carries the reason: no_session for a browser or script without a signed-in session, bad_origin for a page on another site. A refused socket receives nothing. PoolSocketOriginRefused and PoolSocketRefusingConnections read this.', { w: 6, h: 7 }, [
+        prom(`sum by (outcome, reason) (increase(kini_websocket_connections_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{outcome}} · {{reason}}' }),
+      ], { unit: 'short', min: 0, bars: true }),
     ],
     [
       timeseries('Requests by route', 'Every route, as the Express route pattern rather than the resolved path.', { w: 8, h: 8 }, [
