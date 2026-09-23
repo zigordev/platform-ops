@@ -71,8 +71,8 @@ export const emailDelivery: DashboardSpec = {
         rename: { template_id: 'Template', 'Value #A': 'Requested', 'Value #B': 'Sent', 'Value #C': 'Failed attempts', 'Value #D': 'Dead-lettered' },
         sortBy: 'Requested',
       }),
-      logs('Failures', 'Every failed attempt and dead letter, with the template, the app, the error class and the SMTP reply.', { w: 12, h: 10 }, [
-        loki('{app="notifications-api"} | json | event=~"notification.failed|notification.dead_lettered"'),
+      logs('Failures', 'Every failed attempt and dead letter, with the template, the app, the error class and the SMTP reply. dlt_payload_invalid is a dead letter the consumer could not even parse, so it carries no template.', { w: 12, h: 10 }, [
+        loki('{app="notifications-api"} | json | event=~"notification.failed|notification.dead_lettered|notification.dlt_payload_invalid"'),
       ]),
     ],
   ],

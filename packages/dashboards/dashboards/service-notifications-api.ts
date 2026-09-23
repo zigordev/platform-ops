@@ -68,8 +68,8 @@ export const serviceNotificationsApi: DashboardSpec = {
     ],
     runtimeRow(JOB),
     [
-      logs('Failed and dead-lettered', 'Every failed attempt, dead letter and relay outage, newest first, with the template and the SMTP reply.', { w: 12, h: 10 }, [
-        loki(`{app="${JOB}"} | json | event=~"notification.failed|notification.dead_lettered|notification.routed_to_dlt|smtp.unavailable|smtp.recovered"`),
+      logs('Failed and dead-lettered', 'Every failed attempt, dead letter and relay outage, newest first, with the template and the SMTP reply. dlt_payload_invalid is a dead-lettered payload the consumer could not parse; it is the one line that says a message left the topic and was read by nothing.', { w: 12, h: 10 }, [
+        loki(`{app="${JOB}"} | json | event=~"notification.failed|notification.dead_lettered|notification.routed_to_dlt|notification.dlt_payload_invalid|smtp.unavailable|smtp.recovered"`),
       ]),
       errorLogs(JOB, 12),
     ],

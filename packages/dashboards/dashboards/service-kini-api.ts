@@ -11,7 +11,7 @@ export const serviceKiniApi: DashboardSpec = {
   uid: 'service-kini-api',
   title: 'kini-api',
   description:
-    'The kini API: the lottery feeds it scrapes and how each one fails, the weekly pool sync, invitation emails, the live pool socket, its routes, runtime and failures. The kini_* panels stay empty until kini#149 is merged and deployed; everything else reads today.',
+    'The kini API: the lottery feeds it scrapes and how each one fails, the weekly pool sync, invitation emails, the live pool socket, its routes, runtime and failures.',
   folder: SERVICES,
   tags: ['service', 'kini'],
   deploys: deploys(`{job="${JOB}"}`),
@@ -72,8 +72,8 @@ export const serviceKiniApi: DashboardSpec = {
         prom(`slo:latency:ratio_rate1h{job="${JOB}"}`, { legend: '1h' }),
         prom(`slo:latency:ratio_rate1d{job="${JOB}"}`, { legend: '1d' }),
       ], { unit: 'percentunit', max: 1, steps: atLeast(0.95), lines: true }),
-      timeseries('Outbound calls', 'Calls kini makes, by span name: Postgres queries, the lottery pages and PDFs it fetches, and the broker.', { w: 8, h: 8 }, [
-        prom(`sum by (span_name) (rate(traces_spanmetrics_calls_total{service="${JOB}", span_kind="SPAN_KIND_CLIENT"}[${RATE_INTERVAL}]))`, { legend: '{{span_name}}' }),
+      timeseries('Outbound calls', 'Calls kini makes, by span name: Postgres queries and the lottery pages and PDFs it fetches are client spans; the invitation it publishes is a producer span, so both kinds are read here.', { w: 8, h: 8 }, [
+        prom(`sum by (span_name) (rate(traces_spanmetrics_calls_total{service="${JOB}", span_kind=~"SPAN_KIND_CLIENT|SPAN_KIND_PRODUCER"}[${RATE_INTERVAL}]))`, { legend: '{{span_name}}' }),
       ], { unit: 'reqps', min: 0 }),
     ],
     runtimeRow(JOB),

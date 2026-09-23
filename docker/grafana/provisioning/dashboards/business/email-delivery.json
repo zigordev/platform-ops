@@ -695,7 +695,7 @@
       "id": 13,
       "type": "logs",
       "title": "Failures",
-      "description": "Every failed attempt and dead letter, with the template, the app, the error class and the SMTP reply.",
+      "description": "Every failed attempt and dead letter, with the template, the app, the error class and the SMTP reply. dlt_payload_invalid is a dead letter the consumer could not even parse, so it carries no template.",
       "datasource": { "type": "loki", "uid": "loki" },
       "options": {
         "showTime": true,
@@ -712,7 +712,7 @@
         {
           "refId": "A",
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{app=\"notifications-api\"} | json | event=~\"notification.failed|notification.dead_lettered\"",
+          "expr": "{app=\"notifications-api\"} | json | event=~\"notification.failed|notification.dead_lettered|notification.dlt_payload_invalid\"",
           "queryType": "range"
         }
       ]

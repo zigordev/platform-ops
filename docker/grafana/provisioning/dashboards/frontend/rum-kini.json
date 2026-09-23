@@ -1,7 +1,7 @@
 {
   "uid": "rum-kini",
   "title": "RUM · kini",
-  "description": "kini as visitors experience it: the vitals by release, which routes they reach, what broke in their browser and what the content security policy caught. There is no \"what visitors did\" table because kini-web declares no business events of its own — every interaction is a Click or a Form Submit, which says nothing a page view does not already say. The release label, the CSP panels and the log panels arrive with kini#150; the vitals, navigations, errors and frustration counters read today.",
+  "description": "kini as its players experience it: the vitals by release, what they did, which routes they reach, what broke in their browser and what the content security policy caught.",
   "tags": ["frontend", "rum", "kini"],
   "timezone": "browser",
   "editable": false,
@@ -485,6 +485,57 @@
     {
       "id": 9,
       "type": "table",
+      "title": "What players did",
+      "description": "kini declares its own event names, so these are the product steps rather than raw clicks. Most frequent first.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [{ "id": "custom.hidden", "value": true }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false, "reducer": ["sum"], "fields": "", "countRows": false },
+        "sortBy": [{ "displayName": "Count", "desc": true }]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": { "interaction_type": "Event", "Value": "Count" }
+          }
+        }
+      ],
+      "gridPos": { "x": 0, "y": 13, "w": 12, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (interaction_type) (increase(rum_interactions_total{job=\"kini-web\", interaction_type=~\"sign-in-started|team-created|team-switched|invitation-sent|invitation-accepted|invitation-accept-failed|pool-created|pool-create-failed|available-pools-synced|available-pool-added|results-checked|match-result-set|match-assigned|language-switched\"}[$__range]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "table",
       "title": "Where visitors went",
       "description": "Page views by route over the time range, busiest first. The routes are an allow-list, so a path that is not one of kini’s own is counted as other rather than becoming its own row.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -519,7 +570,7 @@
           }
         }
       ],
-      "gridPos": { "x": 0, "y": 13, "w": 8, "h": 9 },
+      "gridPos": { "x": 12, "y": 13, "w": 12, "h": 9 },
       "targets": [
         {
           "refId": "A",
@@ -534,7 +585,7 @@
       ]
     },
     {
-      "id": 10,
+      "id": 11,
       "type": "timeseries",
       "title": "Frustration",
       "description": "Rage clicks, dead clicks, slow page loads and excessive scrolling.",
@@ -562,7 +613,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 8, "y": 13, "w": 8, "h": 9 },
+      "gridPos": { "x": 0, "y": 22, "w": 12, "h": 9 },
       "targets": [
         {
           "refId": "A",
@@ -576,7 +627,7 @@
       ]
     },
     {
-      "id": 11,
+      "id": 12,
       "type": "timeseries",
       "title": "CSP violations by directive",
       "description": "Which rule of the policy was broken.",
@@ -604,7 +655,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 9 },
+      "gridPos": { "x": 12, "y": 22, "w": 12, "h": 9 },
       "targets": [
         {
           "refId": "A",
@@ -618,7 +669,7 @@
       ]
     },
     {
-      "id": 12,
+      "id": 13,
       "type": "logs",
       "title": "Browser errors",
       "description": "Each distinct error once per ten minutes, with the source line it maps to.",
@@ -633,7 +684,7 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "gridPos": { "x": 0, "y": 22, "w": 8, "h": 10 },
+      "gridPos": { "x": 0, "y": 31, "w": 8, "h": 10 },
       "targets": [
         {
           "refId": "A",
@@ -644,7 +695,7 @@
       ]
     },
     {
-      "id": 13,
+      "id": 14,
       "type": "logs",
       "title": "Poor vitals",
       "description": "Visits with a poor vital, and the element behind it.",
@@ -659,7 +710,7 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "gridPos": { "x": 8, "y": 22, "w": 8, "h": 10 },
+      "gridPos": { "x": 8, "y": 31, "w": 8, "h": 10 },
       "targets": [
         {
           "refId": "A",
@@ -670,7 +721,7 @@
       ]
     },
     {
-      "id": 14,
+      "id": 15,
       "type": "logs",
       "title": "CSP violations",
       "description": "What was blocked, where it came from and on which page.",
@@ -685,7 +736,7 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "gridPos": { "x": 16, "y": 22, "w": 8, "h": 10 },
+      "gridPos": { "x": 16, "y": 31, "w": 8, "h": 10 },
       "targets": [
         {
           "refId": "A",

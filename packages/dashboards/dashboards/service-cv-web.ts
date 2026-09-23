@@ -49,8 +49,8 @@ export const serviceCvWeb: DashboardSpec = {
       ], { unit: 's', min: 0 }),
     ],
     [
-      timeseries('Outbound calls', 'Calls cv makes, by span name: the copy from Tolgee, flags from Unleash, the model, the broker.', { w: 8, h: 7 }, [
-        prom(`sum by (span_name) (rate(traces_spanmetrics_calls_total{service="${JOB}", span_kind="SPAN_KIND_CLIENT"}[${RATE_INTERVAL}]))`, { legend: '{{span_name}}' }),
+      timeseries('Outbound calls', 'Calls cv makes, by span name: the copy from Tolgee, flags from Unleash and the model are client spans; the contact email it publishes is a producer span, so both kinds are read here.', { w: 8, h: 7 }, [
+        prom(`sum by (span_name) (rate(traces_spanmetrics_calls_total{service="${JOB}", span_kind=~"SPAN_KIND_CLIENT|SPAN_KIND_PRODUCER"}[${RATE_INTERVAL}]))`, { legend: '{{span_name}}' }),
       ], { unit: 'reqps', min: 0 }),
       timeseries('Where the copy came from', 'Message loads by source. local or default_locale means Tolgee did not answer.', { w: 8, h: 7 }, [
         prom(`sum by (source) (rate(cv_i18n_messages_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{source}}' }),

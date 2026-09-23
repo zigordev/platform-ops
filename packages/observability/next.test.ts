@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 
 import { afterEach, test, vi } from 'vitest';
 
-import { createMetricsRoute, createRumIngestRoute, registry } from './next';
+import {
+  createMetricsRoute,
+  createRumIngestRoute,
+  registerRumVocabulary,
+  registry,
+} from './next';
 
 const POST = createRumIngestRoute({ pages: ['/'] });
 
@@ -40,6 +45,26 @@ test('the home page series are exported at zero before any beacon arrives', asyn
   assert.match(
     frustrations,
     /rum_frustrations_total\{frustration_type="rage_click",page="\/",release="unknown"\} 0/
+  );
+});
+
+test('a vocabulary registered at startup is exported before the route module loads', async () => {
+  registerRumVocabulary({ customInteractions: ['ask-opened'], pages: ['/'] });
+
+  const interactions = await registry.getSingleMetricAsString('rum_interactions_total');
+  assert.match(
+    interactions,
+    /rum_interactions_total\{interaction_type="ask-opened",page="\/",release="unknown"\} 0/
+  );
+});
+
+test('the route factory still declares the vocabulary for callers that register nowhere else', async () => {
+  createRumIngestRoute({ customInteractions: ['contact-sent'], pages: ['/'] });
+
+  const interactions = await registry.getSingleMetricAsString('rum_interactions_total');
+  assert.match(
+    interactions,
+    /rum_interactions_total\{interaction_type="contact-sent",page="\/",release="unknown"\} 0/
   );
 });
 
