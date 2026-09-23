@@ -34,6 +34,8 @@
     "packages/observability/rum-client.ts",
     "packages/observability/metrics.registry.ts",
     "packages/observability/metrics.registry.test.ts",
+    "packages/observability/metrics.registry.openmetrics.ts",
+    "packages/observability/metrics.registry.openmetrics.test.ts",
     "packages/observability/feature-flags.ts",
     "packages/observability/feature-flags.test.ts",
     "packages/observability/probe-paths.ts",
