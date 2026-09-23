@@ -13,6 +13,7 @@ import { serviceKiniApi } from './service-kini-api.ts';
 import { serviceKiniWeb } from './service-kini-web.ts';
 import { serviceNotificationsApi } from './service-notifications-api.ts';
 import { serviceOverview } from './service-overview.ts';
+import { serviceSityWeb } from './service-sity-web.ts';
 import { sloOverview } from './slo-overview.ts';
 
 export const DASHBOARDS: DashboardSpec[] = [
@@ -23,6 +24,7 @@ export const DASHBOARDS: DashboardSpec[] = [
   serviceKiniApi,
   serviceKiniWeb,
   serviceNotificationsApi,
+  serviceSityWeb,
   rumOverview,
   rumCv,
   rumKini,
