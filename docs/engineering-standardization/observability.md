@@ -222,12 +222,16 @@ with the queries that read them: `notification_failure_audit_failed` and
 
 ### Log alerts
 
-Two rules in `docker/loki/rules/fake/log-alerts.yml`, both tickets.
+Three rules in `docker/loki/rules/fake/log-alerts.yml`, all tickets.
 `ErrorLogsSpiking` fires when a service writes more than one error line every
 five seconds for ten minutes, and `UncaughtExceptions` on any
 `process.uncaught_exception` line: a Next app or a Rust task goes on after one
 with nothing else firing, and a process that exits and restarts shows only as a
-gap in its metrics. Logs never
+gap in its metrics. Both group by `app` and match only a non-empty one, so a
+container that writes no service field cannot page under a blank name. The
+third, `NotificationsConsumerCrashLooping`, reads `kafka.consumer_crashed`,
+which the consumer writes at `warn` when the client restarts it — a level the
+error rule filters out, on a path that leaves every metric where it was. Logs never
 page: a page needs a symptom visitors feel, and that is a metric's job. The
 level policy above is what keeps the error rule worth reading.
 
