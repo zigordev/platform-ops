@@ -36,6 +36,10 @@ const APP = [
   'notification_render_duration_seconds_bucket',
   'notification_send_duration_seconds_bucket',
   'notification_delivery_duration_seconds_bucket',
+  'kini_pools_sync_runs_total',
+  'kini_pools_sync_problems_total',
+  'kini_notifications_total',
+  'kini_websocket_clients',
 ];
 
 const PLATFORM = [
