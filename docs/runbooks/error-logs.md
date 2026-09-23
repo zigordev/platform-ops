@@ -47,9 +47,13 @@ the outage lasts rather than editing the rule.
 
 **What fired.** An application logged `process.uncaught_exception`.
 
-**Whether it matters.** It is always a bug. Next catches the exception, prints
-it and keeps serving, so nothing else in the platform notices: no 5xx, no
-health change, no restart. The process continues in a state nobody designed.
+**Whether it matters.** It is always a bug, and what followed depends on the
+runtime. Next catches the exception, prints it and keeps serving, so nothing
+else in the platform notices: no 5xx, no health change, no restart. The process
+continues in a state nobody designed. A Rust service loses the task that
+panicked and keeps the rest running, unless the panic was in its main task. The
+Node APIs and sity's server exit. After an exit Docker restarts the container,
+and `service.started` follows.
 
 **How to see.**
 

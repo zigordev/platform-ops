@@ -612,6 +612,102 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/contact-publish.md'
           dashboard: 'service-cv-web'
 
+  - name: kini
+    rules:
+      - alert: PoolsSyncSchedulerDead
+        expr: |
+          sum by (job) (increase(kini_pools_sync_runs_total{outcome="completed"}[8d])) == 0
+          and on (job)
+          max by (job) (kini_pools_sync_runs_total{outcome="completed"} offset 8d)
+        for: 1h
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} has not finished a pool sync in over a week'
+          description: >-
+            The weekly pool sync has not completed once in eight days. Nothing
+            else notices: the API is up, health is ok, and the site keeps serving
+            whatever the last successful run wrote. The pools it shows are going
+            stale.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/pools-sync.md'
+          dashboard: 'service-kini-api'
+
+      - alert: PoolsSyncRunFailed
+        expr: sum by (job) (increase(kini_pools_sync_runs_total{outcome="failed"}[2h])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} could not finish its weekly pool sync'
+          description: >-
+            The scheduled sync threw before it finished. kini is showing whatever
+            the previous run left behind, and the next attempt is a week away
+            unless someone asks for one.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/pools-sync.md'
+          dashboard: 'service-kini-api'
+
+      - alert: PoolsSyncFeedBroken
+        expr: |
+          sum by (job, source) (increase(kini_pools_sync_problems_total{source!="all"}[24h])) >= 3
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.source }} has given kini {{ $value | humanize }} problems in a day'
+          description: >-
+            One upstream feed failed to fetch, answered with nothing in it, or
+            returned a document kini could not read, three or more times in the
+            last day. A feed that misbehaves that often has usually changed
+            shape rather than blipped.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/pools-sync.md'
+          dashboard: 'service-kini-api'
+
+      - alert: TeamInvitationsNotQueued
+        expr: sum by (job) (increase(kini_notifications_total{outcome="failed"}[15m])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} could not queue {{ $value | humanize }} invitation emails'
+          description: >-
+            Publishing a team invitation to the broker failed in the last fifteen
+            minutes. The person who sent it saw an error, the invited person got
+            no email, and nothing retries it.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/kini-invitations.md'
+          dashboard: 'service-kini-api'
+  - name: gpool
+    rules:
+      - alert: GpoolMailPublishFailing
+        expr: sum by (job) (increase(gpool_notifications_total{outcome="failed"}[15m])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} could not queue {{ $value | humanize }} emails'
+          description: >-
+            gpool failed to hand invitation or access mail to the broker in the
+            last fifteen minutes. Nothing retries it, so each one is an
+            invitation or a request that reaches nobody, and the person who sent
+            it saw no error.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/gpool-mail.md'
+          dashboard: 'gpool-funnel'
+
+      - alert: GpoolMailRequestedButNotSent
+        expr: |
+          sum by (job) (increase(notifications_received_total{source_app="gpool"}[30m])) > 0
+          unless on (job)
+          sum by (job) (increase(notifications_sent_total{source_app="gpool"}[30m])) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "gpool's emails are being read and none of them sent"
+          description: >-
+            {{ $labels.job }} took gpool mail in over the last thirty minutes and
+            delivered none of it. Mail from other products may be flowing
+            normally, so nothing else alerts: a gpool template that fails to
+            render looks exactly like this, and the attempts retry for hours
+            before they reach the dead-letter topic.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/gpool-mail.md'
+          dashboard: 'gpool-funnel'
+
   - name: notifications_delivery_burn
     rules:
       - alert: EmailDeliveryBudgetBurningFast
@@ -708,3 +804,92 @@ groups:
             two seconds for fifteen minutes.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/edge-slis.md'
           dashboard: 'platform-edge'
+
+  - name: trading_bot
+    rules:
+      - alert: MarketStreamDisconnected
+        expr: service_component_up{job="trading-bot-market-data", component="marketStream"} == 0
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data has lost the Binance websocket'
+          description: >-
+            trading-bot-market-data has reported its market stream down for ten
+            minutes. No fresh klines or trades are arriving: execution is
+            evaluating stale candles, and the stored history is growing a gap
+            that only a backfill will close.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/market-stream.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: MarketDataProducerDisconnected
+        expr: service_component_up{job="trading-bot-market-data", component="kafkaProducer"} == 0
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data cannot publish to Kafka'
+          description: >-
+            trading-bot-market-data has reported its Kafka producer down for ten
+            minutes. It may still be receiving the stream, but nothing is
+            reaching execution or the control-plane projections.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/market-data-stalled.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: MarketDataNotPublishing
+        expr: |
+          sum by (job) (increase(trading_bot_market_data_kline_publish_total[15m])) == 0
+          and on (job)
+          max by (job) (trading_bot_market_data_active_kline_subscriptions) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data has published no klines for fifteen minutes'
+          description: >-
+            market-data holds kline subscriptions and has published nothing for
+            fifteen minutes. Every subscription closes a candle at least once a
+            minute, so silence this long is the stream, the store or the
+            producer, whatever the health endpoint says about them.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/market-data-stalled.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: BinanceRateLimitNearCap
+        expr: |
+          (
+            max by (job) (trading_bot_market_data_binance_rest_used_weight_1m)
+            /
+            max by (job) (trading_bot_market_data_binance_rest_limit_weight_1m)
+          ) > 0.9
+          and
+          max by (job) (trading_bot_market_data_binance_rest_limit_weight_1m) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'market-data has spent {{ $value | humanizePercentage }} of the Binance weight ceiling'
+          description: >-
+            REQUEST_WEIGHT usage has been above 90% of the configured ceiling
+            for five minutes, which is past the budget the local limiter holds
+            itself to. Binance answers 429 at the ceiling and bans the address
+            shortly after.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/binance-rate-limit.md'
+          dashboard: 'service-trading-bot-market-data'
+
+      - alert: ExecutionLeftPaperMode
+        expr: |
+          trading_bot_execution_paper_mode_enabled == 0
+          and on (job, instance)
+          trading_bot_execution_active_promotion_loaded == 1
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: 'execution is trading live, not on paper'
+          description: >-
+            trading-bot-execution has an active promotion loaded and its mode is
+            live, so every signal it acts on places a real order against the
+            Binance account. Nothing else in the estate spends money on its own.
+            If this was not deliberate, stop the service now.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/execution-live-mode.md'
+          dashboard: 'service-trading-bot-execution'

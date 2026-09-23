@@ -1,7 +1,7 @@
 {
   "uid": "service-overview",
   "title": "Service overview",
-  "description": "Any Node service, picked from the list: health, requests, errors, latency with traces, its objectives, runtime and logs.",
+  "description": "Any service, picked from the list: health, requests, errors, latency with traces, its objectives, runtime and logs. The list is every job that announces itself the way the observability kit does, so the Rust services are in it too; their runtime row stays empty, because a Rust process publishes no event loop or process metrics.",
   "tags": ["services", "service"],
   "timezone": "browser",
   "editable": false,
@@ -50,10 +50,10 @@
         "label": "Service",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "definition": "label_values(nodejs_eventloop_lag_p99_seconds, job)",
+        "definition": "label_values({__name__=~\"service_health_status|service_build_info|http_requests_total\"}, job)",
         "query": {
           "qryType": 1,
-          "query": "label_values(nodejs_eventloop_lag_p99_seconds, job)",
+          "query": "label_values({__name__=~\"service_health_status|service_build_info|http_requests_total\"}, job)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

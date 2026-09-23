@@ -57,18 +57,18 @@ inhibit_rules:
   - source_matchers:
       - alertname="ServiceDown"
     target_matchers:
-      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking|PageLatencyBudget.*|AskSlow|AskUpstreamFailing|ContactPublishFailing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*"
+      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking|PageLatencyBudget.*|AskSlow|AskUpstreamFailing|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|PoolsSync.*|TeamInvitationsNotQueued|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*|MarketStreamDisconnected|MarketDataProducerDisconnected|MarketDataNotPublishing|BinanceRateLimitNearCap|ExecutionLeftPaperMode"
     equal: ['environment', 'job']
   - source_matchers:
       - alertname="ServiceUnhealthy"
     target_matchers:
-      - alertname=~"NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*"
+      - alertname=~"GpoolMailRequestedButNotSent|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*"
     equal: ['environment', 'job']
 
   - source_matchers:
       - alertname="RedpandaDown"
     target_matchers:
-      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing"
+      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|TeamInvitationsNotQueued"
     equal: ['environment']
   - source_matchers:
       - alertname="RedpandaDown"

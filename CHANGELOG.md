@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.35.0](https://github.com/zigordev/platform-ops/compare/v1.34.0...v1.35.0) (2026-09-23)
+
+
+### Features
+
+* **observability:** give gpool its own dashboards and mail alerts ([#207](https://github.com/zigordev/platform-ops/issues/207)) ([709cb00](https://github.com/zigordev/platform-ops/commit/709cb003679546369a173eecb71a1118e7009447))
+
+## [1.34.0](https://github.com/zigordev/platform-ops/compare/v1.33.0...v1.34.0) (2026-09-23)
+
+
+### Features
+
+* **grafana:** a dashboard for sity-web, and nothing more ([#210](https://github.com/zigordev/platform-ops/issues/210)) ([a9af3e0](https://github.com/zigordev/platform-ops/commit/a9af3e050a547e8671bc3ca73ffc36198a23bf67))
+
+## [1.33.0](https://github.com/zigordev/platform-ops/compare/v1.32.0...v1.33.0) (2026-09-23)
+
+
+### Features
+
+* **observability:** give kini its own dashboards and sync alerts ([#208](https://github.com/zigordev/platform-ops/issues/208)) ([aed6594](https://github.com/zigordev/platform-ops/commit/aed6594d374007e15e25977cd7d9dca46c805ed9))
+
+## [1.32.0](https://github.com/zigordev/platform-ops/compare/v1.31.1...v1.32.0) (2026-09-23)
+
+
+### Features
+
+* **observability:** standard events, probe-free traces and zero-start metrics in the kit ([#204](https://github.com/zigordev/platform-ops/issues/204)) ([2757c2b](https://github.com/zigordev/platform-ops/commit/2757c2bb24b3f1adb99d1d2a9e35d17f7e2aea24))
+
+
+### Bug Fixes
+
+* **observability:** scrape the control plane by name and drop probes from the SLIs ([#206](https://github.com/zigordev/platform-ops/issues/206)) ([c44805a](https://github.com/zigordev/platform-ops/commit/c44805a6ba3cfd95e64f325e26632564a6f33e3b))
+
 ## [1.31.1](https://github.com/zigordev/platform-ops/compare/v1.31.0...v1.31.1) (2026-09-22)
 
 

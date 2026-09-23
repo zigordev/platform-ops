@@ -44,7 +44,7 @@ scrape_configs:
   - job_name: 'trading-bot-control-plane'
     metrics_path: /metrics
     static_configs:
-      - targets: ['trading-bot-api:8080']
+      - targets: ['trading-bot-control-plane:8080']
   - job_name: 'trading-bot-market-data'
     metrics_path: /metrics
     static_configs:

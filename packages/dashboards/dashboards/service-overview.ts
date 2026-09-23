@@ -7,13 +7,16 @@ import { prom } from '../lib/queries.ts';
 
 const JOB = '$job';
 
+const ANY_SERVICE = '{__name__=~"service_health_status|service_build_info|http_requests_total"}';
+
 export const serviceOverview: DashboardSpec = {
   uid: 'service-overview',
   title: 'Service overview',
-  description: 'Any Node service, picked from the list: health, requests, errors, latency with traces, its objectives, runtime and logs.',
+  description:
+    'Any service, picked from the list: health, requests, errors, latency with traces, its objectives, runtime and logs. The list is every job that announces itself the way the observability kit does, so the Rust services are in it too; their runtime row stays empty, because a Rust process publishes no event loop or process metrics.',
   folder: SERVICES,
   tags: ['service'],
-  variables: [jobVariable('nodejs_eventloop_lag_p99_seconds', 'Service')],
+  variables: [jobVariable(ANY_SERVICE, 'Service')],
   deploys: deploys('{job="$job"}'),
   rows: [
     [
