@@ -149,10 +149,13 @@ export function isEnabled(key: string): boolean {
  * at startup and avoid serving one request from defaults and the next from the
  * server. It resolves rather than rejects on failure, for the same reason.
  *
- * The SDK is imported through a non-literal specifier so the compiler does not
- * try to resolve it: this file is vendored into every repository, and most of
- * them declare flags without talking to a flag server. Only the ones that call
- * this function need the dependency.
+ * The SDK is imported through a non-literal specifier, which `tsc` leaves
+ * alone: this file is vendored into every repository, and most of them declare
+ * flags without talking to a flag server. Turbopack is not fooled — it folds
+ * the constant and resolves `unleash-client` — so a Next.js app that reads a
+ * flag must declare the dependency, and `typescript.ignoreBuildErrors` will not
+ * help because the failure comes from the bundler, not the compiler. A Nest or
+ * plain `tsc` build never resolves it.
  */
 export async function connectRemoteFlags(options: RemoteFlagOptions): Promise<boolean> {
   const moduleName = 'unleash-client';
