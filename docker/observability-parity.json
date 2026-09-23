@@ -1,0 +1,64 @@
+{
+  "scrape-parity": [
+    {
+      "name": "caddy",
+      "reason": "the ingress runs only in prod; nothing locally serves a Caddy admin endpoint to scrape"
+    },
+    {
+      "name": "sity-web",
+      "reason": "OPEN GAP: sity has no prod deploy yet, so the job would scrape an address that does not exist. Remove this entry when sity ships to prod."
+    },
+    {
+      "name": "trading-bot-operator-console",
+      "reason": "OPEN GAP: trading-bot has no prod deploy path. Remove the five trading-bot entries together when it ships."
+    },
+    {
+      "name": "trading-bot-control-plane",
+      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+    },
+    {
+      "name": "trading-bot-market-data",
+      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+    },
+    {
+      "name": "trading-bot-research-backtesting",
+      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+    },
+    {
+      "name": "trading-bot-execution",
+      "reason": "OPEN GAP: trading-bot has no prod deploy path."
+    }
+  ],
+  "inhibit-labels": [
+    {
+      "name": "ErrorLogsSpiking",
+      "reason": "OPEN GAP: the log alerts group by app, so they carry no job and the ServiceDown inhibit has never matched them — every outage pages twice. Remove this entry once the Loki rules emit job."
+    }
+  ],
+  "inhibit-siblings": [
+    {
+      "name": "1:AskBudgetExhausted",
+      "reason": "a spend alert is not caused by the service being down, so ServiceDown must not hide it"
+    },
+    {
+      "name": "1:AskBudgetNearlySpent",
+      "reason": "a spend alert is not caused by the service being down, so ServiceDown must not hide it"
+    },
+    {
+      "name": "1:UncaughtExceptions",
+      "reason": "OPEN GAP: same root cause as ErrorLogsSpiking — a log alert carries no job, so listing it here would inhibit nothing"
+    },
+    {
+      "name": "1:NotificationsConsumerCrashLooping",
+      "reason": "OPEN GAP: same root cause as ErrorLogsSpiking — a log alert carries no job"
+    },
+    {
+      "name": "2:NotificationsConsumerCrashLooping",
+      "reason": "OPEN GAP: same root cause as ErrorLogsSpiking — a log alert carries no job"
+    },
+    {
+      "name": "2:GpoolMailPublishFailing",
+      "reason": "a publish failure is gpool's own producer, not the mailer being unhealthy, so ServiceUnhealthy on notifications must not hide it"
+    }
+  ]
+}
