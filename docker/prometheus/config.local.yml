@@ -104,5 +104,5 @@ scrape_configs:
       - targets: ['alloy:12345']
 
 rule_files:
-  - /etc/prometheus/prometheus.rules.yml
-  - /etc/prometheus/prometheus.alerts.yml
+  - /etc/prometheus/rules.yml
+  - /etc/prometheus/alerts.yml

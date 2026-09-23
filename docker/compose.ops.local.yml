@@ -46,9 +46,9 @@ services:
     restart: unless-stopped
     logging: *default-logging
     command:
-      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --config.file=/etc/alertmanager/config.local.yml
     volumes:
-      - ./alertmanager/config.local.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager:/etc/alertmanager:ro
     networks: [platform_ops_shared]
 
   prometheus:
@@ -58,15 +58,13 @@ services:
     restart: unless-stopped
     logging: *default-logging
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
+      - --config.file=/etc/prometheus/config.local.yml
       - --web.enable-remote-write-receiver
       - --storage.tsdb.retention.time=90d
       - --storage.tsdb.retention.size=12GB
       - --enable-feature=exemplar-storage
     volumes:
-      - ./prometheus/config.local.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/rules.yml:/etc/prometheus/prometheus.rules.yml:ro
-      - ./prometheus/alerts.yml:/etc/prometheus/prometheus.alerts.yml:ro
+      - ./prometheus:/etc/prometheus:ro
     depends_on:
       - alertmanager
     networks: [platform_ops_shared]
@@ -104,8 +102,7 @@ services:
     ports:
       - '3100:3100'
     volumes:
-      - ../docker/loki/config.yml:/etc/loki/config.yml:ro
-      - ../docker/loki/rules:/etc/loki/rules:ro
+      - ./loki:/etc/loki:ro
       - ops-local-loki-data:/loki
     networks: [platform_ops_shared]
 
