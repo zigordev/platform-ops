@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.3](https://github.com/zigordev/platform-ops/compare/v1.37.2...v1.37.3) (2026-09-23)
+
+
+### Bug Fixes
+
+* **prometheus:** stop scraping an ingress that does not run locally ([#221](https://github.com/zigordev/platform-ops/issues/221)) ([34bb7fc](https://github.com/zigordev/platform-ops/commit/34bb7fc13f7ceee601069c53549eb46657dfa616))
+
 ## [1.37.2](https://github.com/zigordev/platform-ops/compare/v1.37.1...v1.37.2) (2026-09-23)
 
 
