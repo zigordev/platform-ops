@@ -41,7 +41,7 @@ goes stale, then absent.
 ## How to see
 
 ```promql
-up{job=~"gpool-api|kini-api|notifications-api"} == 1
+up{job=~"gpool-api|kini-api|notifications-api|cv-web|gpool-web|kini-web|sity-web|trading-bot-operator-console"} == 1
   unless on (job) service_health_status
 ```
 
@@ -58,9 +58,9 @@ curl -s http://<service>/health
 '{{json .Config.Healthcheck}}'`. If it is null, that is the bug.
 2. **Does `/health` still respond?** If it 404s, the route moved — health lives
    at `/health`, off the API prefix, in every service.
-3. **Does the handler still call `recordHealth`?** The vendored kit can drift;
-   `bash platform-ops/scripts/verify-standards.sh` reports drift against the
-   canonical copy.
+3. **Does the handler still call `recordHealth`?** The vendored kit can drift,
+   and nothing checks the copies: diff the service's observability folder
+   against `platform-ops/packages/observability`.
 4. **Was the service rebuilt after the kit was last synced?** A running image
    predating the change will not have the gauge — which is exactly how this
    alert first showed up.
