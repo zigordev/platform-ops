@@ -3,9 +3,26 @@
 The reference implementation of the observability code every Node service runs.
 
 Each service keeps its own copy under `apps/*/src/observability/` and maintains
-it by hand. Nothing propagates a change made here and nothing compares the
-copies; whoever changes the kit carries the change into the consumers that need
-it.
+it by hand. Nothing propagates a change made here; whoever changes the kit
+carries the change into the consumers that need it.
+
+What does happen automatically is the noticing. `kit.manifest.json` is generated
+from this directory by `npm run kit:manifest` and CI regenerates it and compares,
+so it cannot fall behind the files beside it. Each consumer commits the manifest
+it last vendored against and runs `scripts/check-kit-parity.mjs`: a local edit to
+a copy fails that repository's build offline, and a kit that has moved on is
+reported without failing anything, because on the day a change lands here every
+consumer is legitimately behind. `kit.profiles.json` says which files each kind
+of service is expected to carry, so a file added here that never reaches a
+consumer is a finding rather than a silence. Each profile has a `kit` list,
+copied verbatim and compared, and a `local` list of files the consumer writes
+itself — which is how a Next app's `metrics.registry.ts` re-export is required
+without being mistaken for a fork.
+
+Adding a file to the kit means adding it to `kit.profiles.json` under the
+profiles that should carry it, then running `npm run kit:manifest`. If the new
+file is imported by a file an existing profile already carries, the profile has
+to gain it too, and the manifest check says so.
 
 ## Why vendored rather than published
 

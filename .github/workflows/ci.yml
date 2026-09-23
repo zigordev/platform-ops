@@ -95,6 +95,12 @@ jobs:
       - name: Shell, workflow, compose and Terraform checks
         run: npm run check:shell && npm run check:workflows && npm run check:terraform
 
+      - name: Observability kit manifest
+        run: npm run check:kit
+
+      - name: Observability parity
+        run: npm run check:alerts
+
       - name: Terraform validate (bootstrap)
         run: |
           terraform -chdir=infra/terraform/bootstrap init -backend=false -input=false

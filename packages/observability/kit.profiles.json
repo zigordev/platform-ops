@@ -1,0 +1,76 @@
+{
+  "nest": {
+    "kit": [
+      "feature-flags.ts",
+      "framework-logs.ts",
+      "health-metrics.ts",
+      "http-metrics.middleware.ts",
+      "json-logger.ts",
+      "metrics.registry.ts",
+      "nest.ts",
+      "probe-paths.ts",
+      "route-names.ts",
+      "standard-events.ts",
+      "start-at-zero.ts",
+      "tracing.ts"
+    ]
+  },
+  "fastify": {
+    "kit": [
+      "fastify.ts",
+      "feature-flags.ts",
+      "framework-logs.ts",
+      "health-metrics.ts",
+      "json-logger.ts",
+      "metrics.registry.ts",
+      "probe-paths.ts",
+      "route-names.ts",
+      "standard-events.ts",
+      "start-at-zero.ts",
+      "tracing.ts"
+    ]
+  },
+  "fastify-web": {
+    "kit": [
+      "csp-reports.ts",
+      "fastify-rum.ts",
+      "fastify.ts",
+      "framework-logs.ts",
+      "health-metrics.ts",
+      "json-logger.ts",
+      "mask.ts",
+      "metrics.registry.ts",
+      "rum-client.ts",
+      "rum-details.ts",
+      "rum-ingest.ts",
+      "rum-metrics.ts",
+      "standard-events.ts",
+      "start-at-zero.ts"
+    ]
+  },
+  "next": {
+    "kit": [
+      "RumProvider.tsx",
+      "csp-reports.ts",
+      "feature-flags.ts",
+      "health-metrics.ts",
+      "json-logger.ts",
+      "mask.ts",
+      "metrics.registry.openmetrics.ts",
+      "next.ts",
+      "probe-paths.ts",
+      "route-names.ts",
+      "rum-client.ts",
+      "rum-details.ts",
+      "rum-ingest.ts",
+      "rum-metrics.ts",
+      "server-timing.ts",
+      "standard-events.ts",
+      "start-at-zero.ts",
+      "tracing.ts"
+    ],
+    "local": [
+      "metrics.registry.ts"
+    ]
+  }
+}
