@@ -124,11 +124,7 @@ services:
       - ops-prod-tolgee-data:/data
       - ./tolgee/config.yaml:/config.yaml:ro
     healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || wget -qO- http://localhost:8080/api/healthz >/dev/null 2>&1',
-        ]
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8080/actuator/health >/dev/null 2>&1']
       interval: 5s
       timeout: 3s
       retries: 30

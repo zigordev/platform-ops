@@ -348,7 +348,7 @@ From the EC2 instance or through an SSM shell:
 ```bash
 curl -fsS http://127.0.0.1:8200/v1/sys/health
 curl -fsS http://127.0.0.1:3000/api/health
-curl -fsS http://127.0.0.1:8080/healthz || curl -fsS http://127.0.0.1:8080/api/healthz
+curl -fsS http://127.0.0.1:8080/actuator/health
 sudo docker compose --env-file "$OPS_DIR/docker/.env.ops.prod" -f "$OPS_DIR/docker/compose.ops.prod.yml" ps redpanda
 ```
 

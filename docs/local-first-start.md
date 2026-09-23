@@ -156,7 +156,7 @@ Confirm the key services respond:
 ```bash
 curl -fsS http://localhost:8200/v1/sys/health
 curl -fsS http://localhost:3002/api/health
-curl -fsS http://localhost:8090/healthz || curl -fsS http://localhost:8090/api/healthz
+curl -fsS http://localhost:8090/actuator/health
 ```
 
 Useful local URLs:
