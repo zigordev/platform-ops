@@ -36,8 +36,16 @@ an outage, a project with no translations, or missing Tolgee configuration.
 
 **This is not the alert for a failed promotion.** A promotion that fails leaves
 prod Tolgee up and serving yesterday's copy, so every render still counts
-`merged` and nothing here fires. Stale-but-answering needs a signal from the
-promotion, and there is none today.
+`merged` and nothing here fires. `CopyServedFromRepository` cannot cover it and
+is not meant to: stale-but-answering is indistinguishable from healthy at the
+running site.
+
+The signal comes from the promotion itself. `promote-prod-translations.yml` in
+cv, gpool and kini retries the push, and a promotion that still fails opens or
+comments on one issue titled `Prod translations: promotion to Tolgee failing`,
+labelled `i18n`, in the repository whose copy did not land. The issue closes
+itself when a later promotion succeeds. If the wording on a site is stale while
+this runbook's queries look healthy, that issue is where to look.
 
 ## How to see
 
