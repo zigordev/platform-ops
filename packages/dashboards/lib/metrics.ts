@@ -49,6 +49,7 @@ const APP = [
   'kini_predictions_total',
   'kini_match_results_total',
   'trading_bot_control_plane_projections_total',
+  'trading_bot_control_plane_config_changes_total',
   'trading_bot_market_data_active_kline_subscriptions',
   'trading_bot_market_data_active_pair_subscriptions',
   'trading_bot_market_data_kline_publish_total',

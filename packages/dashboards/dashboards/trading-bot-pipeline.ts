@@ -20,6 +20,8 @@ const WEIGHT: Step[] = [
 
 const CONFIGURATION = 'strategy_name, pair_code, timeframe_code, risk_profile_name';
 
+const CONFIG_PUBLISH_LOG = 'config.publish_failed|config.publish_skipped';
+
 const PIPELINE_LOG =
   'backtest.failed|backtest.batch_processed|backtest_scan.completed|backtest_scan.failed|backtest.progress_projection_failed|backtest.completed_projection_failed|data_readiness.projection_failed';
 
@@ -35,7 +37,7 @@ export const tradingBotPipeline: DashboardSpec = {
   uid: 'trading-bot-pipeline',
   title: 'trading-bot pipeline',
   description:
-    'Not a funnel: nobody is being carried from one step to the next, and nothing here is a conversion. It is a pipeline, and each stage is measured on its own — stored history replayed into signals, signals turned into simulated trades, backtests scored and their results projected back into the control plane, promotions traded in paper or in earnest, all of it under one Binance weight budget. trading-bot is local only today: it has no deploy and no production scrape job, so the deploy annotation never fires and every panel goes flat when the local stack is down. The trade and last-run panels come from trading-bot#167 and stay empty until it merges; the run counters, the weight budget, the mode and the projections read today.',
+    'Not a funnel: nobody is being carried from one step to the next, and nothing here is a conversion. It is a pipeline, and each stage is measured on its own — stored history replayed into signals, signals turned into simulated trades, backtests scored and their results projected back into the control plane, promotions traded in paper or in earnest, all of it under one Binance weight budget. trading-bot is local only today: it has no deploy and no production scrape job, so the deploy annotation never fires and every panel goes flat when the local stack is down. The trade and last-run panels come from trading-bot#167 and stay empty until it merges; the run counters, the weight budget, the mode, the projections and the configuration changes read today.',
   folder: BUSINESS,
   tags: ['trading-bot', 'backtests'],
   time: { from: 'now-7d', to: 'now' },
@@ -117,6 +119,14 @@ export const tradingBotPipeline: DashboardSpec = {
       timeseries('Backtest results the cap threw away', `Results dropped because the service is already tracking the 2,048 configurations it is willing to export. Anything above that line is scored and then forgotten, so the table to the left is no longer the whole picture. ${WAITING_RUNS}`, { w: 6, h: 9 }, [
         prom(`sum(increase(trading_bot_research_backtesting_last_run_configurations_dropped_total[${RATE_INTERVAL}]))`, { legend: 'dropped' }),
       ], { unit: 'short', min: 0, bars: true }),
+    ],
+    [
+      timeseries('Configuration changes to the services', 'Every pair, timeframe, strategy, risk profile or promotion the control plane saved and then announced on the broker. published is the announcement landing; failed is a send that threw and skipped is one offered while the publisher was stopping, and both are swallowed behind a 2xx. market-data is the only consumer and also reconciles on the hour, so a lost event is an hour of stale subscriptions rather than a change that never happens. All three outcomes start at zero, so a flat zero is silence and not a missing series.', { w: 12, h: 8 }, [
+        prom(`sum by (outcome) (increase(trading_bot_control_plane_config_changes_total[${RATE_INTERVAL}]))`, { legend: '{{outcome}}' }),
+      ], { unit: 'short', min: 0, stack: true, bars: true }),
+      logs('Configuration changes that never left', 'The lines behind the failed and skipped counts, newest first. Each one names the resource type, the operation and the id, which together are enough to repeat the change by hand — nothing else kept a copy.', { w: 12, h: 8 }, [
+        loki(`{app="trading-bot-control-plane"} | json | event=~"${CONFIG_PUBLISH_LOG}"`),
+      ]),
     ],
     [
       logs('Backtests and the projections behind them', 'Each scan, each batch, each run that failed, and every result the control plane could not write down, newest first. A projection failure here names the job it belongs to, which is how you find out which backtest lost its progress. This reads today.', { w: 24, h: 10 }, [
