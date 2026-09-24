@@ -1,0 +1,932 @@
+{
+  "uid": "kini-funnel",
+  "title": "kini funnel",
+  "description": "The road a kini player walks: invited to a team, accepting, taking up the week’s draw, filling in every match, checking the results — and, alone in the estate, ending on an outcome rather than an action, because a checked match is a hit or a miss. The invitation email is followed from kini asking to the relay accepting it. The player counters come from kini#160 and stay empty until it merges; the email loop, the browser steps and the log below read today.",
+  "tags": ["business", "kini", "teams"],
+  "timezone": "browser",
+  "editable": false,
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "weekStart": "",
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "version": 1,
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Deploys",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "enable": true,
+        "hide": false,
+        "iconColor": "purple",
+        "target": {
+          "refId": "Anno",
+          "expr": "max by (job, version) (service_build_info{job=\"kini-api\"}) unless on (job, version) deploy:version_seen:max3d",
+          "interval": "1m"
+        },
+        "titleFormat": "Deploy · {{job}} {{version}}",
+        "textFormat": "",
+        "tagKeys": "job,version",
+        "useValueForTime": false
+      }
+    ]
+  },
+  "templating": { "list": [] },
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Estate",
+      "tags": ["estate"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Services",
+      "tags": ["services"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Frontend",
+      "tags": ["frontend"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Platform",
+      "tags": ["platform"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "dashboards",
+      "title": "Business",
+      "tags": ["business"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link",
+      "targetBlank": false,
+      "tooltip": "",
+      "url": ""
+    },
+    {
+      "type": "link",
+      "title": "Runbooks",
+      "url": "https://github.com/zigordev/platform-ops/tree/main/docs/runbooks",
+      "targetBlank": true,
+      "icon": "doc",
+      "tags": [],
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": false,
+      "tooltip": ""
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Invitations sent · 7 days",
+      "description": "People invited to a team. Every step to the right of this one starts here. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_team_actions_total{action=\"invitation_sent\"}[7d])) or vector(0)",
+          "legendFormat": "sent",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Invitations accepted · 7 days",
+      "description": "Invitations that turned into a team member. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_team_actions_total{action=\"invitation_accepted\"}[7d])) or vector(0)",
+          "legendFormat": "accepted",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Acceptance rate · 7 days",
+      "description": "Accepted over sent. Low with healthy mail is a product problem, low with failed mail is ours, and the email row below says which. It reads nothing at all while nobody has been invited, because the counters are both zero. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0.5 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_team_actions_total{action=\"invitation_accepted\"}[7d])) / sum(increase(kini_team_actions_total{action=\"invitation_sent\"}[7d]))",
+          "legendFormat": "accepted",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Draws taken up · 7 days",
+      "description": "Weekly lottery draws a team pulled in to play. A team that accepts invitations and takes up no draw has joined and never played. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_pool_actions_total{action=\"taken_up\"}[7d])) or vector(0)",
+          "legendFormat": "taken up",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Predictions completed · 7 days",
+      "description": "Draws whose last empty match was filled in, so the team has a full ticket. Fewer of these than draws taken up means tickets are being abandoned half-played. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_pool_actions_total{action=\"predictions_completed\"}[7d])) or vector(0)",
+          "legendFormat": "completed",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Hit rate · 7 days",
+      "description": "Share of first-scored matches the team called right. This is the end of the funnel and the only step that is an outcome rather than something a player did — nobody can make it go up by using kini more, and it is here to be watched rather than improved. The line sits just above a third, which is what blind guessing at a home win, a draw or an away win would give you. It reads nothing until a draw has been scored. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0.35 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto",
+        "justifyMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_match_results_total{outcome=\"hit\"}[7d])) / sum(increase(kini_match_results_total[7d]))",
+          "legendFormat": "hit",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "The funnel over time",
+      "description": "The whole chain in one chart, one bar per step. The bars should fall from left to right within a week; a step that collapses while the one before it holds is where players are being lost. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 5, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_team_actions_total{action=\"invitation_sent\"}[$__rate_interval]))",
+          "legendFormat": "invited",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_team_actions_total{action=\"invitation_accepted\"}[$__rate_interval]))",
+          "legendFormat": "accepted",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_pool_actions_total{action=\"taken_up\"}[$__rate_interval]))",
+          "legendFormat": "draw taken up",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_pool_actions_total{action=\"predictions_completed\"}[$__rate_interval]))",
+          "legendFormat": "predictions completed",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "E",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(kini_pool_actions_total{action=\"results_checked\"}[$__rate_interval]))",
+          "legendFormat": "results checked",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Hits and misses",
+      "description": "Matches scored against the official results for the first time. A rescore of the same match is counted in neither, so these bars are players finding out, not the checker running. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "normal", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 8, "y": 5, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome) (increase(kini_match_results_total[$__rate_interval]))",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Invitations that went nowhere",
+      "description": "The two dead ends of an invitation: the address already belongs to a member, or accepting threw and the person saw an error. The second one costs a player and needs the log below. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 16, "y": 5, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (action) (increase(kini_team_actions_total{action=~\"invitation_already_member|invitation_accept_failed\"}[$__rate_interval]))",
+          "legendFormat": "{{action}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Teams",
+      "description": "Teams players made themselves, and the ones kini made for them on first sign-in. default_created without created means nobody has chosen to build a team of their own. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "normal", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 13, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (action) (increase(kini_team_actions_total{action=~\"created|default_created\"}[$__rate_interval]))",
+          "legendFormat": "{{action}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Everything done to a draw",
+      "description": "Every pool action stacked: taken up from the week’s lottery feed, created or edited by hand, filled in, scored. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "normal", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 8, "y": 13, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (action) (increase(kini_pool_actions_total[$__rate_interval]))",
+          "legendFormat": "{{action}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Predictions",
+      "description": "set and cleared are a player changing a pick; assigned and unassigned are a team handing a match to one of its members to call. Clearing and unassigning are normal play, not errors. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (action) (increase(kini_predictions_total[$__rate_interval]))",
+          "legendFormat": "{{action}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "The invitation email loop, by template",
+      "description": "Both halves of the same email side by side. kini labels its counter template where notifications labels it template_id, so the first column is renamed before the join; a row where queued and requested disagree means an invitation was lost between kini and the broker. kini sends one kind of email, so one row is the whole of it. This reads today.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [{ "id": "custom.hidden", "value": true }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false, "reducer": ["sum"], "fields": "", "countRows": false },
+        "sortBy": [{ "displayName": "Queued by kini", "desc": true }]
+      },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "template_id": "Template",
+              "Value #A": "Queued by kini",
+              "Value #B": "Requested",
+              "Value #C": "Sent",
+              "Value #D": "Failed attempts"
+            }
+          }
+        }
+      ],
+      "gridPos": { "x": 0, "y": 21, "w": 12, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (template_id) (label_replace(sum by (template) (increase(kini_notifications_total{outcome=\"queued\"}[$__range])), \"template_id\", \"$1\", \"template\", \"(.*)\"))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (template_id) (increase(notifications_received_total{source_app=\"kini\"}[$__range]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (template_id) (increase(notifications_sent_total{source_app=\"kini\"}[$__range]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (template_id) (increase(notifications_failed_total{source_app=\"kini\"}[$__range]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false,
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "How long invitation mail takes",
+      "description": "From kini asking to the relay accepting, for kini templates only. The line is the two-minute objective every product shares. An invitation that arrives late is an acceptance that happens late or not at all. This reads today.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 120 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 12, "y": 21, "w": 12, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(notification_delivery_duration_seconds_bucket{source_app=\"kini\"}[$__rate_interval])))",
+          "legendFormat": "p95",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(notification_delivery_duration_seconds_bucket{source_app=\"kini\"}[$__rate_interval])))",
+          "legendFormat": "p50",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Invitations at the other end",
+      "description": "The same mail as notifications handled it: sent by the relay, a failed attempt, or given up on. A dead letter is an invitation nobody will ever receive and nobody is told about. This reads today.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 30, "w": 12, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(notifications_sent_total{source_app=\"kini\"}[$__rate_interval]))",
+          "legendFormat": "sent",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(notifications_failed_total{source_app=\"kini\"}[$__rate_interval]))",
+          "legendFormat": "failed attempts",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(notifications_dlq_total{source_app=\"kini\"}[$__rate_interval]))",
+          "legendFormat": "dead-lettered",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "The same steps in the browser",
+      "description": "What players clicked, reported by their browsers, including the accept that failed in front of them. It should track the server counts above; a gap means the click never reached the API. This reads today.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 12, "y": 30, "w": 12, "h": 9 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (interaction_type) (increase(rum_interactions_total{job=\"kini-web\", interaction_type=~\"invitation-sent|invitation-accepted|invitation-accept-failed|available-pool-added|match-result-set|match-assigned|results-checked\"}[$__rate_interval]))",
+          "legendFormat": "{{interaction_type}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "logs",
+      "title": "Invitations, draws and the emails they trigger",
+      "description": "Every invitation sent and accepted, every pool created by hand and every email decision, newest first, with the team and pool ids. Email addresses are never logged. This reads today and does not wait on kini#160, because the API already logs these lines; locally it is usually empty simply because nobody has been invited, not because it is pointed at the wrong stream.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "gridPos": { "x": 0, "y": 39, "w": 24, "h": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{app=\"kini-api\"} | json | event=~\"team.invitation_sent|team.invitation_accepted|pool.created|notification.queued|notification.publish_failed\"",
+          "queryType": "range"
+        }
+      ]
+    }
+  ]
+}

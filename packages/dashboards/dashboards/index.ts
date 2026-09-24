@@ -3,6 +3,7 @@ import { cvFunnel } from './cv-funnel.ts';
 import { emailDelivery } from './email-delivery.ts';
 import { estateOverview } from './estate-overview.ts';
 import { gpoolFunnel } from './gpool-funnel.ts';
+import { kiniFunnel } from './kini-funnel.ts';
 import { platformEdge } from './platform-edge.ts';
 import { platformHost } from './platform-host.ts';
 import { platformStack } from './platform-stack.ts';
@@ -25,6 +26,7 @@ import { serviceTradingBotMarketData } from './service-trading-bot-market-data.t
 import { serviceTradingBotOperatorConsole } from './service-trading-bot-operator-console.ts';
 import { serviceTradingBotResearchBacktesting } from './service-trading-bot-research-backtesting.ts';
 import { sloOverview } from './slo-overview.ts';
+import { tradingBotPipeline } from './trading-bot-pipeline.ts';
 
 export const DASHBOARDS: DashboardSpec[] = [
   estateOverview,
@@ -49,6 +51,8 @@ export const DASHBOARDS: DashboardSpec[] = [
   rumTradingBotOperatorConsole,
   cvFunnel,
   gpoolFunnel,
+  kiniFunnel,
+  tradingBotPipeline,
   emailDelivery,
   platformHost,
   platformEdge,
