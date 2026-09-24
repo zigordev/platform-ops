@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.1](https://github.com/zigordev/platform-ops/compare/v1.40.0...v1.40.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **observability:** one server span per next request, and none lost when no route matched ([#231](https://github.com/zigordev/platform-ops/issues/231)) ([8af6a7d](https://github.com/zigordev/platform-ops/commit/8af6a7d0bcfd187c8846eb7004e3ea2526078be5))
+
 ## [1.40.0](https://github.com/zigordev/platform-ops/compare/v1.39.0...v1.40.0) (2026-09-24)
 
 
