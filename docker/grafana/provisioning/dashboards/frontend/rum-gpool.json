@@ -1,7 +1,7 @@
 {
   "uid": "rum-gpool",
   "title": "RUM · gpool",
-  "description": "gpool as its players experience it: the vitals, which of its pages are slow, what they did with pools and what broke in their browser. The release breakdown and the policy-violation panels need gpool#283; the rest reads today.",
+  "description": "gpool as its players experience it: the vitals, which of its pages are slow, what they did with pools and what broke in their browser. Every panel reads today.",
   "tags": ["frontend", "rum", "gpool"],
   "timezone": "browser",
   "editable": false,
@@ -342,7 +342,7 @@
       "id": 6,
       "type": "stat",
       "title": "CSP violations · 24 hours",
-      "description": "Scripts or resources the policy did not allow. Needs gpool#283, which is what gives gpool-web a policy and a report endpoint.",
+      "description": "Scripts or resources the policy did not allow. gpool-web serves a nonce policy and a report endpoint, so any count here is worth reading.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -387,7 +387,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "LCP p75 by release",
-      "description": "Compare a release with the one before it. The release label arrives with gpool#283; before it every visit falls into one series. Hover a dot to open the render trace.",
+      "description": "Compare a release with the one before it. Visits from before gpool#283 carry no release label and fall into one unnamed series. Hover a dot to open the render trace.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -579,7 +579,7 @@
       "id": 11,
       "type": "timeseries",
       "title": "CSP violations by directive",
-      "description": "Which rule of the policy was broken. Needs gpool#283.",
+      "description": "Which rule of the policy was broken.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -742,7 +742,7 @@
       "id": 14,
       "type": "logs",
       "title": "Browser errors",
-      "description": "Each distinct error once per ten minutes, with the source line it maps to. Needs gpool#283.",
+      "description": "Each distinct error once per ten minutes, with the source line it maps to.",
       "datasource": { "type": "loki", "uid": "loki" },
       "options": {
         "showTime": true,
@@ -768,7 +768,7 @@
       "id": 15,
       "type": "logs",
       "title": "Poor vitals",
-      "description": "Visits with a poor vital, and the element behind it. Needs gpool#283.",
+      "description": "Visits with a poor vital, and the element behind it.",
       "datasource": { "type": "loki", "uid": "loki" },
       "options": {
         "showTime": true,
@@ -794,7 +794,7 @@
       "id": 16,
       "type": "logs",
       "title": "CSP violations",
-      "description": "What was blocked, where it came from and on which page. Needs gpool#283.",
+      "description": "What was blocked, where it came from and on which page.",
       "datasource": { "type": "loki", "uid": "loki" },
       "options": {
         "showTime": true,

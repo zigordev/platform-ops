@@ -14,7 +14,7 @@ export const serviceTradingBotResearchBacktesting: DashboardSpec = {
   uid: 'service-trading-bot-research-backtesting',
   title: 'trading-bot-research-backtesting',
   description:
-    'The Rust service that replays stored history through a strategy and reports what it would have done. Backtests start when market-data says a window is ready, so a stalled readiness topic shows up here as no runs at all rather than as an error. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release and the backtest log panel all come from trading-bot#158 — that branch is where a Rust log line first carries an event name at all — so they stay empty until it merges and the container is rebuilt. The run counters, the replay throughput and the readiness lag are live now.',
+    'The Rust service that replays stored history through a strategy and reports what it would have done. Backtests start when market-data says a window is ready, so a stalled readiness topic shows up here as no runs at all rather than as an error. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release and the backtest log panel came with trading-bot#158, which is where a Rust log line first carried an event name at all; it is merged, so every panel reads whenever the local stack is up.',
   folder: SERVICES,
   tags: ['service', 'trading-bot'],
   deploys: deploys(`{job="${JOB}"}`),

@@ -1,7 +1,7 @@
 {
   "uid": "kini-funnel",
   "title": "kini funnel",
-  "description": "The road a kini player walks: invited to a team, accepting, taking up the week’s draw, filling in every match, checking the results — and, alone in the estate, ending on an outcome rather than an action, because a checked match is a hit or a miss. The invitation email is followed from kini asking to the relay accepting it. The player counters come from kini#160 and stay empty until it merges; the email loop, the browser steps and the log below read today.",
+  "description": "The road a kini player walks: invited to a team, accepting, taking up the week’s draw, filling in every match, checking the results — and, alone in the estate, ending on an outcome rather than an action, because a checked match is a hit or a miss. The invitation email is followed from kini asking to the relay accepting it. Every panel reads today.",
   "tags": ["business", "kini", "teams"],
   "timezone": "browser",
   "editable": false,
@@ -123,7 +123,7 @@
       "id": 1,
       "type": "stat",
       "title": "Invitations sent · 7 days",
-      "description": "People invited to a team. Every step to the right of this one starts here. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "People invited to a team. Every step to the right of this one starts here. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -162,7 +162,7 @@
       "id": 2,
       "type": "stat",
       "title": "Invitations accepted · 7 days",
-      "description": "Invitations that turned into a team member. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Invitations that turned into a team member. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -201,7 +201,7 @@
       "id": 3,
       "type": "stat",
       "title": "Acceptance rate · 7 days",
-      "description": "Accepted over sent. Low with healthy mail is a product problem, low with failed mail is ours, and the email row below says which. It reads nothing at all while nobody has been invited, because the counters are both zero. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Accepted over sent. Low with healthy mail is a product problem, low with failed mail is ours, and the email row below says which. It reads nothing at all while nobody has been invited, because the counters are both zero. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -247,7 +247,7 @@
       "id": 4,
       "type": "stat",
       "title": "Draws taken up · 7 days",
-      "description": "Weekly lottery draws a team pulled in to play. A team that accepts invitations and takes up no draw has joined and never played. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Weekly lottery draws a team pulled in to play. A team that accepts invitations and takes up no draw has joined and never played. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -286,7 +286,7 @@
       "id": 5,
       "type": "stat",
       "title": "Predictions completed · 7 days",
-      "description": "Draws whose last empty match was filled in, so the team has a full ticket. Fewer of these than draws taken up means tickets are being abandoned half-played. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Draws whose last empty match was filled in, so the team has a full ticket. Fewer of these than draws taken up means tickets are being abandoned half-played. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -325,7 +325,7 @@
       "id": 6,
       "type": "stat",
       "title": "Hit rate · 7 days",
-      "description": "Share of first-scored matches the team called right. This is the end of the funnel and the only step that is an outcome rather than something a player did — nobody can make it go up by using kini more, and it is here to be watched rather than improved. The line sits just above a third, which is what blind guessing at a home win, a draw or an away win would give you. It reads nothing until a draw has been scored. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Share of first-scored matches the team called right. This is the end of the funnel and the only step that is an outcome rather than something a player did — nobody can make it go up by using kini more, and it is here to be watched rather than improved. The line sits just above a third, which is what blind guessing at a home win, a draw or an away win would give you. It reads nothing until a draw has been scored. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -371,7 +371,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "The funnel over time",
-      "description": "The whole chain in one chart, one bar per step. The bars should fall from left to right within a week; a step that collapses while the one before it holds is where players are being lost. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "The whole chain in one chart, one bar per step. The bars should fall from left to right within a week; a step that collapses while the one before it holds is where players are being lost. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -449,7 +449,7 @@
       "id": 8,
       "type": "timeseries",
       "title": "Hits and misses",
-      "description": "Matches scored against the official results for the first time. A rescore of the same match is counted in neither, so these bars are players finding out, not the checker running. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Matches scored against the official results for the first time. A rescore of the same match is counted in neither, so these bars are players finding out, not the checker running. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -491,7 +491,7 @@
       "id": 9,
       "type": "timeseries",
       "title": "Invitations that went nowhere",
-      "description": "The two dead ends of an invitation: the address already belongs to a member, or accepting threw and the person saw an error. The second one costs a player and needs the log below. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "The two dead ends of an invitation: the address already belongs to a member, or accepting threw and the person saw an error. The second one costs a player and needs the log below. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -533,7 +533,7 @@
       "id": 10,
       "type": "timeseries",
       "title": "Teams",
-      "description": "Teams players made themselves, and the ones kini made for them on first sign-in. default_created without created means nobody has chosen to build a team of their own. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Teams players made themselves, and the ones kini made for them on first sign-in. default_created without created means nobody has chosen to build a team of their own. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -575,7 +575,7 @@
       "id": 11,
       "type": "timeseries",
       "title": "Everything done to a draw",
-      "description": "Every pool action stacked: taken up from the week’s lottery feed, created or edited by hand, filled in, scored. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "Every pool action stacked: taken up from the week’s lottery feed, created or edited by hand, filled in, scored. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -617,7 +617,7 @@
       "id": 12,
       "type": "timeseries",
       "title": "Predictions",
-      "description": "set and cleared are a player changing a pick; assigned and unassigned are a team handing a match to one of its members to call. Clearing and unassigning are normal play, not errors. Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.",
+      "description": "set and cleared are a player changing a pick; assigned and unassigned are a team handing a match to one of its members to call. Clearing and unassigning are normal play, not errors. kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -906,7 +906,7 @@
       "id": 17,
       "type": "logs",
       "title": "Invitations, draws and the emails they trigger",
-      "description": "Every invitation sent and accepted, every pool created by hand and every email decision, newest first, with the team and pool ids. Email addresses are never logged. This reads today and does not wait on kini#160, because the API already logs these lines; locally it is usually empty simply because nobody has been invited, not because it is pointed at the wrong stream.",
+      "description": "Every invitation sent and accepted, every pool created by hand and every email decision, newest first, with the team and pool ids. Email addresses are never logged. Locally this is usually empty simply because nobody has been invited, not because it is pointed at the wrong stream.",
       "datasource": { "type": "loki", "uid": "loki" },
       "options": {
         "showTime": true,

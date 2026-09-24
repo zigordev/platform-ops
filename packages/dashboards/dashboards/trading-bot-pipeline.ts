@@ -6,9 +6,9 @@ import { loki, prom } from '../lib/queries.ts';
 
 const JOBS = '{job=~"trading-bot-control-plane|trading-bot-market-data|trading-bot-execution|trading-bot-research-backtesting"}';
 
-const WAITING_TRADES = 'Empty until trading-bot#167 merges and the execution container is rebuilt; the service starts both counters at zero for every loaded promotion, so after that a flat zero means no trade, not no metric.';
+const WAITING_TRADES = 'The service starts both counters at zero for every loaded promotion, so a flat zero means no trade, not no metric.';
 
-const WAITING_RUNS = 'Empty until trading-bot#167 merges and the research-backtesting container is rebuilt.';
+const WAITING_RUNS = 'Reads once the local stack is running an image built from main.';
 
 const MODE = valueMap({ '0': ['live', 'red'], '1': ['paper', 'green'] });
 
@@ -37,7 +37,7 @@ export const tradingBotPipeline: DashboardSpec = {
   uid: 'trading-bot-pipeline',
   title: 'trading-bot pipeline',
   description:
-    'Not a funnel: nobody is being carried from one step to the next, and nothing here is a conversion. It is a pipeline, and each stage is measured on its own — stored history replayed into signals, signals turned into simulated trades, backtests scored and their results projected back into the control plane, promotions traded in paper or in earnest, all of it under one Binance weight budget. trading-bot is local only today: it has no deploy and no production scrape job, so the deploy annotation never fires and every panel goes flat when the local stack is down. The trade and last-run panels come from trading-bot#167 and stay empty until it merges; the run counters, the weight budget, the mode, the projections and the configuration changes read today.',
+    'Not a funnel: nobody is being carried from one step to the next, and nothing here is a conversion. It is a pipeline, and each stage is measured on its own — stored history replayed into signals, signals turned into simulated trades, backtests scored and their results projected back into the control plane, promotions traded in paper or in earnest, all of it under one Binance weight budget. trading-bot is local only today: it has no deploy and no production scrape job, so the deploy annotation never fires and every panel goes flat when the local stack is down. Every panel is instrumented and reads whenever the local stack is up.',
   folder: BUSINESS,
   tags: ['trading-bot', 'backtests'],
   time: { from: 'now-7d', to: 'now' },
@@ -113,7 +113,7 @@ export const tradingBotPipeline: DashboardSpec = {
         sortBy: 'Score',
         overrides: [unit('Win rate', 'percentunit'), unit('Total PnL', 'percent'), unit('Max drawdown', 'percent')],
       }),
-      timeseries('Backtest results that never reached the control plane', 'A finished backtest whose result the control plane could not write down: the run cost its full replay and left nothing behind, and the job sits at whatever progress it last recorded. This reads today and it is not flat — backtest_progress is failing more often than it lands, because a fractional progress percent is handed to an integer column and dies there. That is the bug trading-bot#167 fixes, and this panel is how you tell whether the fix took: once it merges the failed streams should fall to nothing.', { w: 6, h: 9 }, [
+      timeseries('Backtest results that never reached the control plane', 'A finished backtest whose result the control plane could not write down: the run cost its full replay and left nothing behind, and the job sits at whatever progress it last recorded. This reads today and it is not flat — backtest_progress is failing more often than it lands, because a fractional progress percent is handed to an integer column and dies there. That was the bug trading-bot#167 fixed, and this panel is how you tell whether the fix took — the failed streams should fall to nothing on an image built since it merged.', { w: 6, h: 9 }, [
         prom(`sum by (stream) (increase(trading_bot_control_plane_projections_total{outcome="failed"}[${RATE_INTERVAL}]))`, { legend: '{{stream}}' }),
       ], { unit: 'short', min: 0, bars: true }),
       timeseries('Backtest results the cap threw away', `Results dropped because the service is already tracking the 2,048 configurations it is willing to export. Anything above that line is scored and then forgotten, so the table to the left is no longer the whole picture. ${WAITING_RUNS}`, { w: 6, h: 9 }, [

@@ -1,7 +1,7 @@
 {
   "uid": "service-kini-web",
   "title": "kini-web",
-  "description": "The kini site as a service: page renders from traces, the two beacon routes the browser posts to, the copy it reads at render time, runtime and failures. Health, traces, the beacon routes and the log panels all arrive with kini#150; only the RUM counters read today, and those have their own dashboard.",
+  "description": "The kini site as a service: page renders from traces, the two beacon routes the browser posts to, the copy it reads at render time, runtime and failures. Every panel is instrumented and reads today: kini#150 brought health, traces, the beacon routes and the log panels, and it is deployed. The RUM counters have their own dashboard as well.",
   "tags": ["services", "service", "kini"],
   "timezone": "browser",
   "editable": false,

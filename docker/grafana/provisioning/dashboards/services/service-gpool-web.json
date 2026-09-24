@@ -1,7 +1,7 @@
 {
   "uid": "service-gpool-web",
   "title": "gpool-web",
-  "description": "The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. The runtime row, the release, the page-view count and the two rejection panels read today; health, the dependency table, the render panels, the beacon routes and everything from traces or logs arrive with gpool#283, and until it merges they are empty rather than wrong.",
+  "description": "The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. Every panel is instrumented and reads today: gpool#283 brought health, the dependency table, the render panels, the beacon routes and the trace and log panels, and it is deployed.",
   "tags": ["services", "service", "gpool"],
   "timezone": "browser",
   "editable": false,
@@ -278,7 +278,7 @@
       "id": 4,
       "type": "stat",
       "title": "Page views · 1 hour",
-      "description": "Page views the browsers reported in the last hour. The browsers already post these, so this tile does not wait on gpool#283.",
+      "description": "Page views the browsers reported in the last hour. The server does not count them; the browsers post them.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {

@@ -18,7 +18,7 @@ export const serviceTradingBotMarketData: DashboardSpec = {
   uid: 'service-trading-bot-market-data',
   title: 'trading-bot-market-data',
   description:
-    'The Rust service that holds the Binance websocket open, publishes every kline and trade to Kafka, stores them in ClickHouse and backfills the gaps. Its budget against the Binance REQUEST_WEIGHT ceiling is the panel to read first. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release and the ingest log panel all come from trading-bot#158 — that branch is where a Rust log line first carries an event name at all — so they stay empty until it merges and the container is rebuilt. The metrics and the traces are live now.',
+    'The Rust service that holds the Binance websocket open, publishes every kline and trade to Kafka, stores them in ClickHouse and backfills the gaps. Its budget against the Binance REQUEST_WEIGHT ceiling is the panel to read first. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release and the ingest log panel came with trading-bot#158, which is where a Rust log line first carried an event name at all; it is merged, so every panel reads whenever the local stack is up.',
   folder: SERVICES,
   tags: ['service', 'trading-bot'],
   deploys: deploys(`{job="${JOB}"}`),

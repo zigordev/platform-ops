@@ -1,7 +1,7 @@
 {
   "uid": "trading-bot-pipeline",
   "title": "trading-bot pipeline",
-  "description": "Not a funnel: nobody is being carried from one step to the next, and nothing here is a conversion. It is a pipeline, and each stage is measured on its own — stored history replayed into signals, signals turned into simulated trades, backtests scored and their results projected back into the control plane, promotions traded in paper or in earnest, all of it under one Binance weight budget. trading-bot is local only today: it has no deploy and no production scrape job, so the deploy annotation never fires and every panel goes flat when the local stack is down. The trade and last-run panels come from trading-bot#167 and stay empty until it merges; the run counters, the weight budget, the mode, the projections and the configuration changes read today.",
+  "description": "Not a funnel: nobody is being carried from one step to the next, and nothing here is a conversion. It is a pipeline, and each stage is measured on its own — stored history replayed into signals, signals turned into simulated trades, backtests scored and their results projected back into the control plane, promotions traded in paper or in earnest, all of it under one Binance weight budget. trading-bot is local only today: it has no deploy and no production scrape job, so the deploy annotation never fires and every panel goes flat when the local stack is down. Every panel is instrumented and reads whenever the local stack is up.",
   "tags": ["business", "trading-bot", "backtests"],
   "timezone": "browser",
   "editable": false,
@@ -528,7 +528,7 @@
       "id": 10,
       "type": "timeseries",
       "title": "Trades opened",
-      "description": "Positions the execution service opened, by side. Long and short should both appear; only one side over a whole range usually means the promoted strategy is one-directional rather than that the other side is broken. Empty until trading-bot#167 merges and the execution container is rebuilt; the service starts both counters at zero for every loaded promotion, so after that a flat zero means no trade, not no metric.",
+      "description": "Positions the execution service opened, by side. Long and short should both appear; only one side over a whole range usually means the promoted strategy is one-directional rather than that the other side is broken. The service starts both counters at zero for every loaded promotion, so a flat zero means no trade, not no metric.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -570,7 +570,7 @@
       "id": 11,
       "type": "timeseries",
       "title": "Trades closed, by reason",
-      "description": "Why each position ended. takeProfit is the plan working; a wall of stopLoss or riskExit says the promoted configuration is wrong for the market it is trading, and reversal means the strategy changed its mind rather than the levels being hit. Empty until trading-bot#167 merges and the execution container is rebuilt; the service starts both counters at zero for every loaded promotion, so after that a flat zero means no trade, not no metric.",
+      "description": "Why each position ended. takeProfit is the plan working; a wall of stopLoss or riskExit says the promoted configuration is wrong for the market it is trading, and reversal means the strategy changed its mind rather than the levels being hit. The service starts both counters at zero for every loaded promotion, so a flat zero means no trade, not no metric.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -672,7 +672,7 @@
       "id": 13,
       "type": "table",
       "title": "The last backtest of each configuration",
-      "description": "One row per strategy, pair, timeframe and risk profile, holding only its most recent run — rerunning a configuration replaces its row instead of adding one, so this is a standings table and never a history. Sorted by the promotion score, which is what decides whether a configuration is ever traded. A high score on a handful of trades is worth less than the number suggests; read it against the signals-per-trade tile. Empty until trading-bot#167 merges and the research-backtesting container is rebuilt.",
+      "description": "One row per strategy, pair, timeframe and risk profile, holding only its most recent run — rerunning a configuration replaces its row instead of adding one, so this is a standings table and never a history. Sorted by the promotion score, which is what decides whether a configuration is ever traded. A high score on a handful of trades is worth less than the number suggests; read it against the signals-per-trade tile. Reads once the local stack is running an image built from main.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -775,7 +775,7 @@
       "id": 14,
       "type": "timeseries",
       "title": "Backtest results that never reached the control plane",
-      "description": "A finished backtest whose result the control plane could not write down: the run cost its full replay and left nothing behind, and the job sits at whatever progress it last recorded. This reads today and it is not flat — backtest_progress is failing more often than it lands, because a fractional progress percent is handed to an integer column and dies there. That is the bug trading-bot#167 fixes, and this panel is how you tell whether the fix took: once it merges the failed streams should fall to nothing.",
+      "description": "A finished backtest whose result the control plane could not write down: the run cost its full replay and left nothing behind, and the job sits at whatever progress it last recorded. This reads today and it is not flat — backtest_progress is failing more often than it lands, because a fractional progress percent is handed to an integer column and dies there. That was the bug trading-bot#167 fixed, and this panel is how you tell whether the fix took — the failed streams should fall to nothing on an image built since it merged.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -817,7 +817,7 @@
       "id": 15,
       "type": "timeseries",
       "title": "Backtest results the cap threw away",
-      "description": "Results dropped because the service is already tracking the 2,048 configurations it is willing to export. Anything above that line is scored and then forgotten, so the table to the left is no longer the whole picture. Empty until trading-bot#167 merges and the research-backtesting container is rebuilt.",
+      "description": "Results dropped because the service is already tracking the 2,048 configurations it is willing to export. Anything above that line is scored and then forgotten, so the table to the left is no longer the whole picture. Reads once the local stack is running an image built from main.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {

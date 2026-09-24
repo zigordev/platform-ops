@@ -16,7 +16,7 @@ export const serviceTradingBotExecution: DashboardSpec = {
   uid: 'service-trading-bot-execution',
   title: 'trading-bot-execution',
   description:
-    'The Rust service that reads the live kline and trade stream, evaluates the promoted strategies and opens and closes positions. The one panel that matters is the mode: paper means every trade is simulated, live means the Binance account is being used for real. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release, the closed-trade breakdown and the trade log panel all come from trading-bot#158 — that branch is where a Rust log line first carries an event name at all — so they stay empty until it merges and the container is rebuilt. The mode, the promotion, the refresh rate and the Kafka lag are live now.',
+    'The Rust service that reads the live kline and trade stream, evaluates the promoted strategies and opens and closes positions. The one panel that matters is the mode: paper means every trade is simulated, live means the Binance account is being used for real. trading-bot is local only: no deploy, no production scrape job. Health, dependencies, release, the closed-trade breakdown and the trade log panel came with trading-bot#158, which is where a Rust log line first carried an event name at all; it is merged, so every panel reads whenever the local stack is up.',
   folder: SERVICES,
   tags: ['service', 'trading-bot'],
   deploys: deploys(`{job="${JOB}"}`),

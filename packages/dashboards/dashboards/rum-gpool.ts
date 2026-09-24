@@ -15,7 +15,7 @@ function p75(metric: string): string {
 export const rumGpool: DashboardSpec = {
   uid: 'rum-gpool',
   title: 'RUM · gpool',
-  description: 'gpool as its players experience it: the vitals, which of its pages are slow, what they did with pools and what broke in their browser. The release breakdown and the policy-violation panels need gpool#283; the rest reads today.',
+  description: 'gpool as its players experience it: the vitals, which of its pages are slow, what they did with pools and what broke in their browser. Every panel reads today.',
   folder: FRONTEND,
   tags: ['rum', 'gpool'],
   time: { from: 'now-24h', to: 'now' },
@@ -33,12 +33,12 @@ export const rumGpool: DashboardSpec = {
       stat('Client errors · 24 hours', 'Script errors and rejected promises players hit.', { w: 4, h: 5 }, [
         prom(`sum(increase(rum_errors_total{${SEL}}[24h])) or vector(0)`, { legend: 'errors' }),
       ], { decimals: 0, steps: under(1) }),
-      stat('CSP violations · 24 hours', 'Scripts or resources the policy did not allow. Needs gpool#283, which is what gives gpool-web a policy and a report endpoint.', { w: 4, h: 5 }, [
+      stat('CSP violations · 24 hours', 'Scripts or resources the policy did not allow. gpool-web serves a nonce policy and a report endpoint, so any count here is worth reading.', { w: 4, h: 5 }, [
         prom(`sum(increase(csp_violations_total{${SEL}}[24h])) or vector(0)`, { legend: 'violations' }),
       ], { decimals: 0, steps: under(1) }),
     ],
     [
-      timeseries('LCP p75 by release', 'Compare a release with the one before it. The release label arrives with gpool#283; before it every visit falls into one series. Hover a dot to open the render trace.', { w: 12, h: 8 }, [
+      timeseries('LCP p75 by release', 'Compare a release with the one before it. Visits from before gpool#283 carry no release label and fall into one unnamed series. Hover a dot to open the render trace.', { w: 12, h: 8 }, [
         prom(`histogram_quantile(0.75, sum by (le, release) (rate(rum_performance_seconds_bucket{${SEL}, metric_name="LCP"}[${RATE_INTERVAL}])))`, { legend: '{{release}}', exemplar: true }),
       ], { unit: 's', min: 0, steps: under(2.5), lines: true }),
       timeseries('INP and TTFB p75 by release', 'Responsiveness and server response, by release.', { w: 12, h: 8 }, [
@@ -53,7 +53,7 @@ export const rumGpool: DashboardSpec = {
       timeseries('Frustration', 'Rage clicks, dead clicks, slow page loads and excessive scrolling. A dead click on a pool page is usually a button that needed a sign-in.', { w: 8, h: 9 }, [
         prom(`sum by (frustration_type) (increase(rum_frustrations_total{${SEL}}[${RATE_INTERVAL}]))`, { legend: '{{frustration_type}}' }),
       ], { unit: 'short', min: 0, bars: true }),
-      timeseries('CSP violations by directive', 'Which rule of the policy was broken. Needs gpool#283.', { w: 8, h: 9 }, [
+      timeseries('CSP violations by directive', 'Which rule of the policy was broken.', { w: 8, h: 9 }, [
         prom(`sum by (directive) (increase(csp_violations_total{${SEL}}[${RATE_INTERVAL}]))`, { legend: '{{directive}}' }),
       ], { unit: 'short', min: 0, bars: true }),
     ],
@@ -76,9 +76,9 @@ export const rumGpool: DashboardSpec = {
       ], { unit: 'short', min: 0 }),
     ],
     [
-      logs('Browser errors', 'Each distinct error once per ten minutes, with the source line it maps to. Needs gpool#283.', { w: 8, h: 10 }, [loki('{app="gpool-web"} | json | event="rum.client_error"')]),
-      logs('Poor vitals', 'Visits with a poor vital, and the element behind it. Needs gpool#283.', { w: 8, h: 10 }, [loki('{app="gpool-web"} | json | event="rum.vital_poor"')]),
-      logs('CSP violations', 'What was blocked, where it came from and on which page. Needs gpool#283.', { w: 8, h: 10 }, [loki('{app="gpool-web"} | json | event="csp.violation"')]),
+      logs('Browser errors', 'Each distinct error once per ten minutes, with the source line it maps to.', { w: 8, h: 10 }, [loki('{app="gpool-web"} | json | event="rum.client_error"')]),
+      logs('Poor vitals', 'Visits with a poor vital, and the element behind it.', { w: 8, h: 10 }, [loki('{app="gpool-web"} | json | event="rum.vital_poor"')]),
+      logs('CSP violations', 'What was blocked, where it came from and on which page.', { w: 8, h: 10 }, [loki('{app="gpool-web"} | json | event="csp.violation"')]),
     ],
   ],
 };

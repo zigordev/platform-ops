@@ -4,7 +4,7 @@ import type { DashboardSpec } from '../lib/model.ts';
 import { atLeast, logs, stat, table, timeseries, under } from '../lib/panels.ts';
 import { loki, prom } from '../lib/queries.ts';
 
-const WAITING = 'Empty until kini#160 merges and the API restarts; after that a zero here is a real zero, because kini creates every action at zero when it starts.';
+const WAITING = 'kini creates every action at zero when it starts, so a zero here is a real zero: nobody did this, rather than nothing is counting it.';
 
 const KINI_MAIL =
   'sum by (template_id) (label_replace(sum by (template) (increase(kini_notifications_total{outcome="queued"}[$__range])), "template_id", "$1", "template", "(.*)"))';
@@ -31,7 +31,7 @@ export const kiniFunnel: DashboardSpec = {
   uid: 'kini-funnel',
   title: 'kini funnel',
   description:
-    'The road a kini player walks: invited to a team, accepting, taking up the week’s draw, filling in every match, checking the results — and, alone in the estate, ending on an outcome rather than an action, because a checked match is a hit or a miss. The invitation email is followed from kini asking to the relay accepting it. The player counters come from kini#160 and stay empty until it merges; the email loop, the browser steps and the log below read today.',
+    'The road a kini player walks: invited to a team, accepting, taking up the week’s draw, filling in every match, checking the results — and, alone in the estate, ending on an outcome rather than an action, because a checked match is a hit or a miss. The invitation email is followed from kini asking to the relay accepting it. Every panel reads today.',
   folder: BUSINESS,
   tags: ['kini', 'teams'],
   time: { from: 'now-7d', to: 'now' },
@@ -113,7 +113,7 @@ export const kiniFunnel: DashboardSpec = {
       ], { unit: 'short', min: 0, bars: true }),
     ],
     [
-      logs('Invitations, draws and the emails they trigger', 'Every invitation sent and accepted, every pool created by hand and every email decision, newest first, with the team and pool ids. Email addresses are never logged. This reads today and does not wait on kini#160, because the API already logs these lines; locally it is usually empty simply because nobody has been invited, not because it is pointed at the wrong stream.', { w: 24, h: 10 }, [
+      logs('Invitations, draws and the emails they trigger', 'Every invitation sent and accepted, every pool created by hand and every email decision, newest first, with the team and pool ids. Email addresses are never logged. Locally this is usually empty simply because nobody has been invited, not because it is pointed at the wrong stream.', { w: 24, h: 10 }, [
         loki(`{app="kini-api"} | json | event=~"${FUNNEL_LOG}"`),
       ]),
     ],
