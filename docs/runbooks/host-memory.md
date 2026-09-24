@@ -41,6 +41,10 @@ docker inspect <name> --format '{{.State.OOMKilled}}'
 3. **Set a limit.** The real fix is `mem_limit` on the container, so it dies
    predictably and alone rather than taking the host's other tenants with it.
    Absent limits are a known outstanding item for the trading-bot stack.
+4. **Account for what is already capped.** Tempo is the one container that has
+   a limit, so it never shows up here — it hits its own ceiling first and
+   raises [`TempoMemoryNearLimit`](tempo-memory.md) instead. A host under
+   pressure while Tempo is quiet is somebody else's growth.
 
 If pressure is steady rather than growing, the host is simply too small for what
 is on it, and the answer is a decision rather than a command.

@@ -53,6 +53,7 @@ says what it depends on.
 | `BinanceRateLimitNearCap`                                                                            | [binance-rate-limit.md](binance-rate-limit.md)               |
 | `ExecutionLeftPaperMode`                                                                             | [execution-live-mode.md](execution-live-mode.md)             |
 | `ControlPlaneProjectionsFailing`                                                                     | [control-plane-projections.md](control-plane-projections.md) |
+| `TempoMemory*`                                                                                       | [tempo-memory.md](tempo-memory.md)                           |
 
 ## Procedures
 
