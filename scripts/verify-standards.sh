@@ -9,7 +9,7 @@
 
 set -uo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT="${ESTATE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 REPOS="cv gpool kini trading-bot notifications sity platform-ops design-system"
 SHARED_PRETTIER="$(shasum "$ROOT/platform-ops/.prettierrc" 2>/dev/null | cut -d" " -f1)"
 FAILED=0
@@ -18,6 +18,24 @@ ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
 bad()  { printf '  \033[31m✗\033[0m %s\n' "$1"; FAILED=$((FAILED+1)); }
 skip() { printf '  \033[90m–\033[0m %s\n' "$1"; }
 
+if [ ! -e "$ROOT/platform-ops/.git" ]; then
+  printf '\033[31mNo estate at %s.\033[0m\n' "$ROOT" >&2
+  printf 'This script reads all eight repositories from one common root, so run it from a\n' >&2
+  printf 'checkout that has them side by side, or point ESTATE_ROOT at one. Run from a\n' >&2
+  printf 'worktree it used to find nothing and print "All checks passed".\n' >&2
+  exit 2
+fi
+
+ABSENT=""
+for repo in $REPOS; do
+  [ -e "$ROOT/$repo/.git" ] || ABSENT="$ABSENT $repo"
+done
+
+if [ -n "$ABSENT" ]; then
+  printf '\n\033[1mestate\033[0m\n'
+  bad "not checked out under $ROOT:$ABSENT — nothing below covers them"
+fi
+
 for repo in $REPOS; do
   d="$ROOT/$repo"
   [ -e "$d/.git" ] || continue
@@ -25,10 +43,20 @@ for repo in $REPOS; do
 
   # --- hooks actually installed, not merely present -------------------------
   if [ -d "$d/.husky" ]; then
-    if [ "$(git -C "$d" config core.hooksPath 2>/dev/null)" != "" ]; then
-      ok "husky active (hooksPath set)"
+    prepare=$(sed -n 's/.*"prepare"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$d/package.json" 2>/dev/null | head -1)
+    case "$prepare" in
+      *husky*) installs_hooks=yes ;;
+      *) installs_hooks=no ;;
+    esac
+    if [ "$installs_hooks" = yes ] && [ -f "$d/.husky/pre-commit" ]; then
+      ok "npm install arms the hooks (prepare: $prepare)"
     else
-      bad "husky present but INACTIVE — run 'npm install' in $repo"
+      bad "hooks are not armed by 'npm install' (prepare: ${prepare:-none})"
+    fi
+    if [ -n "$(git -C "$d" config core.hooksPath 2>/dev/null)" ]; then
+      ok "hooks active in this clone"
+    else
+      skip "hooks not installed in this clone — run 'npm install' in $repo"
     fi
   else
     skip "no .husky (design-system has no build to gate)"
@@ -169,15 +197,24 @@ for repo in $REPOS; do
     grep -q securityHeaders "$cfg" && ok "security headers ($app)" || bad "no security headers ($app)"
   done
 
-  # --- APIs: helmet and a health endpoint -----------------------------------
-  for main in $(find "$d/apps" -maxdepth 4 -name 'main.ts' -path '*/src/*' -not -path '*/node_modules/*' 2>/dev/null); do
-    app=$(echo "$main" | sed "s|$d/apps/||;s|/src/main.ts||")
-    grep -qE '"(@nestjs/core|fastify)"' "$d/apps/$app/package.json" 2>/dev/null || continue
-    grep -q helmet "$main" && ok "helmet ($app)" || bad "no helmet ($app)"
-    if find "$d/apps/$app/src" -iname 'health*' -print -quit 2>/dev/null | grep -q .; then
-      ok "health endpoint ($app)"
+  # --- HTTP servers: security headers and a health route --------------------
+  for pkg in $(find "$d/apps" -maxdepth 2 -name package.json -not -path '*/node_modules/*' 2>/dev/null | sort); do
+    grep -qE '"(@nestjs/core|fastify)"' "$pkg" || continue
+    appdir=$(dirname "$pkg")
+    app=$(basename "$appdir")
+    sources="--include=*.ts --exclude=*.test.ts --exclude=*.spec.ts"
+    skipdirs="--exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.next --exclude-dir=e2e --exclude-dir=test"
+
+    if grep -rqE "helmet|X-Content-Type-Options" "$appdir" $sources $skipdirs 2>/dev/null; then
+      ok "security headers ($app)"
     else
-      bad "no health endpoint ($app)"
+      bad "no security headers ($app)"
+    fi
+
+    if grep -rqE "['\"]/health['\"]|Controller\('health'\)" "$appdir" $sources $skipdirs 2>/dev/null; then
+      ok "health route ($app)"
+    else
+      bad "no health route ($app)"
     fi
   done
 
@@ -341,18 +378,24 @@ EOF
 check_shared_bodies() {
   local dir="$1"
   shift
-  local f repo src hashes present distinct
+  local f repo src hashes present distinct holders
   for f in "$@"; do
     hashes=""
+    holders=""
     present=0
     for repo in $REPOS; do
       src="$ROOT/$repo/$dir/$f"
       [ -f "$src" ] || continue
       present=$((present + 1))
+      holders="$holders $repo"
       hashes="$hashes $(shasum "$src" | cut -d' ' -f1)"
     done
     if [ "$present" -eq 0 ]; then
       skip "$f: not present anywhere"
+      continue
+    fi
+    if [ "$present" -eq 1 ]; then
+      skip "$f: only in$holders — one copy is nothing to compare, not agreement"
       continue
     fi
     distinct=$(printf '%s\n' $hashes | sort -u | wc -l | tr -d ' ')

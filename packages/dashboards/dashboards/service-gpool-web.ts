@@ -10,7 +10,7 @@ const JOB = 'gpool-web';
 export const serviceGpoolWeb: DashboardSpec = {
   uid: 'service-gpool-web',
   title: 'gpool-web',
-  description: 'The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. The runtime row, the release, the page-view count and the two rejection panels read today; health, the dependency table, the render panels, the beacon routes and everything from traces or logs arrive with gpool#283, and until it merges they are empty rather than wrong.',
+  description: 'The pool site as a service: page renders from traces, the beacon routes visitors post to, the copy it reads at render time, runtime and failures. Every panel is instrumented and reads today: gpool#283 brought health, the dependency table, the render panels, the beacon routes and the trace and log panels, and it is deployed.',
   folder: SERVICES,
   tags: ['service', 'gpool'],
   deploys: deploys(`{job="${JOB}"}`),
@@ -19,7 +19,7 @@ export const serviceGpoolWeb: DashboardSpec = {
       healthStat(JOB),
       releaseStat(JOB),
       componentsTable(JOB, 8),
-      stat('Page views · 1 hour', 'Page views the browsers reported in the last hour. The browsers already post these, so this tile does not wait on gpool#283.', { w: 4, h: 5 }, [
+      stat('Page views · 1 hour', 'Page views the browsers reported in the last hour. The server does not count them; the browsers post them.', { w: 4, h: 5 }, [
         prom(`sum(increase(rum_navigations_total{job="${JOB}", navigation_type="Page View"}[1h])) or vector(0)`, { legend: 'views' }),
       ], { decimals: 0 }),
       stat('Beacons rejected · 24 hours', 'Browser reports thrown away before they became a metric: rate limited, malformed, an event type or name the allow-list does not have, or a batch over the size cap.', { w: 4, h: 5 }, [
@@ -45,7 +45,10 @@ export const serviceGpoolWeb: DashboardSpec = {
       ], { unit: 'short', min: 0, bars: true }),
     ],
     [
-      timeseries('Copy that did not come from Tolgee', 'Renders that fell back, by what they fell back to: cached is the last good export, local is the copy committed in the repo. A run of these means Tolgee is unreachable.', { w: 24, h: 8 }, [
+      timeseries('Where the copy came from', 'Message loads by source. merged is the healthy case, and also what a Tolgee outage looks like for as long as the process still holds a cached export — so it says nothing about Tolgee being reachable. local means a render served the message files committed in the repository with nothing from Tolgee in it, and is what CopyServedFromRepository alerts on.', { w: 12, h: 8 }, [
+        prom(`sum by (source) (rate(gpool_i18n_messages_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{source}}' }),
+      ], { unit: 'ops', min: 0 }),
+      timeseries('Copy that did not come from Tolgee', 'Renders that fell back, by what they fell back to: cached is the last good export, local is the copy committed in the repo. This is the only place cached is visible — the panel beside it counts those renders as merged, because the loader still had two sources to merge. A run of either means Tolgee is unreachable.', { w: 12, h: 8 }, [
         loki(`sum by (source) (count_over_time({app="${JOB}"} | json | event="i18n.fallback" [$__auto]))`, { legend: '{{source}}' }),
       ], { unit: 'short', min: 0, bars: true }),
     ],

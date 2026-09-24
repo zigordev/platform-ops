@@ -12,7 +12,7 @@ export const serviceKiniWeb: DashboardSpec = {
   uid: 'service-kini-web',
   title: 'kini-web',
   description:
-    'The kini site as a service: page renders from traces, the two beacon routes the browser posts to, the copy it reads at render time, runtime and failures. Health, traces, the beacon routes and the log panels all arrive with kini#150; only the RUM counters read today, and those have their own dashboard.',
+    'The kini site as a service: page renders from traces, the two beacon routes the browser posts to, the copy it reads at render time, runtime and failures. Every panel is instrumented and reads today: kini#150 brought health, traces, the beacon routes and the log panels, and it is deployed. The RUM counters have their own dashboard as well.',
   folder: SERVICES,
   tags: ['service', 'kini'],
   deploys: deploys(`{job="${JOB}"}`),
@@ -51,13 +51,16 @@ export const serviceKiniWeb: DashboardSpec = {
         prom(`sum by (reason) (increase(rum_rejected_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{reason}}' }),
       ], { unit: 'short', min: 0, bars: true }),
     ],
-    runtimeRow(JOB),
-    [failingTraces(JOB, 12), slowTraces(JOB, '1s', 12)],
     [
-      logs('Translations fell back', 'Every render that could not read fresh copy from Tolgee, with the locale and whether it used the cached copy or the message files in the repo. Falling back is not an outage; falling back for hours means the copy on the site is stale.', { w: 12, h: 10 }, [
+      timeseries('Where the copy came from', 'Message loads by source. merged is the healthy case, and also what a Tolgee outage looks like for as long as the process still holds a cached export — so it says nothing about Tolgee being reachable. local means a render served the message files committed in the repository with nothing from Tolgee in it, and is what CopyServedFromRepository alerts on.', { w: 12, h: 10 }, [
+        prom(`sum by (source) (rate(kini_i18n_messages_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{source}}' }),
+      ], { unit: 'ops', min: 0 }),
+      logs('Translations fell back', 'Every render that could not read fresh copy from Tolgee, with the locale and whether it used the cached copy or the message files in the repo. This is the only place cached is visible — the panel beside it counts those renders as merged, because the loader still had two sources to merge. Falling back is not an outage; falling back for hours means the copy on the site is stale.', { w: 12, h: 10 }, [
         loki(`{app="${JOB}"} | json | event="i18n.fallback"`),
       ]),
-      errorLogs(JOB, 12),
     ],
+    runtimeRow(JOB),
+    [failingTraces(JOB, 12), slowTraces(JOB, '1s', 12)],
+    [errorLogs(JOB, 24)],
   ],
 };

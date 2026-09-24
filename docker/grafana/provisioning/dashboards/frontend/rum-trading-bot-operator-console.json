@@ -1,7 +1,7 @@
 {
   "uid": "rum-trading-bot-operator-console",
   "title": "RUM · trading-bot console",
-  "description": "The trading-bot console in the browser it is actually driven from: the vitals per page, what was clicked, what broke and what the content security policy caught. The console is an internal tool with one or two operators, so read counts here as \"did this person have a bad time\", not as traffic. trading-bot is local only, so nothing on this dashboard has a production counterpart. CSP violations, the browser log panels and the release label the by-release panel splits on all arrive with trading-bot#158, so that panel is one unnamed line until it merges; the vitals, navigations, frustration and errors are live now.",
+  "description": "The trading-bot console in the browser it is actually driven from: the vitals per page, what was clicked, what broke and what the content security policy caught. The console is an internal tool with one or two operators, so read counts here as \"did this person have a bad time\", not as traffic. trading-bot is local only, so nothing on this dashboard has a production counterpart. CSP violations, the browser log panels and the release label the by-release panel splits on all came with trading-bot#158, which is merged, so every panel reads whenever the local stack is up.",
   "tags": ["frontend", "rum", "trading-bot"],
   "timezone": "browser",
   "editable": false,
