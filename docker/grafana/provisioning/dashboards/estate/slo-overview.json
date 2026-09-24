@@ -1,7 +1,7 @@
 {
   "uid": "slo-overview",
   "title": "Service level objectives",
-  "description": "The four objectives the alerts are built on: each indicator over its alerting windows, and how fast its error budget is being spent.",
+  "description": "The four objectives the alerts are built on: each indicator over its alerting windows, and how fast its error budget is being spent. Three of them ask the same technical question of every service; email delivery is the one objective that is specific to what notifications does.",
   "tags": ["estate", "slo"],
   "timezone": "browser",
   "editable": false,
@@ -215,7 +215,7 @@
       "id": 3,
       "type": "stat",
       "title": "Page latency · 6 hours",
-      "description": "cv page renders under 512 ms over the last six hours. The objective is 95%.",
+      "description": "Page renders under 512 ms over the last six hours, by web app. The objective is 95%.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -250,7 +250,7 @@
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:page_latency:ratio_rate6h",
-          "legendFormat": "cv-web",
+          "legendFormat": "{{job}}",
           "range": false,
           "instant": true,
           "exemplar": false
@@ -518,8 +518,8 @@
     {
       "id": 9,
       "type": "timeseries",
-      "title": "Page latency · cv",
-      "description": "Share of cv page renders under 512 ms, from Tempo span metrics, over one and six hours.",
+      "title": "Page latency",
+      "description": "Share of page renders under 512 ms, from Tempo span metrics, over one and six hours. One line per web app: the same measurement, the same objective, whatever the app renders.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -556,7 +556,7 @@
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:page_latency:ratio_rate1h",
-          "legendFormat": "1h",
+          "legendFormat": "{{job}} · 1h",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -565,7 +565,7 @@
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:page_latency:ratio_rate6h",
-          "legendFormat": "6h",
+          "legendFormat": "{{job}} · 6h",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -614,7 +614,7 @@
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "(1 - slo:page_latency:ratio_rate1h) / 0.05",
-          "legendFormat": "cv-web",
+          "legendFormat": "{{job}}",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -771,7 +771,7 @@
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:page_traffic:rate1h * 3600",
-          "legendFormat": "cv-web · page views an hour",
+          "legendFormat": "{{job}} · page renders an hour",
           "range": true,
           "instant": false,
           "exemplar": false

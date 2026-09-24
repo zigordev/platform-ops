@@ -1,4 +1,4 @@
-import { componentsTable, errorLogs, failingTraces, healthStat, releaseStat, runtimeRow, slowTraces } from '../lib/common.ts';
+import { componentsTable, errorLogs, failingTraces, healthStat, pageLatencyObjective, pageRenderTime, releaseStat, runtimeRow, slowTraces } from '../lib/common.ts';
 import { deploys, RATE_INTERVAL } from '../lib/dashboard.ts';
 import { SERVICES } from '../lib/folders.ts';
 import type { DashboardSpec } from '../lib/model.ts';
@@ -29,25 +29,25 @@ export const serviceKiniWeb: DashboardSpec = {
       ], { decimals: 0, steps: under(1) }),
     ],
     [
-      timeseries('Page render time', 'The server side of a page view, from Tempo. Hover a dot to open that render trace.', { w: 8, h: 8 }, [
-        prom(`histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{${SERVER}}[${RATE_INTERVAL}])))`, { legend: 'p95', exemplar: true }),
-        prom(`histogram_quantile(0.5, sum by (le) (rate(traces_spanmetrics_latency_bucket{${SERVER}}[${RATE_INTERVAL}])))`, { legend: 'p50' }),
-      ], { unit: 's', min: 0 }),
+      pageRenderTime(JOB),
+      pageLatencyObjective(JOB),
       timeseries('Renders by route and outcome', 'Server spans by name and status. kini renders several routes rather than one page, so a slow release usually shows up on one of them first.', { w: 8, h: 8 }, [
         prom(`sum by (span_name, status_code) (rate(traces_spanmetrics_calls_total{${SERVER}}[${RATE_INTERVAL}]))`, { legend: '{{span_name}} · {{status_code}}' }),
       ], { unit: 'reqps', min: 0 }),
+    ],
+    [
       timeseries('Calls it makes while rendering', 'Outbound spans: the copy from Tolgee and anything the server fetches from kini-api before it can answer.', { w: 8, h: 8 }, [
         prom(`sum by (span_name) (rate(traces_spanmetrics_calls_total{service="${JOB}", span_kind="SPAN_KIND_CLIENT"}[${RATE_INTERVAL}]))`, { legend: '{{span_name}}' }),
       ], { unit: 'reqps', min: 0 }),
-    ],
-    [
       timeseries('Beacon requests', 'The only two routes kini-web measures server side: the RUM beacon and the CSP report endpoint. The pages themselves are in the render panels above.', { w: 8, h: 8 }, [
         prom(`sum by (route) (rate(http_requests_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{route}}' }),
       ], { unit: 'reqps', min: 0 }),
       timeseries('Beacon responses that are not 2xx', 'By route and status. 403 is a cross-origin post, 413 a body over the cap, 400 a body that is not JSON. The endpoint answers nothing useful on purpose, so this is the only place the refusals show.', { w: 8, h: 8 }, [
         prom(`sum by (route, status) (rate(http_requests_total{job="${JOB}", status!~"2.."}[${RATE_INTERVAL}]))`, { legend: '{{route}} · {{status}}' }),
       ], { unit: 'reqps', min: 0 }),
-      timeseries('Beacons rejected', 'Beacons dropped before they reached a metric, by reason. rate_limited is one client looping or someone probing the endpoint.', { w: 8, h: 8 }, [
+    ],
+    [
+      timeseries('Beacons rejected', 'Beacons dropped before they reached a metric, by reason. rate_limited is one client looping or someone probing the endpoint.', { w: 24, h: 8 }, [
         prom(`sum by (reason) (increase(rum_rejected_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{reason}}' }),
       ], { unit: 'short', min: 0, bars: true }),
     ],

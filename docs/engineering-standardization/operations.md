@@ -108,10 +108,15 @@ decision rather than folklore:
 | ---------------- | -------------------- | ------------------------------------------------------ | --------------------------------------- |
 | API availability | 99.5% not 5xx        | `http_requests_total`                                  | `AvailabilityBudget*`, pages and ticket |
 | API latency      | 95% within 500 ms    | `http_request_duration_seconds`, `le="0.5"`            | `LatencyBudget*`, page and ticket       |
-| Page latency, cv | 95% within 512 ms    | Tempo span metrics of `GET /`                          | `PageLatencyBudget*`, tickets           |
+| Page latency     | 95% within 512 ms    | Tempo span metrics of page and RSC server spans        | `PageLatencyBudget*`, tickets           |
 | Email delivery   | 99% within 2 minutes | `notification_delivery_duration_seconds` over requests | `EmailDeliveryBudget*`, tickets         |
 
-The two API numbers are one target for every API.
+The first three ask the same technical question of every service that can answer
+it, with one target each: API availability and API latency of every service that
+serves routes, page latency of every web app. Email delivery is the exception —
+it measures what notifications is for rather than how it behaves, so it applies
+to one service and cannot be asked of any other. It is kept because the number
+is the promise, not because it fits the pattern.
 
 A single target is a deliberate simplification. It over-protects `cv-web`, which
 serves static pages and could hold a far tighter number, and under-protects

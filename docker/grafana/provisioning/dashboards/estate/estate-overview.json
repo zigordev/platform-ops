@@ -651,8 +651,8 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Page latency objective · cv",
-      "description": "Share of cv page renders under 512 ms. The objective is 95%.",
+      "title": "Page latency objective",
+      "description": "Share of page renders under 512 ms, by web app. The objective is 95%.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -689,7 +689,7 @@
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:page_latency:ratio_rate1h",
-          "legendFormat": "1h",
+          "legendFormat": "{{job}} · 1h",
           "range": true,
           "instant": false,
           "exemplar": false
@@ -698,7 +698,7 @@
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "slo:page_latency:ratio_rate6h",
-          "legendFormat": "6h",
+          "legendFormat": "{{job}} · 6h",
           "range": true,
           "instant": false,
           "exemplar": false

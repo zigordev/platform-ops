@@ -131,6 +131,45 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/latency-burn.md'
           dashboard: 'service-overview'
 
+  - name: slo_page_latency_burn
+    rules:
+      - alert: PageLatencyBudgetBurningFast
+        expr: |
+          (1 - slo:page_latency:ratio_rate1h) > (14.4 * 0.05)
+          and
+          (1 - slo:page_latency:ratio_rate5m) > (14.4 * 0.05)
+          and
+          slo:page_traffic:rate1h * 3600 >= 20
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} is rendering pages far slower than half a second'
+          description: >-
+            Most page renders of {{ $labels.job }} in the last hour took longer
+            than half a second, and they still do. The objective is 95% under
+            half a second; this burns a month's budget in about two days.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
+          dashboard: 'service-overview'
+
+      - alert: PageLatencyBudgetEroding
+        expr: |
+          (1 - slo:page_latency:ratio_rate6h) > (6 * 0.05)
+          and
+          (1 - slo:page_latency:ratio_rate30m) > (6 * 0.05)
+          and
+          slo:page_traffic:rate6h * 3600 >= 20
+        for: 30m
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} has been rendering pages slowly for hours'
+          description: >-
+            Nearly a third of page renders of {{ $labels.job }} over six hours
+            took longer than half a second.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
+          dashboard: 'service-overview'
+
   # ===========================================================================
   # Availability of the services themselves.
   #
@@ -519,43 +558,6 @@ groups:
 
   - name: cv
     rules:
-      - alert: PageLatencyBudgetBurningFast
-        expr: |
-          (1 - slo:page_latency:ratio_rate1h) > (14.4 * 0.05)
-          and
-          (1 - slo:page_latency:ratio_rate5m) > (14.4 * 0.05)
-          and
-          slo:page_traffic:rate1h * 3600 >= 20
-        for: 5m
-        labels:
-          severity: ticket
-        annotations:
-          summary: '{{ $labels.job }} is rendering its page far slower than half a second'
-          description: >-
-            Most page renders of {{ $labels.job }} in the last hour took longer
-            than half a second, and they still do. The objective is 95% under
-            half a second; this burns a month's budget in about two days.
-          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
-          dashboard: 'service-cv-web'
-
-      - alert: PageLatencyBudgetEroding
-        expr: |
-          (1 - slo:page_latency:ratio_rate6h) > (6 * 0.05)
-          and
-          (1 - slo:page_latency:ratio_rate30m) > (6 * 0.05)
-          and
-          slo:page_traffic:rate6h * 3600 >= 20
-        for: 30m
-        labels:
-          severity: ticket
-        annotations:
-          summary: '{{ $labels.job }} is rendering its page slowly for hours'
-          description: >-
-            Nearly a third of page renders of {{ $labels.job }} over six hours
-            took longer than half a second.
-          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/page-latency.md'
-          dashboard: 'service-cv-web'
-
       - alert: AskSlow
         expr: |
           histogram_quantile(0.95, sum by (job, le) (rate(cv_ask_latency_seconds_bucket[30m]))) > 10
