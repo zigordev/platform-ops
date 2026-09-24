@@ -14,12 +14,16 @@ export const PATHS = {
   exceptions: 'docker/observability-parity.json',
   composeLocal: 'docker/compose.ops.local.yml',
   composeProd: 'docker/compose.ops.prod.yml',
+  dashboards: 'packages/dashboards/dashboards',
 };
 
 const ALERT_NAME = /^\s+-\s+alert:\s*([A-Za-z0-9_]+)\s*$/gm;
 const JOB_NAME = /^\s+-\s+job_name:\s*['"]?([A-Za-z0-9_-]+)['"]?\s*$/gm;
 const ALERTNAME_MATCHER = /alertname=~?"([^"]*)"/;
 const EQUAL_LIST = /equal:\s*\[([^\]]*)\]/;
+const APP_SELECTOR = /\bapp(=~|=)"([^"]*)"/g;
+const DASHBOARD_UID = /^\s*uid:\s*'service-([a-z0-9-]+)'\s*,\s*$/m;
+const EXPR_END = /^\s+(?:for|labels|annotations):/;
 const MEM_LIMIT = /^\s+mem_limit:\s*(\S+)\s*$/;
 const GO_MEM_LIMIT = /^\s+(?:-\s+)?GOMEMLIMIT[:=]\s*(\S+)\s*$/;
 const MEM_DIVISOR =
@@ -97,6 +101,44 @@ export function lokiAlertLabels(root) {
     }
   }
   return out;
+}
+
+export function logAlertApps(root) {
+  const out = new Map();
+  for (const file of yamlFilesUnder(join(root, PATHS.lokiRules))) {
+    let current = null;
+    for (const line of readFileSync(file, 'utf8').split('\n')) {
+      const alert = /^\s*-\s+alert:\s*([A-Za-z0-9_]+)\s*$/.exec(line);
+      if (alert) {
+        current = alert[1];
+        continue;
+      }
+      if (!current) continue;
+      if (EXPR_END.test(line)) {
+        current = null;
+        continue;
+      }
+      for (const match of line.matchAll(APP_SELECTOR)) {
+        const entry = out.get(current) ?? { listed: new Set(), pinned: new Set() };
+        if (match[1] === '=~') for (const app of match[2].split('|')) entry.listed.add(app);
+        else entry.pinned.add(match[2]);
+        out.set(current, entry);
+      }
+    }
+  }
+  return out;
+}
+
+export function dashboardServices(root) {
+  const dir = join(root, PATHS.dashboards);
+  if (!existsSync(dir)) return [];
+  const out = new Set();
+  for (const entry of readdirSync(dir)) {
+    if (!entry.startsWith('service-') || !entry.endsWith('.ts')) continue;
+    const uid = DASHBOARD_UID.exec(readFileSync(join(dir, entry), 'utf8'));
+    if (uid && uid[1] !== 'overview') out.add(uid[1]);
+  }
+  return [...out].sort();
 }
 
 export function toBytes(value) {
@@ -300,6 +342,27 @@ export function audit(root) {
   }
   if (unmatchable === 0) ok.push('every inhibited alert carries the labels its rule compares');
 
+  const services = dashboardServices(root);
+  const logApps = logAlertApps(root);
+  let strays = 0;
+  for (const [name, { listed, pinned }] of logApps) {
+    for (const app of [...listed, ...pinned].sort()) {
+      if (services.includes(app)) continue;
+      if (allowed(used, exceptions, 'log-alert-apps', `${name}:${app}`)) continue;
+      findings.push(`${name} watches ${app}, which is not a service in this estate`);
+      strays += 1;
+    }
+    if (listed.size === 0) continue;
+    for (const service of services) {
+      if (listed.has(service)) continue;
+      if (allowed(used, exceptions, 'log-alert-apps', `${name}:${service}`)) continue;
+      findings.push(`${name} leaves out ${service}, which has a service dashboard`);
+      strays += 1;
+    }
+  }
+  if (strays === 0 && services.length > 0 && logApps.size > 0)
+    ok.push(`the log alerts name only the ${services.length} services that have dashboards`);
+
   const groups = runbookGroups(readFileSync(join(root, PATHS.runbooks), 'utf8'));
   let odd = 0;
   for (const rule of rules) {
@@ -363,6 +426,17 @@ export function audit(root) {
       }
       const soft = localSoft.get(service);
       const softProd = prodSoft.get(service);
+      if (
+        soft === undefined &&
+        softProd === undefined &&
+        !allowed(used, exceptions, 'runtime-memory-limits', service)
+      ) {
+        findings.push(
+          `${service} is capped at ${here} and asks the runtime for nothing, so the kernel kills ` +
+            `it instead of the runtime giving memory back`
+        );
+        capGaps += 1;
+      }
       const unreadable = [
         ['locally', soft],
         ['in prod', softProd],

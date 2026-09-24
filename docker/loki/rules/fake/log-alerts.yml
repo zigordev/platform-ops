@@ -5,7 +5,7 @@ groups:
       - alert: ErrorLogsSpiking
         expr: |
           sum by (app, environment) (
-            rate({job="docker-json-logs", app!=""} | json | level = "error" [5m])
+            rate({job="docker-json-logs", app=~"cv-web|gpool-api|gpool-web|kini-api|kini-web|notifications-api|sity-web|trading-bot-control-plane|trading-bot-execution|trading-bot-market-data|trading-bot-operator-console|trading-bot-research-backtesting"} | json | level = "error" [5m])
           ) > 0.2
         for: 10m
         labels:
@@ -23,7 +23,7 @@ groups:
       - alert: UncaughtExceptions
         expr: |
           sum by (app, environment) (
-            count_over_time({job="docker-json-logs", app!=""} | json | event = "process.uncaught_exception" [10m])
+            count_over_time({job="docker-json-logs", app=~"cv-web|gpool-api|gpool-web|kini-api|kini-web|notifications-api|sity-web|trading-bot-control-plane|trading-bot-execution|trading-bot-market-data|trading-bot-operator-console|trading-bot-research-backtesting"} | json | event = "process.uncaught_exception" [10m])
           ) > 0
         for: 0m
         labels:

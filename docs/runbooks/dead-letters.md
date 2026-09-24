@@ -76,3 +76,37 @@ the log line opens the full path in Tempo.
 
 5. **Tell the affected people** if the failure window was long. They are waiting
    for mail that is not coming.
+
+## When the dead-letter write itself fails
+
+`NotificationsDeadLetterUnwritable` is a different and worse failure: an email
+failed, and the attempt to record that failure on the dead-letter topic also
+failed, on every retry. The consumer does not drop the record — dropping it
+would lose an email nobody would ever hear about — so it leaves the offset
+uncommitted and lets the batch fail, which means that partition stops moving
+and everything queued behind it waits.
+
+Which record is wedged, and how long it has been:
+
+```logql
+{app="notifications-api"} | json | event = "notification.record_blocked"
+```
+
+`failures` on that line counts consecutive failures of the same topic,
+partition and offset, so it keeps rising across the consumer restarts rather
+than resetting to one each time.
+
+The publish is retried `NOTIFICATIONS_RETRY_MAX_ATTEMPTS` times with the delay
+doubling from `NOTIFICATIONS_RETRY_INTERVAL_MS` up to thirty seconds, and the
+consumer heartbeats through each wait, so a short broker blip is absorbed and
+shows up only as `outcome="retried"` on
+`notifications_dlq_publish_failures_total`. `outcome="exhausted"` is what this
+alert watches.
+
+Almost always the broker is the cause, so check `RedpandaDown` first — it
+inhibits this alert for exactly that reason. If Redpanda is healthy, the topic
+itself is the next thing to look at: a missing `notification.email.requested.v1.DLT`,
+a partition without a leader, or a quota rejecting the write.
+
+Once the broker takes writes again the consumer clears the backlog on its own.
+Nothing needs replaying, because nothing was committed.

@@ -41,15 +41,15 @@
     },
     {
       "name": "1:UncaughtExceptions",
-      "reason": "UncaughtExceptions is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap — decide whether a service being down should hide it"
+      "reason": "the exception is a routing decision, not a labelling gap: an uncaught exception is usually why the service went down, and ServiceDown says only that it did. Hiding it would drop the one line that names the cause"
     },
     {
       "name": "1:NotificationsConsumerCrashLooping",
-      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap — decide whether a service being down should hide it"
+      "reason": "the exception is a routing decision, not a labelling gap: the crash loop names the failure, where ServiceDown and ServiceUnhealthy name only the symptom. It also decays on its own once the process stops logging, so it does not outlive the outage"
     },
     {
       "name": "2:NotificationsConsumerCrashLooping",
-      "reason": "NotificationsConsumerCrashLooping is a log alert; its labels now match, so listing it here is a routing decision rather than a technical gap — decide whether a service being down should hide it"
+      "reason": "the exception is a routing decision, not a labelling gap: the crash loop names the failure, where ServiceDown and ServiceUnhealthy name only the symptom. It also decays on its own once the process stops logging, so it does not outlive the outage"
     },
     {
       "name": "2:GpoolMailPublishFailing",

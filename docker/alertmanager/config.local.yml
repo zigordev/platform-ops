@@ -32,7 +32,7 @@ inhibit_rules:
   - source_matchers:
       - alertname="ServiceDown"
     target_matchers:
-      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking|PageLatencyBudget.*|AskSlow|AskUpstreamFailing|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|PoolsSync.*|TeamInvitationsNotQueued|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*|MarketStreamDisconnected|MarketDataProducerDisconnected|MarketDataNotPublishing|BinanceRateLimitNearCap|ExecutionLeftPaperMode|ControlPlaneProjectionsFailing"
+      - alertname=~"ServiceUnhealthy|ServiceDegraded|ComponentDown|HealthSignalMissing|AvailabilityBudget.*|LatencyBudget.*|ErrorLogsSpiking|PageLatencyBudget.*|AskSlow|AskUpstreamFailing|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|PoolsSync.*|TeamInvitationsNotQueued|NotificationsConsumerStuck|NotificationsReceivedButNotSent|EmailDeliveryBudget.*|MarketStreamDisconnected|MarketDataProducerDisconnected|MarketDataNotPublishing|BinanceRateLimitNearCap|ExecutionLeftPaperMode|ControlPlaneProjectionsFailing|ControlPlaneConfigPublishFailing"
     equal: ['environment', 'job']
   - source_matchers:
       - alertname="ServiceUnhealthy"
@@ -43,7 +43,7 @@ inhibit_rules:
   - source_matchers:
       - alertname="RedpandaDown"
     target_matchers:
-      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsDeadLetterUnread|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|TeamInvitationsNotQueued|MarketDataProducerDisconnected|MarketDataNotPublishing|NotificationsConsumerCrashLooping"
+      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsDeadLetterUnread|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|TeamInvitationsNotQueued|MarketDataProducerDisconnected|MarketDataNotPublishing|NotificationsConsumerCrashLooping|ControlPlaneConfigPublishFailing|NotificationsDeadLetterUnwritable"
     equal: ['environment']
   - source_matchers:
       - alertname="RedpandaDown"

@@ -489,6 +489,27 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/dead-letters.md'
           dashboard: 'service-notifications-api'
 
+      - alert: NotificationsDeadLetterUnwritable
+        expr: |
+          sum by (job) (
+            increase(notifications_dlq_publish_failures_total{outcome="exhausted"}[1h])
+          ) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'notifications could not even dead-letter a failed email'
+          description: >-
+            {{ $value | humanize }} emails failed and then could not be written
+            to the dead-letter topic either, after every retry. The record is
+            held rather than lost — the offset is never committed — but its
+            partition stops moving until the broker takes the write, so the
+            emails queued behind it wait too. The wedged record names itself:
+            {app="notifications-api"} | json | event = "notification.record_blocked"
+            carries the topic, partition, offset and how many times it has failed.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/dead-letters.md'
+          dashboard: 'service-notifications-api'
+
       - alert: RedpandaDown
         expr: up{job="redpanda"} == 0
         for: 2m
@@ -1013,4 +1034,24 @@ groups:
             and the console keeps serving whatever the last event that did
             project wrote. The value is the share of that stream being lost.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/control-plane-projections.md'
+          dashboard: 'trading-bot-pipeline'
+
+      - alert: ControlPlaneConfigPublishFailing
+        expr: |
+          sum by (job, outcome) (
+            increase(trading_bot_control_plane_config_changes_total{outcome=~"failed|skipped"}[15m])
+          ) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'the control plane left {{ $value | humanize }} configuration changes unpublished ({{ $labels.outcome }})'
+          description: >-
+            A configuration change was saved and then never reached the broker.
+            failed is a send that threw, skipped is one offered while the
+            publisher was stopping, and both are swallowed — the caller was
+            answered 2xx and nothing retries. market-data is the only consumer
+            and it also reconciles against the control plane on the hour, so a
+            lost event means the change takes effect up to an hour late rather
+            than never. Persistently failing means every change is an hour late.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/control-plane-config-changes.md'
           dashboard: 'trading-bot-pipeline'

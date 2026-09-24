@@ -5,6 +5,8 @@ import { dirname, join } from 'node:path';
 import {
   PATHS,
   audit,
+  dashboardServices,
+  logAlertApps,
   inhibitBlock,
   matches,
   goMemoryLimits,
@@ -56,12 +58,16 @@ const PROM_ALERTS = [
   .map((name) => `      - alert: ${name}\n        expr: up == 0\n`)
   .join('');
 
-function lokiAlerts(withLabels) {
+function lokiAlerts(withLabels, apps) {
+  const selector = apps
+    ? `{job="docker-json-logs", app=~"${apps.join('|')}"}`
+    : '{job="docker-json-logs"}';
   return ['ErrorLogsSpiking', 'UncaughtExceptions']
     .map(
       (name) =>
-        `      - alert: ${name}\n        expr: sum by (app) (rate({job="docker-json-logs"}[5m])) > 1\n` +
-        (withLabels ? `        labels:\n          job: '{{ $labels.app }}'\n` : '')
+        `      - alert: ${name}\n        expr: sum by (app) (rate(${selector}[5m])) > 1\n` +
+        (withLabels ? `        labels:\n          job: '{{ $labels.app }}'\n` : '') +
+        `        annotations:\n          summary: 'read {app="{{ $labels.app }}"}'\n`
     )
     .join('');
 }
@@ -94,6 +100,8 @@ function build({
   prodJobs,
   exceptions,
   lokiLabels = false,
+  lokiApps,
+  dashboards,
   inhibit = INHIBIT,
   prodInhibit = INHIBIT,
   localLimit,
@@ -115,8 +123,13 @@ function build({
   );
   put(
     `${PATHS.lokiRules}/fake/log-alerts.yml`,
-    `groups:\n  - name: logs\n    rules:\n${lokiAlerts(lokiLabels)}`
+    `groups:\n  - name: logs\n    rules:\n${lokiAlerts(lokiLabels, lokiApps)}`
   );
+  for (const service of dashboards ?? [])
+    put(
+      `${PATHS.dashboards}/service-${service}.ts`,
+      `export const spec = {\n  uid: 'service-${service}',\n  title: '${service}',\n};\n`
+    );
   put(PATHS.alertmanagerLocal, `route:\n  receiver: sink\n\n${inhibit}`);
   put(PATHS.alertmanagerProd, `route:\n  receiver: mail\n\n${prodInhibit}`);
   put(PATHS.runbooks, RUNBOOKS);
@@ -375,6 +388,8 @@ describe('memory limits', () => {
       prodJobs: ['cv-web'],
       localLimit: '1g',
       prodLimit: '1g',
+      localSoft: '700MiB',
+      prodSoft: '700MiB',
       memoryAlert: '1073741824',
       exceptions: {
         'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'known' }],
@@ -456,6 +471,100 @@ describe('a runtime limit under a memory limit', () => {
     expect(audit(root).findings).toContain(
       'tempo asks the runtime for 900m locally, which Go does not accept — it takes B, KiB, MiB, GiB or TiB'
     );
+  });
+});
+
+describe('the services the log alerts watch', () => {
+  const base = {
+    localJobs: ['cv-web'],
+    prodJobs: ['cv-web'],
+    dashboards: ['cv-web', 'gpool-api', 'overview'],
+    lokiApps: ['cv-web', 'gpool-api'],
+    lokiLabels: true,
+    exceptions: {
+      'inhibit-siblings': [{ name: '1:UncaughtExceptions', reason: 'known' }],
+    },
+  };
+
+  it('reads the list out of the rule and the services off their dashboards', () => {
+    build(base);
+    expect(dashboardServices(root)).toEqual(['cv-web', 'gpool-api']);
+    expect(logAlertApps(root).get('ErrorLogsSpiking').listed).toEqual(
+      new Set(['cv-web', 'gpool-api'])
+    );
+  });
+
+  it('passes when the list names every service and nothing else', () => {
+    build(base);
+    expect(audit(root).findings).toEqual([]);
+  });
+
+  it('catches an app in the list that is no service of ours', () => {
+    build({ ...base, lokiApps: ['cv-web', 'gpool-api', 'gpool-api-test'] });
+    expect(audit(root).findings).toContain(
+      'ErrorLogsSpiking watches gpool-api-test, which is not a service in this estate'
+    );
+  });
+
+  it('catches a service the list has fallen behind on', () => {
+    build({ ...base, lokiApps: ['cv-web'] });
+    expect(audit(root).findings).toContain(
+      'ErrorLogsSpiking leaves out gpool-api, which has a service dashboard'
+    );
+  });
+
+  it('lets a declared exception hold a service out of one alert', () => {
+    build({
+      ...base,
+      lokiApps: ['cv-web'],
+      exceptions: {
+        ...base.exceptions,
+        'log-alert-apps': [
+          { name: 'ErrorLogsSpiking:gpool-api', reason: 'deliberate' },
+          { name: 'UncaughtExceptions:gpool-api', reason: 'deliberate' },
+        ],
+      },
+    });
+    expect(audit(root).findings).toEqual([]);
+  });
+
+  it('reads no app out of an annotation that quotes the label', () => {
+    build({ ...base, lokiApps: undefined });
+    expect(logAlertApps(root).size).toBe(0);
+  });
+});
+
+describe('a capped container with no runtime limit', () => {
+  const base = {
+    localJobs: ['cv-web'],
+    prodJobs: ['cv-web'],
+    localLimit: '1g',
+    prodLimit: '1g',
+    memoryAlert: '1073741824',
+    memoryFraction: '0.92',
+    exceptions: {
+      'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'known' }],
+      'inhibit-siblings': [{ name: '1:UncaughtExceptions', reason: 'known' }],
+      'runbook-rows': [{ name: 'TempoMemoryNearLimit', reason: 'not the subject here' }],
+    },
+  };
+
+  it('catches a limit the runtime was never told about', () => {
+    build(base);
+    expect(audit(root).findings).toContain(
+      'tempo is capped at 1073741824 and asks the runtime for nothing, so the kernel kills it instead of the runtime giving memory back'
+    );
+  });
+
+  it('lets a declared exception through for a runtime that has no such knob', () => {
+    build({
+      ...base,
+      exceptions: {
+        ...base.exceptions,
+        'runtime-memory-limits': [{ name: 'tempo', reason: 'not a Go runtime' }],
+      },
+    });
+    expect(audit(root).findings).toEqual([]);
   });
 });
 
