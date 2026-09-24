@@ -78,6 +78,48 @@
   reverse_proxy cv-web:3001
 }
 
+{$SITY_WEB_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
+  encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
+  reverse_proxy sity-web:8080
+}
+
+{$TRADING_BOT_CONSOLE_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
+  encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
+  reverse_proxy trading-bot-operator-console:3000
+}
+
+{$TRADING_BOT_API_DOMAIN} {
+  log {
+    output stdout
+    format json
+  }
+
+  encode zstd gzip
+
+  @metrics path /metrics
+  respond @metrics 404
+
+  reverse_proxy trading-bot-control-plane:8080
+}
+
 {$OPS_GRAFANA_DOMAIN} {
   log {
     output stdout
