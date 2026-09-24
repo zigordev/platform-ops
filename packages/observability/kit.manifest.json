@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "digest": "9d007b206e5141b747c9bcece2ed9ff3cc3e70c45b8e6510375bd8d857330d81",
+  "digest": "c18bfc4b12560e65d3ecdc78b4425f9130d3a3ec724853a0b59da5c2341bda57",
   "files": {
     "RumProvider.tsx": "c1e7e67a8bda17c74441b78e957399bd3ec369457e2b8767a5c2d3184259535d",
     "csp-reports.test.ts": "bf269af13966f0c1939a2224ecff9138ce6edfa4a0f453fec3107de0b2df953d",
@@ -29,6 +29,8 @@
     "metrics.registry.test.ts": "72d5f3c3f2c92f63bbfc2c51b7bd347811bdb965c53872fb5c90b06402db488e",
     "metrics.registry.ts": "271267f5fb6e0c21a7f40d5820a610339a498a8872c44b746d68281488aee40e",
     "nest.ts": "4857ae813bc3969bc771d7f7225ade77ed41c76f8789a4fc06116913ee9d82db",
+    "next-spans.test.ts": "2497b8ac66de5e2b6cd070dd2bb74402450bb65d0c2e782cb06dc5a5b95fef04",
+    "next-spans.ts": "606555a6b4f261deba3bd10fd1c9a0d8426f6955358eeb607dafa77696be70cf",
     "next.test.ts": "922d1379f62e095d54a33a02b29c739600f8ea7b69bc2a11cb7a457f115e788d",
     "next.ts": "dff5d3d5b67853ffd370d85b40e1bc012154cf2644ea41c61928d8e17f1de727",
     "probe-paths.test.ts": "a34b2f4c138d085112a6ba734037f22cd5874bf48f0b6abf7bb689e628e1ac58",
@@ -48,7 +50,7 @@
     "standard-events.ts": "68fc287cf7e1ea5f0ba8795b16507fb5be33e7a85052f945fa601332be237523",
     "start-at-zero.test.ts": "b905baeea13ed75988bf659aac0383cd28edd0c7f242a6656693b39d3fe38e40",
     "start-at-zero.ts": "e0b400484ade7758949f54ecdd7dd1cdf04d3db1134731a33e77ad2e3b2625c6",
-    "tracing.ts": "4ed739a5575ee61cde82f02d375a39abb45110cddfb4d01db18711a73c0b38b4"
+    "tracing.ts": "32452b208742abaaf7000ad2c15d46d2815a2e45053724c78783139ea930af5c"
   },
   "profiles": {
     "fastify": {
@@ -59,6 +61,7 @@
         "health-metrics.ts",
         "json-logger.ts",
         "metrics.registry.ts",
+        "next-spans.ts",
         "probe-paths.ts",
         "route-names.ts",
         "standard-events.ts",
@@ -93,6 +96,7 @@
         "json-logger.ts",
         "metrics.registry.ts",
         "nest.ts",
+        "next-spans.ts",
         "probe-paths.ts",
         "route-names.ts",
         "standard-events.ts",
@@ -109,6 +113,7 @@
         "json-logger.ts",
         "mask.ts",
         "metrics.registry.openmetrics.ts",
+        "next-spans.ts",
         "next.ts",
         "probe-paths.ts",
         "route-names.ts",

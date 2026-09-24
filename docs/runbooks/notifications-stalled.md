@@ -26,6 +26,11 @@ kafka:consumer_group_lag:sum{redpanda_group="notifications-api"}
 sum(increase(notifications_received_total[30m])), sum(increase(notifications_sent_total[30m]))
 ```
 
+That first query returns a row per topic. Only
+`notification.email.requested.v1` belongs to this runbook; lag on
+`notification.email.requested.v1.DLT` is `NotificationsDeadLetterUnread` and is
+covered by [dead-letters.md](dead-letters.md). Nothing here clears it.
+
 ```bash
 sudo docker exec platform-ops-prod-redpanda-1 rpk group describe notifications-api
 ```

@@ -69,8 +69,19 @@ path in three repositories until it was fixed on 12 September. gpool attaches th
 fullest set and is the one to copy: Trivy on the pushed image, an SBOM
 attestation, a cosign signature and SLSA provenance.
 
-`trading-bot` and `sity` have no deploy workflow and no production compose
-manifest.
+`sity` follows the same three jobs. It is one static-serving container and it
+fits on the shared host, and the shared side of its delivery — ingress route,
+ECR repository, OIDC deploy role — is in place. The repository itself still has
+no `deploy.yml` and no production compose manifest, so it does not deploy yet.
+
+`trading-bot` is the exception, and deliberately so. It has the same ingress
+route, ECR repository and OIDC deploy role as everything else, but its deploy is
+`workflow_dispatch` only: no release trigger, no merge trigger. Its seven
+containers measured ~10.6 GiB against a host with 8, so nothing should be able
+to start it by accident. It also has no prod scrape jobs and no uptime probe,
+because both would alert forever on services that are not running.
+[docs/host-capacity.md](../host-capacity.md) has the measurements and the
+instance size they imply.
 
 ## Translations
 
