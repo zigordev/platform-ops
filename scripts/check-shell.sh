@@ -12,8 +12,8 @@ while IFS= read -r file; do
 done < <(find "$REPO_ROOT/scripts" -maxdepth 2 -type f -name '*.sh' | sort)
 
 if [ "$count" -eq 0 ]; then
-  echo "No shell scripts to lint."
-  exit 0
+  echo "No shell scripts found under $REPO_ROOT/scripts — this script lives there, so that cannot be true." >&2
+  exit 1
 fi
 
 echo "Shell syntax check passed (${count} files)."
