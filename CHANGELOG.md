@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.41.0](https://github.com/zigordev/platform-ops/compare/v1.40.1...v1.41.0) (2026-09-24)
+
+
+### Features
+
+* **dashboards:** add the kini funnel and the trading-bot pipeline ([#234](https://github.com/zigordev/platform-ops/issues/234)) ([ce0654e](https://github.com/zigordev/platform-ops/commit/ce0654ec539bb0f3da071148fdc78f044a26256e))
+* **slo:** measure page latency the same way on every web app ([#233](https://github.com/zigordev/platform-ops/issues/233)) ([add7354](https://github.com/zigordev/platform-ops/commit/add73543dbe2de6bfbce8694726295b1cb94f1c4))
+
+
+### Bug Fixes
+
+* **observability:** hold span metrics for two hours and alert on a wedged dlt ([#232](https://github.com/zigordev/platform-ops/issues/232)) ([e1c158d](https://github.com/zigordev/platform-ops/commit/e1c158d16254c261457b061e010c00a6bea6cdd3))
+
 ## [1.40.1](https://github.com/zigordev/platform-ops/compare/v1.40.0...v1.40.1) (2026-09-24)
 
 
