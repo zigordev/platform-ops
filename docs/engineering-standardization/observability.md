@@ -29,6 +29,25 @@ The kit loads the Node auto-instrumentations except `fs`, whose span per file
 read drowns everything else, and `pino`, because the kit stamps the trace on log
 lines itself. HTTP, the framework, `pg` and `kafkajs` are all covered.
 
+**A Next.js page request is one server span.** Next names its own `GET /` span,
+which no other framework here does, so on a Next server the HTTP
+instrumentation's incoming span is off. Next then runs `handleRequest` twice
+whenever middleware runs: once for the middleware pass, which ends by throwing
+Next's own bubble and carries `next.bubble`, and once for the request the router
+redispatches. The kit holds the bubbled pass back and drops it as soon as a
+second `handleRequest` span for the same method and target ends — and exports it
+if none does, because a middleware redirect or a middleware 401 is that pass and
+nothing else. Requests that never ran middleware, a 404 and the image
+optimiser's inner dispatch among them, are never held and keep the span their
+render spans hang off. Outgoing calls keep their spans either way. Without this
+one page request is three `SPAN_KIND_SERVER` spans, and any panel that groups by
+span kind rather than by an exact span name counts that request three times.
+
+**A span name is a metric label.** The generator turns it into `span_name`, so a
+name that carries a URL carries its query string into Prometheus for as long as
+the series lives. The kit rewrites Next's `fetch GET <url>` spans to
+`fetch GET <host>` and keeps the URL on the span as `url.full`.
+
 **`OTEL_SERVICE_NAME` is `<repo>-<app>`** — `gpool-api`, `notifications-api`,
 `cv-web`. This is the same string as the Prometheus job name and the Grafana
 dashboard title. One name, three tools.
@@ -46,9 +65,11 @@ at a trace Tempo never stored is a link that opens nothing.
 Tempo keeps traces for 30 days. Its metrics generator turns every span into span
 metrics, `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket`
 by `service`, `span_name`, `span_kind` and `status_code`, plus service-graph
-edges, and remote-writes them into Prometheus with an exemplar per bucket. A
-Next.js app's page latency objective is built on them, since a page render has
-no route metric, and every graph drawn from them is a door into a trace. The
+edges, and remote-writes them into Prometheus with an exemplar per bucket. The
+page latency objective every web app shares is built on them, since a page
+render has no route metric, and every graph drawn from them is a door into a
+trace. A recording rule does not carry exemplars, so a panel that wants one
+reads the generator series and not `slo:page_render:*`. The
 `local-blocks` processor keeps recent blocks queryable by TraceQL metrics, which
 is what Traces Drilldown runs on.
 
@@ -691,9 +712,12 @@ what its kind needs.
 - `experimental.clientTraceMetadata: ['traceparent']` in `next.config.js`, so a
   page view can be tied to its render trace. The proxy runs in a trace of its
   own, so a header set there names the wrong trace.
-- Page renders measured from span metrics, not route metrics: `GET /` server
-  spans, with a page latency objective of 95% under 512 ms, Tempo's bucket edge
-  nearest half a second.
+- Page renders measured from span metrics, not route metrics: `GET /…` and
+  `RSC GET /…` server spans, with a page latency objective of 95% under 512 ms,
+  Tempo's bucket edge nearest half a second. `slo:page_render:latency_bucket`
+  and `slo:page_render:latency_count` select them for every app at once, so an
+  app inherits the objective by being named `<repo>-web` or `<repo>-console` and
+  emitting spans, not by getting rules of its own.
 - A registry that speaks OpenMetrics, for exemplars, and metrics recorded while
   rendering kept on `globalThis` (section 2).
 - A report-only CSP with a nonce per request and `report-uri /rum/csp`. A

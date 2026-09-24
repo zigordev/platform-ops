@@ -128,6 +128,8 @@ const RULES = [
   'slo:traffic:rate1h',
   'host:filesystem_avail:ratio',
   'host:filesystem_avail_bytes:max',
+  'slo:page_render:latency_bucket',
+  'slo:page_render:latency_count',
   'slo:page_latency:ratio_rate1h',
   'slo:page_latency:ratio_rate6h',
   'slo:page_traffic:rate1h',

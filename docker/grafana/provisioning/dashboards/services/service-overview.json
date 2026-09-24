@@ -683,7 +683,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 0, "y": 21, "w": 8, "h": 7 },
+      "gridPos": { "x": 0, "y": 21, "w": 6, "h": 7 },
       "targets": [
         {
           "refId": "A",
@@ -740,7 +740,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 8, "y": 21, "w": 8, "h": 7 },
+      "gridPos": { "x": 6, "y": 21, "w": 6, "h": 7 },
       "targets": [
         {
           "refId": "A",
@@ -764,6 +764,63 @@
     },
     {
       "id": 14,
+      "type": "timeseries",
+      "title": "Page latency objective",
+      "description": "Share of page renders under 512 ms over one and six hours. The line is the 95% objective, and it is the same measurement on every web app. A service that renders no pages has no line here.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "max": 1,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0.95 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 12, "y": 21, "w": 6, "h": 7 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slo:page_latency:ratio_rate1h{job=\"$job\"}",
+          "legendFormat": "1h",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slo:page_latency:ratio_rate6h{job=\"$job\"}",
+          "legendFormat": "6h",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 15,
       "type": "timeseries",
       "title": "Dependencies over time",
       "description": "Each dependency as /health saw it: 1 is up, 0 is down.",
@@ -793,7 +850,7 @@
         "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "gridPos": { "x": 16, "y": 21, "w": 8, "h": 7 },
+      "gridPos": { "x": 18, "y": 21, "w": 6, "h": 7 },
       "targets": [
         {
           "refId": "A",
@@ -807,7 +864,7 @@
       ]
     },
     {
-      "id": 15,
+      "id": 16,
       "type": "timeseries",
       "title": "CPU",
       "description": "CPU time the process uses, in cores.",
@@ -850,7 +907,7 @@
       ]
     },
     {
-      "id": 16,
+      "id": 17,
       "type": "timeseries",
       "title": "Memory",
       "description": "Resident memory of the process.",
@@ -892,7 +949,7 @@
       ]
     },
     {
-      "id": 17,
+      "id": 18,
       "type": "timeseries",
       "title": "Event loop lag p99",
       "description": "How long callbacks wait for the event loop. Above 100 ms, every request is late.",
@@ -940,7 +997,7 @@
       ]
     },
     {
-      "id": 18,
+      "id": 19,
       "type": "logs",
       "title": "Errors and warnings",
       "description": "Error and warning lines, newest first. A line with a trace id has a button that opens the trace.",

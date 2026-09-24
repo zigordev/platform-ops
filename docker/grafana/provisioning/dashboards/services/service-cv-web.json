@@ -177,7 +177,7 @@
       "id": 2,
       "type": "stat",
       "title": "Page views · 1 hour",
-      "description": "Page renders traced in the last hour.",
+      "description": "Page and navigation renders traced in the last hour. Probe, API, asset and not-found spans are left out, the same way the objective leaves them out.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -204,7 +204,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=\"cv-web\", span_name=\"GET /\", span_kind=\"SPAN_KIND_SERVER\"}[1h]))",
+          "expr": "sum(increase(slo:page_render:latency_count{job=\"cv-web\"}[1h]))",
           "legendFormat": "renders",
           "range": false,
           "instant": true,
@@ -317,7 +317,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Page render time",
-      "description": "The server side of a page view, from Tempo. Hover a dot to open that render trace.",
+      "description": "The server side of a page view, by route, from Tempo. Hover a dot to open that render trace.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -353,7 +353,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"cv-web\", span_name=\"GET /\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"cv-web\", span_kind=\"SPAN_KIND_SERVER\", span_name=~\"(RSC )?GET /.*\", span_name!~\"(RSC )?GET /(_next|_not-found|api|health|metrics|rum)(/.*)?\", span_name!~\".*[.][A-Za-z0-9]+\"}[$__rate_interval])))",
           "legendFormat": "p95",
           "range": true,
           "instant": false,
@@ -362,7 +362,7 @@
         {
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"cv-web\", span_name=\"GET /\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"cv-web\", span_kind=\"SPAN_KIND_SERVER\", span_name=~\"(RSC )?GET /.*\", span_name!~\"(RSC )?GET /(_next|_not-found|api|health|metrics|rum)(/.*)?\", span_name!~\".*[.][A-Za-z0-9]+\"}[$__rate_interval])))",
           "legendFormat": "p50",
           "range": true,
           "instant": false,
@@ -374,7 +374,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Page latency objective",
-      "description": "Share of renders under 512 ms over one and six hours. The line is the 95% objective.",
+      "description": "Share of page renders under 512 ms over one and six hours. The line is the 95% objective, and it is the same measurement on every web app. A service that renders no pages has no line here.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -410,7 +410,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:page_latency:ratio_rate1h",
+          "expr": "slo:page_latency:ratio_rate1h{job=\"cv-web\"}",
           "legendFormat": "1h",
           "range": true,
           "instant": false,
@@ -419,7 +419,7 @@
         {
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "slo:page_latency:ratio_rate6h",
+          "expr": "slo:page_latency:ratio_rate6h{job=\"cv-web\"}",
           "legendFormat": "6h",
           "range": true,
           "instant": false,

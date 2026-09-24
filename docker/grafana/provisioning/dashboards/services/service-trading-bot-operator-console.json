@@ -374,50 +374,8 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Page renders",
-      "description": "Server spans by name: one per page the console rendered. The console is polled by whoever has it open, so this follows how many tabs are watching.",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none", "group": "A" },
-            "thresholdsStyle": { "mode": "off" }
-          },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "gridPos": { "x": 0, "y": 5, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"trading-bot-operator-console\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval]))",
-          "legendFormat": "{{span_name}}",
-          "range": true,
-          "instant": false,
-          "exemplar": false
-        }
-      ]
-    },
-    {
-      "id": 7,
-      "type": "timeseries",
-      "title": "Page render time p95",
-      "description": "The server side of a page view, by page. Hover a dot to open that render trace.",
+      "title": "Page render time",
+      "description": "The server side of a page view, by route, from Tempo. Hover a dot to open that render trace.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -438,7 +396,64 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              { "color": "red", "value": 0.512 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 5, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"trading-bot-operator-console\", span_kind=\"SPAN_KIND_SERVER\", span_name=~\"(RSC )?GET /.*\", span_name!~\"(RSC )?GET /(_next|_not-found|api|health|metrics|rum)(/.*)?\", span_name!~\".*[.][A-Za-z0-9]+\"}[$__rate_interval])))",
+          "legendFormat": "p95",
+          "range": true,
+          "instant": false,
+          "exemplar": true
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"trading-bot-operator-console\", span_kind=\"SPAN_KIND_SERVER\", span_name=~\"(RSC )?GET /.*\", span_name!~\"(RSC )?GET /(_next|_not-found|api|health|metrics|rum)(/.*)?\", span_name!~\".*[.][A-Za-z0-9]+\"}[$__rate_interval])))",
+          "legendFormat": "p50",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Page latency objective",
+      "description": "Share of page renders under 512 ms over one and six hours. The line is the 95% objective, and it is the same measurement on every web app. A service that renders no pages has no line here.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "max": 1,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0.95 }
             ]
           }
         },
@@ -453,11 +468,20 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=\"trading-bot-operator-console\", span_kind=\"SPAN_KIND_SERVER\"}[$__rate_interval])))",
-          "legendFormat": "{{span_name}}",
+          "expr": "slo:page_latency:ratio_rate1h{job=\"trading-bot-operator-console\"}",
+          "legendFormat": "1h",
           "range": true,
           "instant": false,
-          "exemplar": true
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "slo:page_latency:ratio_rate6h{job=\"trading-bot-operator-console\"}",
+          "legendFormat": "6h",
+          "range": true,
+          "instant": false,
+          "exemplar": false
         }
       ]
     },

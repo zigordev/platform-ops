@@ -1,4 +1,4 @@
-import { componentsTable, errorLogs, failingTraces, healthStat, releaseStat, runtimeRow, slowTraces, upStat } from '../lib/common.ts';
+import { componentsTable, errorLogs, failingTraces, healthStat, pageLatencyObjective, pageRenderTime, releaseStat, runtimeRow, slowTraces, upStat } from '../lib/common.ts';
 import { deploys, RATE_INTERVAL } from '../lib/dashboard.ts';
 import { SERVICES } from '../lib/folders.ts';
 import type { DashboardSpec } from '../lib/model.ts';
@@ -28,12 +28,8 @@ export const serviceTradingBotOperatorConsole: DashboardSpec = {
       componentsTable(JOB, 8),
     ],
     [
-      timeseries('Page renders', 'Server spans by name: one per page the console rendered. The console is polled by whoever has it open, so this follows how many tabs are watching.', { w: 8, h: 8 }, [
-        prom(`sum by (span_name) (rate(traces_spanmetrics_calls_total{${SERVER}}[${RATE_INTERVAL}]))`, { legend: '{{span_name}}' }),
-      ], { unit: 'reqps', min: 0 }),
-      timeseries('Page render time p95', 'The server side of a page view, by page. Hover a dot to open that render trace.', { w: 8, h: 8 }, [
-        prom(`histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{${SERVER}}[${RATE_INTERVAL}])))`, { legend: '{{span_name}}', exemplar: true }),
-      ], { unit: 's', min: 0, steps: under(1), lines: true }),
+      pageRenderTime(JOB),
+      pageLatencyObjective(JOB),
       timeseries('Renders by outcome', 'Server spans by name and status. A render that fails against the control-plane shows up here first.', { w: 8, h: 8 }, [
         prom(`sum by (span_name, status_code) (rate(traces_spanmetrics_calls_total{${SERVER}}[${RATE_INTERVAL}]))`, { legend: '{{span_name}} · {{status_code}}' }),
       ], { unit: 'reqps', min: 0 }),

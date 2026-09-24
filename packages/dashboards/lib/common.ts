@@ -56,6 +56,28 @@ export function runtimeRow(job: string): Row {
   ];
 }
 
+export const PAGE_RENDER = 'span_kind="SPAN_KIND_SERVER", span_name=~"(RSC )?GET /.*", span_name!~"(RSC )?GET /(_next|_not-found|api|health|metrics|rum)(/.*)?", span_name!~".*[.][A-Za-z0-9]+"';
+
+export function pageViewsStat(job: string): PanelSpec {
+  return stat('Page views · 1 hour', 'Page and navigation renders traced in the last hour. Probe, API, asset and not-found spans are left out, the same way the objective leaves them out.', { w: 4, h: 5 }, [
+    prom(`sum(increase(slo:page_render:latency_count{job="${job}"}[1h]))`, { legend: 'renders' }),
+  ], { decimals: 0 });
+}
+
+export function pageRenderTime(job: string, w = 8): PanelSpec {
+  return timeseries('Page render time', 'The server side of a page view, by route, from Tempo. Hover a dot to open that render trace.', { w, h: 8 }, [
+    prom(`histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service="${job}", ${PAGE_RENDER}}[${RATE_INTERVAL}])))`, { legend: 'p95', exemplar: true }),
+    prom(`histogram_quantile(0.5, sum by (le) (rate(traces_spanmetrics_latency_bucket{service="${job}", ${PAGE_RENDER}}[${RATE_INTERVAL}])))`, { legend: 'p50' }),
+  ], { unit: 's', min: 0, steps: under(0.512), lines: true });
+}
+
+export function pageLatencyObjective(job: string, w = 8, h = 8): PanelSpec {
+  return timeseries('Page latency objective', 'Share of page renders under 512 ms over one and six hours. The line is the 95% objective, and it is the same measurement on every web app. A service that renders no pages has no line here.', { w, h }, [
+    prom(`slo:page_latency:ratio_rate1h{job="${job}"}`, { legend: '1h' }),
+    prom(`slo:page_latency:ratio_rate6h{job="${job}"}`, { legend: '6h' }),
+  ], { unit: 'percentunit', max: 1, steps: atLeast(0.95), lines: true });
+}
+
 export function failingTraces(service: string, w: number, h = 10): PanelSpec {
   return traces('Failing traces', 'The latest traces with a span in error. Select a trace id to open it.', { w, h }, [
     traceql(`{ resource.service.name = "${service}" && status = error }`),
