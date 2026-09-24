@@ -10,6 +10,8 @@ const APP = [
   'nodejs_eventloop_lag_p99_seconds',
   'cv_contact_submissions_total',
   'cv_i18n_messages_total',
+  'gpool_i18n_messages_total',
+  'kini_i18n_messages_total',
   'cv_feature_flag_enabled',
   'cv_ask_requests_total',
   'cv_ask_tokens_total',

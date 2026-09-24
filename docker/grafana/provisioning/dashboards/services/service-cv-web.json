@@ -641,7 +641,7 @@
       "id": 12,
       "type": "timeseries",
       "title": "Where the copy came from",
-      "description": "Message loads by source. local or default_locale means Tolgee did not answer.",
+      "description": "Message loads by source. merged is the healthy case, and also what a Tolgee outage looks like for as long as the process still holds a cached export — so it says nothing about Tolgee being reachable. local means a render served the message files committed in the repository with nothing from Tolgee in it, and is what CopyServedFromRepository alerts on.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {

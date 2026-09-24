@@ -45,7 +45,10 @@ export const serviceGpoolWeb: DashboardSpec = {
       ], { unit: 'short', min: 0, bars: true }),
     ],
     [
-      timeseries('Copy that did not come from Tolgee', 'Renders that fell back, by what they fell back to: cached is the last good export, local is the copy committed in the repo. A run of these means Tolgee is unreachable.', { w: 24, h: 8 }, [
+      timeseries('Where the copy came from', 'Message loads by source. merged is the healthy case, and also what a Tolgee outage looks like for as long as the process still holds a cached export — so it says nothing about Tolgee being reachable. local means a render served the message files committed in the repository with nothing from Tolgee in it, and is what CopyServedFromRepository alerts on.', { w: 12, h: 8 }, [
+        prom(`sum by (source) (rate(gpool_i18n_messages_total{job="${JOB}"}[${RATE_INTERVAL}]))`, { legend: '{{source}}' }),
+      ], { unit: 'ops', min: 0 }),
+      timeseries('Copy that did not come from Tolgee', 'Renders that fell back, by what they fell back to: cached is the last good export, local is the copy committed in the repo. This is the only place cached is visible — the panel beside it counts those renders as merged, because the loader still had two sources to merge. A run of either means Tolgee is unreachable.', { w: 12, h: 8 }, [
         loki(`sum by (source) (count_over_time({app="${JOB}"} | json | event="i18n.fallback" [$__auto]))`, { legend: '{{source}}' }),
       ], { unit: 'short', min: 0, bars: true }),
     ],
