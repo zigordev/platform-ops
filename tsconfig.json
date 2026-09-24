@@ -42,6 +42,8 @@
     "packages/observability/probe-paths.test.ts",
     "packages/observability/route-names.ts",
     "packages/observability/route-names.test.ts",
+    "packages/observability/next-spans.ts",
+    "packages/observability/next-spans.test.ts",
     "packages/observability/standard-events.ts",
     "packages/observability/standard-events.test.ts",
     "packages/observability/start-at-zero.ts",
