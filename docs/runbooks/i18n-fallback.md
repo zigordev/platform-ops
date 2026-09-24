@@ -71,8 +71,9 @@ In the order they are usually true:
   recover on their own within the minute the cache TTL allows.
 - **One site only.** Tolgee is up and this site cannot reach it or is not
   configured for it. Check `TOLGEE_API_URL`, `TOLGEE_PROJECT_ID` and
-  `TOLGEE_API_KEY` in that service's environment — all three unset makes the
-  loader skip Tolgee entirely and count `local` on every render, silently.
+  `TOLGEE_API_KEY` in that service's environment — any one of the three unset
+  or blank makes the loader skip Tolgee before it fetches, so it counts `local`
+  on every render and writes no `i18n.fallback` line at all.
 - **The project is empty for that locale.** Tolgee answers `no_exported_result`
   with a 400, which the loader treats as Tolgee being up with nothing to give.
   The log line carries `NoExport`. Check the language tags: they are
