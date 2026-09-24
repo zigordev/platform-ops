@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.2](https://github.com/zigordev/platform-ops/compare/v1.42.1...v1.42.2) (2026-09-24)
+
+
+### Bug Fixes
+
+* **alerting:** name the services the log alerts watch, and stop two checks lying ([#242](https://github.com/zigordev/platform-ops/issues/242)) ([b928634](https://github.com/zigordev/platform-ops/commit/b9286343bdb698729ecbf59af23c84031031bdd2))
+
 ## [1.42.1](https://github.com/zigordev/platform-ops/compare/v1.42.0...v1.42.1) (2026-09-24)
 
 
