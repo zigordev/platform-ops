@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.0](https://github.com/zigordev/platform-ops/compare/v1.39.0...v1.40.0) (2026-09-24)
+
+
+### Features
+
+* **delivery:** add the shared delivery path for sity and trading-bot ([#230](https://github.com/zigordev/platform-ops/issues/230)) ([229a4fe](https://github.com/zigordev/platform-ops/commit/229a4fe1dff73fb653022cc475236150dc53fb7d))
+
 ## [1.39.0](https://github.com/zigordev/platform-ops/compare/v1.38.0...v1.39.0) (2026-09-23)
 
 
