@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.3](https://github.com/zigordev/platform-ops/compare/v1.42.2...v1.42.3) (2026-09-24)
+
+
+### Bug Fixes
+
+* **checks:** make the estate verifier run, and stop three checks lying ([#244](https://github.com/zigordev/platform-ops/issues/244)) ([f660c5c](https://github.com/zigordev/platform-ops/commit/f660c5ca86ee3251ec09dcdf2b630007e9ec774d))
+
 ## [1.42.2](https://github.com/zigordev/platform-ops/compare/v1.42.1...v1.42.2) (2026-09-24)
 
 
