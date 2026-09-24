@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.0](https://github.com/zigordev/platform-ops/compare/v1.41.0...v1.42.0) (2026-09-24)
+
+
+### Features
+
+* **alerts:** alert when the control plane drops a projection stream ([#238](https://github.com/zigordev/platform-ops/issues/238)) ([d02c620](https://github.com/zigordev/platform-ops/commit/d02c620aaf4f8deb0ecc170d402eb72d54916e8b))
+
 ## [1.41.0](https://github.com/zigordev/platform-ops/compare/v1.40.1...v1.41.0) (2026-09-24)
 
 
