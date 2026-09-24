@@ -46,9 +46,11 @@ at a trace Tempo never stored is a link that opens nothing.
 Tempo keeps traces for 30 days. Its metrics generator turns every span into span
 metrics, `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket`
 by `service`, `span_name`, `span_kind` and `status_code`, plus service-graph
-edges, and remote-writes them into Prometheus with an exemplar per bucket. A
-Next.js app's page latency objective is built on them, since a page render has
-no route metric, and every graph drawn from them is a door into a trace. The
+edges, and remote-writes them into Prometheus with an exemplar per bucket. The
+page latency objective every web app shares is built on them, since a page
+render has no route metric, and every graph drawn from them is a door into a
+trace. A recording rule does not carry exemplars, so a panel that wants one
+reads the generator series and not `slo:page_render:*`. The
 `local-blocks` processor keeps recent blocks queryable by TraceQL metrics, which
 is what Traces Drilldown runs on.
 
@@ -691,9 +693,12 @@ what its kind needs.
 - `experimental.clientTraceMetadata: ['traceparent']` in `next.config.js`, so a
   page view can be tied to its render trace. The proxy runs in a trace of its
   own, so a header set there names the wrong trace.
-- Page renders measured from span metrics, not route metrics: `GET /` server
-  spans, with a page latency objective of 95% under 512 ms, Tempo's bucket edge
-  nearest half a second.
+- Page renders measured from span metrics, not route metrics: `GET /…` and
+  `RSC GET /…` server spans, with a page latency objective of 95% under 512 ms,
+  Tempo's bucket edge nearest half a second. `slo:page_render:latency_bucket`
+  and `slo:page_render:latency_count` select them for every app at once, so an
+  app inherits the objective by being named `<repo>-web` or `<repo>-console` and
+  emitting spans, not by getting rules of its own.
 - A registry that speaks OpenMetrics, for exemplars, and metrics recorded while
   rendering kept on `globalThis` (section 2).
 - A report-only CSP with a nonce per request and `report-uri /rum/csp`. A

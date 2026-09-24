@@ -65,9 +65,9 @@ export const estateOverview: DashboardSpec = {
       ], { unit: 's', min: 0, steps: under(0.5), lines: true }),
     ],
     [
-      timeseries('Page latency objective · cv', 'Share of cv page renders under 512 ms. The objective is 95%.', { w: 8, h: 8 }, [
-        prom('slo:page_latency:ratio_rate1h', { legend: '1h' }),
-        prom('slo:page_latency:ratio_rate6h', { legend: '6h' }),
+      timeseries('Page latency objective', 'Share of page renders under 512 ms, by web app. The objective is 95%.', { w: 8, h: 8 }, [
+        prom('slo:page_latency:ratio_rate1h', { legend: '{{job}} · 1h' }),
+        prom('slo:page_latency:ratio_rate6h', { legend: '{{job}} · 6h' }),
       ], { unit: 'percentunit', max: 1, steps: atLeast(0.95), lines: true }),
       timeseries('Email delivery objective', 'Share of emails sent within two minutes of the request. The objective is 99%.', { w: 8, h: 8 }, [
         prom('slo:delivery:ratio_rate1h', { legend: '1h' }),

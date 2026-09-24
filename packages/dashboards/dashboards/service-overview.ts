@@ -1,4 +1,4 @@
-import { componentsTable, errorLogs, failingTraces, healthStat, releaseStat, runtimeRow, upStat } from '../lib/common.ts';
+import { componentsTable, errorLogs, failingTraces, healthStat, pageLatencyObjective, releaseStat, runtimeRow, upStat } from '../lib/common.ts';
 import { deploys, jobVariable, RATE_INTERVAL } from '../lib/dashboard.ts';
 import { SERVICES } from '../lib/folders.ts';
 import type { DashboardSpec } from '../lib/model.ts';
@@ -49,15 +49,16 @@ export const serviceOverview: DashboardSpec = {
       failingTraces(JOB, 8, 8),
     ],
     [
-      timeseries('Availability', 'Share of requests not answered 5xx over one hour and one day. The line is the 99.5% objective.', { w: 8, h: 7 }, [
+      timeseries('Availability', 'Share of requests not answered 5xx over one hour and one day. The line is the 99.5% objective.', { w: 6, h: 7 }, [
         prom(`slo:availability:ratio_rate1h{job="${JOB}"}`, { legend: '1h' }),
         prom(`slo:availability:ratio_rate1d{job="${JOB}"}`, { legend: '1d' }),
       ], { unit: 'percentunit', max: 1, steps: atLeast(0.995), lines: true }),
-      timeseries('Latency', 'Share of requests answered within 500 ms over one hour and one day. The line is the 95% objective.', { w: 8, h: 7 }, [
+      timeseries('Latency', 'Share of requests answered within 500 ms over one hour and one day. The line is the 95% objective.', { w: 6, h: 7 }, [
         prom(`slo:latency:ratio_rate1h{job="${JOB}"}`, { legend: '1h' }),
         prom(`slo:latency:ratio_rate1d{job="${JOB}"}`, { legend: '1d' }),
       ], { unit: 'percentunit', max: 1, steps: atLeast(0.95), lines: true }),
-      timeseries('Dependencies over time', 'Each dependency as /health saw it: 1 is up, 0 is down.', { w: 8, h: 7 }, [
+      pageLatencyObjective(JOB, 6, 7),
+      timeseries('Dependencies over time', 'Each dependency as /health saw it: 1 is up, 0 is down.', { w: 6, h: 7 }, [
         prom(`max by (component) (service_component_up{job="${JOB}"})`, { legend: '{{component}}' }),
       ], { unit: 'short', min: 0, max: 1, decimals: 0 }),
     ],

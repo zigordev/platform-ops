@@ -219,50 +219,49 @@ groups:
 
   - name: slo_page_latency_sli
     rules:
+      - record: slo:page_render:latency_bucket
+        expr: |
+          label_replace(
+            traces_spanmetrics_latency_bucket{span_kind="SPAN_KIND_SERVER", service=~".+-web|.+-console", span_name=~"(RSC )?GET /.*", span_name!~"(RSC )?GET /(_next|_not-found|api|health|metrics|rum)(/.*)?", span_name!~".*[.][A-Za-z0-9]+"},
+            "job", "$1", "service", "(.*)"
+          )
+
+      - record: slo:page_render:latency_count
+        expr: |
+          label_replace(
+            traces_spanmetrics_latency_count{span_kind="SPAN_KIND_SERVER", service=~".+-web|.+-console", span_name=~"(RSC )?GET /.*", span_name!~"(RSC )?GET /(_next|_not-found|api|health|metrics|rum)(/.*)?", span_name!~".*[.][A-Za-z0-9]+"},
+            "job", "$1", "service", "(.*)"
+          )
+
       - record: slo:page_latency:ratio_rate5m
         expr: |
-          label_replace(
-            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[5m]))
-            /
-            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[5m])),
-            "job", "$1", "service", "(.*)"
-          )
+          sum by (job) (rate(slo:page_render:latency_bucket{le="0.512"}[5m]))
+          /
+          sum by (job) (rate(slo:page_render:latency_count[5m]))
+
       - record: slo:page_latency:ratio_rate30m
         expr: |
-          label_replace(
-            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[30m]))
-            /
-            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[30m])),
-            "job", "$1", "service", "(.*)"
-          )
+          sum by (job) (rate(slo:page_render:latency_bucket{le="0.512"}[30m]))
+          /
+          sum by (job) (rate(slo:page_render:latency_count[30m]))
+
       - record: slo:page_latency:ratio_rate1h
         expr: |
-          label_replace(
-            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[1h]))
-            /
-            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[1h])),
-            "job", "$1", "service", "(.*)"
-          )
+          sum by (job) (rate(slo:page_render:latency_bucket{le="0.512"}[1h]))
+          /
+          sum by (job) (rate(slo:page_render:latency_count[1h]))
+
       - record: slo:page_latency:ratio_rate6h
         expr: |
-          label_replace(
-            sum by (service) (rate(traces_spanmetrics_latency_bucket{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER", le="0.512"}[6h]))
-            /
-            sum by (service) (rate(traces_spanmetrics_latency_count{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[6h])),
-            "job", "$1", "service", "(.*)"
-          )
+          sum by (job) (rate(slo:page_render:latency_bucket{le="0.512"}[6h]))
+          /
+          sum by (job) (rate(slo:page_render:latency_count[6h]))
+
       - record: slo:page_traffic:rate1h
-        expr: |
-          label_replace(
-            sum by (service) (rate(traces_spanmetrics_calls_total{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[1h])),
-            "job", "$1", "service", "(.*)"
-          )
+        expr: sum by (job) (rate(slo:page_render:latency_count[1h]))
+
       - record: slo:page_traffic:rate6h
-        expr: |
-          label_replace(
-            sum by (service) (rate(traces_spanmetrics_calls_total{service="cv-web", span_name="GET /", span_kind="SPAN_KIND_SERVER"}[6h])),
-            "job", "$1", "service", "(.*)"
-          )
+        expr: sum by (job) (rate(slo:page_render:latency_count[6h]))
 
   - name: slo_delivery_sli
     rules:
