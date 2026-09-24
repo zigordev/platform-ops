@@ -115,6 +115,7 @@ jobs:
           CV_WEB_DOMAIN: ${{ vars.CV_WEB_DOMAIN }}
           KINI_WEB_DOMAIN: ${{ vars.KINI_WEB_DOMAIN }}
           KINI_API_DOMAIN: ${{ vars.KINI_API_DOMAIN }}
+          SITY_WEB_DOMAIN: ${{ vars.SITY_WEB_DOMAIN }}
         run: |
           set -uo pipefail
 
@@ -208,6 +209,11 @@ jobs:
 
           if [ -n "${KINI_API_DOMAIN:-}" ]; then
             probe_health "kini-api" "https://${KINI_API_DOMAIN}/health"
+          fi
+
+          if [ -n "${SITY_WEB_DOMAIN:-}" ]; then
+            probe_page   "sity-web" "https://${SITY_WEB_DOMAIN}/"
+            probe_health "sity-web" "https://${SITY_WEB_DOMAIN}/health"
           fi
 
           {

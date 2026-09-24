@@ -248,6 +248,77 @@ variable "gpool_ssm_app_parameter_prefix" {
   }
 }
 
+variable "sity_github_repository" {
+  description = "GitHub repository in ORG/REPO format allowed to assume the dedicated sity deploy role."
+  type        = string
+  default     = "zigordev/sity"
+}
+
+variable "sity_github_environment" {
+  description = "GitHub Environment name used by the dedicated sity deploy workflow trust policy."
+  type        = string
+  default     = "production"
+}
+
+variable "sity_ecr_web_repository_name" {
+  description = "Optional ECR repository name for sity Web image."
+  type        = string
+  default     = "sity/prod/web"
+}
+
+variable "sity_ssm_app_parameter_prefix" {
+  description = "SSM path prefix for sity app env values, e.g. /sity/prod/app."
+  type        = string
+  default     = "/sity/prod/app"
+
+  validation {
+    condition     = startswith(var.sity_ssm_app_parameter_prefix, "/")
+    error_message = "sity_ssm_app_parameter_prefix must start with '/'."
+  }
+}
+
+variable "trading_bot_github_repository" {
+  description = "GitHub repository in ORG/REPO format allowed to assume the dedicated trading-bot deploy role."
+  type        = string
+  default     = "zigordev/trading-bot"
+}
+
+variable "trading_bot_github_environment" {
+  description = "GitHub Environment name used by the dedicated trading-bot deploy workflow trust policy."
+  type        = string
+  default     = "production"
+}
+
+variable "trading_bot_ecr_repository_names" {
+  description = "ECR repository names for the five trading-bot images its manual deploy builds and pushes."
+  type        = map(string)
+  default = {
+    control_plane        = "trading-bot/prod/control-plane"
+    operator_console     = "trading-bot/prod/operator-console"
+    market_data          = "trading-bot/prod/market-data"
+    research_backtesting = "trading-bot/prod/research-backtesting"
+    execution            = "trading-bot/prod/execution"
+  }
+
+  validation {
+    condition = sort(keys(var.trading_bot_ecr_repository_names)) == sort([
+      "control_plane", "operator_console", "market_data", "research_backtesting", "execution"
+    ])
+    error_message = "trading_bot_ecr_repository_names must name exactly the five trading-bot images the deploy pushes."
+  }
+}
+
+variable "trading_bot_ssm_app_parameter_prefix" {
+  description = "SSM path prefix for trading-bot app env values, e.g. /trading-bot/prod/app."
+  type        = string
+  default     = "/trading-bot/prod/app"
+
+  validation {
+    condition     = startswith(var.trading_bot_ssm_app_parameter_prefix, "/")
+    error_message = "trading_bot_ssm_app_parameter_prefix must start with '/'."
+  }
+}
+
 variable "notifications_github_repository" {
   description = "GitHub repository in ORG/REPO format allowed to assume the dedicated notifications deploy role."
   type        = string
