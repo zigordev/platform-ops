@@ -171,6 +171,62 @@ output "notifications_github_actions_variables" {
   }
 }
 
+output "sity_web_ecr_repository_url" {
+  description = "ECR repository URI for the sity Web image."
+  value       = aws_ecr_repository.sity_web.repository_url
+}
+
+output "sity_github_deploy_role_arn" {
+  description = "IAM role ARN to configure in sity GitHub Actions for OIDC deploy."
+  value       = aws_iam_role.sity_github_deploy.arn
+}
+
+output "sity_ssm_app_parameter_prefix" {
+  description = "SSM prefix expected by sity deploy for app env values."
+  value       = var.sity_ssm_app_parameter_prefix
+}
+
+output "sity_github_actions_variables" {
+  description = "Copy these values into sity GitHub Environment variables (production)."
+  value = {
+    AWS_REGION                 = var.aws_region
+    AWS_DEPLOY_BUCKET          = aws_s3_bucket.deploy.id
+    AWS_DEPLOY_INSTANCE_ID     = aws_instance.app.id
+    AWS_ECR_WEB_REPOSITORY_URI = aws_ecr_repository.sity_web.repository_url
+    AWS_SSM_APP_PREFIX         = var.sity_ssm_app_parameter_prefix
+  }
+}
+
+output "trading_bot_ecr_repository_urls" {
+  description = "ECR repository URIs for the five trading-bot images, keyed by service."
+  value       = { for key, repo in aws_ecr_repository.trading_bot : key => repo.repository_url }
+}
+
+output "trading_bot_github_deploy_role_arn" {
+  description = "IAM role ARN to configure in trading-bot GitHub Actions for OIDC deploy. The deploy is manual dispatch only; see docs/host-capacity.md."
+  value       = aws_iam_role.trading_bot_github_deploy.arn
+}
+
+output "trading_bot_ssm_app_parameter_prefix" {
+  description = "SSM prefix expected by trading-bot deploy for app env values."
+  value       = var.trading_bot_ssm_app_parameter_prefix
+}
+
+output "trading_bot_github_actions_variables" {
+  description = "Copy these values into trading-bot GitHub Environment variables (production)."
+  value = {
+    AWS_REGION                                  = var.aws_region
+    AWS_DEPLOY_BUCKET                           = aws_s3_bucket.deploy.id
+    AWS_DEPLOY_INSTANCE_ID                      = aws_instance.app.id
+    AWS_ECR_CONTROL_PLANE_REPOSITORY_URI        = aws_ecr_repository.trading_bot["control_plane"].repository_url
+    AWS_ECR_OPERATOR_CONSOLE_REPOSITORY_URI     = aws_ecr_repository.trading_bot["operator_console"].repository_url
+    AWS_ECR_MARKET_DATA_REPOSITORY_URI          = aws_ecr_repository.trading_bot["market_data"].repository_url
+    AWS_ECR_RESEARCH_BACKTESTING_REPOSITORY_URI = aws_ecr_repository.trading_bot["research_backtesting"].repository_url
+    AWS_ECR_EXECUTION_REPOSITORY_URI            = aws_ecr_repository.trading_bot["execution"].repository_url
+    AWS_SSM_APP_PREFIX                          = var.trading_bot_ssm_app_parameter_prefix
+  }
+}
+
 output "openbao_unseal_kms_key_id" {
   description = "KMS key id for OpenBao auto-unseal; set as OPS_OPENBAO_KMS_KEY_ID in docker/.env.ops.prod."
   value       = aws_kms_key.openbao_unseal.key_id

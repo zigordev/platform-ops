@@ -55,10 +55,13 @@ npm run audit
 - Terraform in `infra/terraform/` owns the host, the deploy bucket, ingress and every product's ECR repository and deploy role.
 - Products own their own app stack compose and config; this repository owns everything they share.
 
+Production is one `t3.large` and it is close to full. `docs/host-capacity.md` records what runs on it, why `trading-bot` cannot, and what instance size it would take — read it before deploying anything new there.
+
 See:
 
 - `docs/local-first-start.md`
 - `docs/cloud-first-deploy.md`
+- `docs/host-capacity.md`
 
 ## Husky Commit Checks
 
