@@ -112,7 +112,7 @@ ingress_env="$(docker compose --env-file "$prod_env_tmp" -f "$REPO_ROOT/docker/c
 missing=()
 while read -r placeholder; do
   [ -n "$placeholder" ] || continue
-  if ! printf '%s\n' "$ingress_env" | grep -qx "$placeholder"; then
+  if ! grep -qxF "$placeholder" <<<"$ingress_env"; then
     missing+=("$placeholder")
   fi
 done < <(grep -oE '\{\$[A-Z0-9_]+\}' "$caddyfile" | tr -d '{$}' | sort -u)
