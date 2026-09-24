@@ -30,8 +30,7 @@
 
 Where the layout is not met yet: kini's `openbao-run.mjs` lives in
 `apps/api/scripts/`, and notifications' wrapper is a shell script rather than the
-shared `.mjs` one. trading-bot and sity have no `compose.app.prod.yml`, because
-neither deploys yet.
+shared `.mjs` one.
 
 ## The npm script surface
 

@@ -6,7 +6,7 @@
     },
     {
       "name": "sity-web",
-      "reason": "sity has an ingress route, an ECR repository and a deploy role, but no deploy workflow and no production compose in the sity repo, so nothing ever runs sity-web in prod. A prod job would scrape an address that does not exist and ServiceDown would page forever. Remove this entry in the same change that adds sity's own deploy workflow."
+      "reason": "sity has an ingress route, an ECR repository, a deploy role, its own deploy workflow and a production compose file, but it has never deployed: its production environment holds no values, so the v0.4.0 release deploy stopped at its own variable check on a missing AWS_REGION, and sity.zigordev.com has no DNS record. Nothing runs sity-web in prod, so a prod job would scrape an address that does not exist and ServiceDown would page forever. Remove this entry in the same change that first deploys sity successfully."
     },
     {
       "name": "trading-bot-operator-console",

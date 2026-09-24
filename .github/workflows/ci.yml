@@ -76,6 +76,9 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
+      - name: Licence check (prod dependencies)
+        run: node ./scripts/check-licences.mjs .
+
       - name: Format
         run: npm run format:check
 
