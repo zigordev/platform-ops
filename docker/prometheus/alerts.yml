@@ -822,6 +822,27 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/gpool-mail.md'
           dashboard: 'gpool-funnel'
 
+  - name: i18n
+    rules:
+      - alert: CopyServedFromRepository
+        expr: |
+          sum by (job) (
+            increase({__name__=~"(cv|gpool|kini)_i18n_messages_total", source="local"}[15m])
+          ) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $labels.job }} is serving the copy committed in the repository'
+          description: >-
+            {{ $value | humanize }} renders in the last fifteen minutes used the
+            message files in the repository, with nothing from Tolgee in them.
+            That needs Tolgee to have answered with nothing *and* the process to
+            hold no cached export, so it is a cold process during a Tolgee
+            outage, an empty project, or missing Tolgee configuration. Visitors
+            are reading whatever the copy was when the image was built.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/i18n-fallback.md'
+          dashboard: 'service-overview'
+
   - name: notifications_delivery_burn
     rules:
       - alert: EmailDeliveryBudgetBurningFast
