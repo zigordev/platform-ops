@@ -15,7 +15,9 @@ services:
     restart: unless-stopped
     logging: *default-logging
     command: ['-config.file=/etc/tempo/config.yml']
-    mem_limit: 512m
+    mem_limit: 1g
+    environment:
+      GOMEMLIMIT: 900MiB
     ports:
       - '127.0.0.1:3200:3200'
     volumes:

@@ -7,9 +7,14 @@ import {
   audit,
   inhibitBlock,
   matches,
+  goMemoryLimits,
+  memoryCaps,
+  memoryDivisors,
   parseInhibitRules,
   readAlerts,
   runbookGroups,
+  toBytes,
+  toGoBytes,
 } from './check-alert-wiring.mjs';
 
 const INHIBIT = `inhibit_rules:
@@ -75,6 +80,15 @@ function scrape(jobs) {
   return `scrape_configs:\n${jobs.map((job) => `  - job_name: '${job}'\n`).join('')}`;
 }
 
+function compose(name, limit, soft) {
+  return (
+    `name: ${name}\n\nservices:\n  tempo:\n    image: grafana/tempo:2.8.1\n` +
+    (limit ? `    mem_limit: ${limit}\n` : '') +
+    (soft ? `    environment:\n      GOMEMLIMIT: ${soft}\n` : '') +
+    '    networks: [platform_ops_shared]\n'
+  );
+}
+
 function build({
   localJobs,
   prodJobs,
@@ -82,10 +96,23 @@ function build({
   lokiLabels = false,
   inhibit = INHIBIT,
   prodInhibit = INHIBIT,
+  localLimit,
+  prodLimit,
+  localSoft,
+  prodSoft,
+  memoryAlert,
+  memoryFraction = '0.8',
 }) {
   put(PATHS.scrapeLocal, scrape(localJobs));
   put(PATHS.scrapeProd, scrape(prodJobs));
-  put(PATHS.alerts, `groups:\n  - name: a\n    rules:\n${PROM_ALERTS}`);
+  put(
+    PATHS.alerts,
+    `groups:\n  - name: a\n    rules:\n${PROM_ALERTS}${
+      memoryAlert
+        ? `      - alert: TempoMemoryNearLimit\n        expr: |\n          process_resident_memory_bytes{job="tempo"} / ${memoryAlert} > ${memoryFraction}\n`
+        : ''
+    }`
+  );
   put(
     `${PATHS.lokiRules}/fake/log-alerts.yml`,
     `groups:\n  - name: logs\n    rules:\n${lokiAlerts(lokiLabels)}`
@@ -94,6 +121,10 @@ function build({
   put(PATHS.alertmanagerProd, `route:\n  receiver: mail\n\n${prodInhibit}`);
   put(PATHS.runbooks, RUNBOOKS);
   if (exceptions) put(PATHS.exceptions, `${JSON.stringify(exceptions, null, 2)}\n`);
+  if (localLimit !== undefined)
+    put(PATHS.composeLocal, compose('platform-ops-local', localLimit, localSoft));
+  if (prodLimit !== undefined)
+    put(PATHS.composeProd, compose('platform-ops-prod', prodLimit, prodSoft));
 }
 
 beforeEach(() => {
@@ -268,6 +299,162 @@ describe('audit', () => {
     });
     expect(audit(root).findings).toContain(
       'exception inhibit-labels/ErrorLogsSpiking has no reason'
+    );
+  });
+});
+
+describe('memory limits', () => {
+  it('reads a limit per service and understands the suffixes', () => {
+    expect([...memoryCaps(compose('x', '1g'))]).toEqual([['tempo', 1073741824]]);
+    expect(memoryCaps(compose('x', null)).size).toBe(0);
+    expect(toBytes('512m')).toBe(536870912);
+    expect(toBytes('nonsense')).toBe(null);
+  });
+
+  it('reads the divisor out of the alert that watches a limit', () => {
+    expect(
+      memoryDivisors(
+        '      - alert: TempoMemoryNearLimit\n        expr: |\n          process_resident_memory_bytes{job="tempo"} / 1073741824 > 0.8\n'
+      )
+    ).toEqual([{ alert: 'TempoMemoryNearLimit', job: 'tempo', bytes: 1073741824, fraction: 0.8 }]);
+  });
+
+  it('catches a limit raised in one environment only', () => {
+    build({
+      localJobs: ['cv-web'],
+      prodJobs: ['cv-web'],
+      localLimit: '1g',
+      prodLimit: '512m',
+      memoryAlert: '1073741824',
+      exceptions: {
+        'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'known' }],
+        'inhibit-siblings': [{ name: '1:UncaughtExceptions', reason: 'known' }],
+        'runbook-rows': [{ name: 'TempoMemoryNearLimit', reason: 'not the subject here' }],
+      },
+    });
+    expect(audit(root).findings).toContain(
+      'tempo is capped at 1073741824 locally and 536870912 in prod'
+    );
+  });
+
+  it('catches an alert left behind by a raised limit', () => {
+    build({
+      localJobs: ['cv-web'],
+      prodJobs: ['cv-web'],
+      localLimit: '1g',
+      prodLimit: '1g',
+      memoryAlert: '536870912',
+      exceptions: {
+        'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'known' }],
+        'inhibit-siblings': [{ name: '1:UncaughtExceptions', reason: 'known' }],
+        'runbook-rows': [{ name: 'TempoMemoryNearLimit', reason: 'not the subject here' }],
+      },
+    });
+    expect(audit(root).findings).toContain(
+      'TempoMemoryNearLimit divides by 536870912, but tempo is capped at 1073741824'
+    );
+  });
+
+  it('catches a capped container that no alert watches', () => {
+    build({
+      localJobs: ['cv-web'],
+      prodJobs: ['cv-web'],
+      localLimit: '1g',
+      prodLimit: '1g',
+      exceptions: {
+        'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'known' }],
+        'inhibit-siblings': [{ name: '1:UncaughtExceptions', reason: 'known' }],
+      },
+    });
+    expect(audit(root).findings).toContain('tempo has a memory limit that no alert watches');
+  });
+
+  it('passes a limit that matches in both environments and in its alert', () => {
+    build({
+      localJobs: ['cv-web'],
+      prodJobs: ['cv-web'],
+      localLimit: '1g',
+      prodLimit: '1g',
+      memoryAlert: '1073741824',
+      exceptions: {
+        'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'known' }],
+        'inhibit-siblings': [{ name: '1:UncaughtExceptions', reason: 'known' }],
+        'runbook-rows': [{ name: 'TempoMemoryNearLimit', reason: 'not the subject here' }],
+      },
+    });
+    expect(audit(root).findings).toEqual([]);
+  });
+
+  it('reads a runtime limit per service and takes only the suffixes Go takes', () => {
+    expect([...goMemoryLimits(compose('x', '1g', '900MiB'))]).toEqual([['tempo', 943718400]]);
+    expect(goMemoryLimits(compose('x', '1g')).size).toBe(0);
+    expect(
+      goMemoryLimits('services:\n  tempo:\n    environment:\n      - GOMEMLIMIT=1GiB\n')
+    ).toEqual(new Map([['tempo', 1073741824]]));
+    expect(toGoBytes('512MiB')).toBe(536870912);
+    expect(toGoBytes('512m')).toBe(null);
+  });
+
+  it('keeps a runtime limit Go would reject as text rather than reading it as nothing', () => {
+    expect([...goMemoryLimits(compose('x', '1g', '900m'))]).toEqual([['tempo', '900m']]);
+  });
+});
+
+describe('a runtime limit under a memory limit', () => {
+  const exceptions = {
+    'inhibit-labels': [{ name: 'ErrorLogsSpiking', reason: 'known' }],
+    'inhibit-siblings': [{ name: '1:UncaughtExceptions', reason: 'known' }],
+    'runbook-rows': [{ name: 'TempoMemoryNearLimit', reason: 'not the subject here' }],
+  };
+  const base = {
+    localJobs: ['cv-web'],
+    prodJobs: ['cv-web'],
+    localLimit: '1g',
+    prodLimit: '1g',
+    localSoft: '900MiB',
+    prodSoft: '900MiB',
+    memoryAlert: '1073741824',
+    memoryFraction: '0.92',
+    exceptions,
+  };
+
+  it('passes when the alert sits between the two limits', () => {
+    build(base);
+    expect(audit(root).findings).toEqual([]);
+  });
+
+  it('catches an alert that would fire on memory the runtime is allowed to use', () => {
+    build({ ...base, memoryFraction: '0.85' });
+    expect(audit(root).findings).toContain(
+      'TempoMemoryNearLimit fires at 912680550, at or below the 943718400 tempo is allowed to use'
+    );
+  });
+
+  it('catches an alert that only fires once the ceiling is already reached', () => {
+    build({ ...base, memoryFraction: '1.05' });
+    expect(audit(root).findings).toContain(
+      'TempoMemoryNearLimit fires at 1127428915, at or above the 1073741824 ceiling it is meant to warn about'
+    );
+  });
+
+  it('catches a runtime limit the memory limit cannot honour', () => {
+    build({ ...base, localSoft: '1200MiB', prodSoft: '1200MiB' });
+    expect(audit(root).findings).toContain(
+      'tempo asks the runtime for 1258291200, which its 1073741824 memory limit cannot give it'
+    );
+  });
+
+  it('catches a runtime limit set in one environment only', () => {
+    build({ ...base, localSoft: undefined });
+    expect(audit(root).findings).toContain(
+      'tempo asks the runtime for nothing locally and 943718400 in prod'
+    );
+  });
+
+  it('catches a runtime limit in a unit Go does not take', () => {
+    build({ ...base, localSoft: '900m', prodSoft: '900m' });
+    expect(audit(root).findings).toContain(
+      'tempo asks the runtime for 900m locally, which Go does not accept — it takes B, KiB, MiB, GiB or TiB'
     );
   });
 });

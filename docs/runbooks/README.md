@@ -30,6 +30,7 @@ says what it depends on.
 | `OpenBaoSealed`                                                                                      | [openbao-sealed.md](openbao-sealed.md)               |
 | `HostDisk*`, `HostFilesystemWillFillIn24h`                                                           | [host-disk.md](host-disk.md)                         |
 | `HostMemoryPressure`                                                                                 | [host-memory.md](host-memory.md)                     |
+| `TempoMemory*`                                                                                       | [tempo-memory.md](tempo-memory.md)                   |
 | `KafkaConsumerLagGrowing`                                                                            | [kafka-lag.md](kafka-lag.md)                         |
 | `NotificationsConsumerStuck`, `NotificationsReceivedButNotSent`, `NotificationsConsumerCrashLooping` | [notifications-stalled.md](notifications-stalled.md) |
 | `EmailDeliveryBudget*`                                                                               | [email-delivery.md](email-delivery.md)               |

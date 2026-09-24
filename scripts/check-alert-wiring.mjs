@@ -12,12 +12,22 @@ export const PATHS = {
   alertmanagerProd: 'docker/alertmanager/config.prod.yml.tpl',
   runbooks: 'docs/runbooks/README.md',
   exceptions: 'docker/observability-parity.json',
+  composeLocal: 'docker/compose.ops.local.yml',
+  composeProd: 'docker/compose.ops.prod.yml',
 };
 
 const ALERT_NAME = /^\s+-\s+alert:\s*([A-Za-z0-9_]+)\s*$/gm;
 const JOB_NAME = /^\s+-\s+job_name:\s*['"]?([A-Za-z0-9_-]+)['"]?\s*$/gm;
 const ALERTNAME_MATCHER = /alertname=~?"([^"]*)"/;
 const EQUAL_LIST = /equal:\s*\[([^\]]*)\]/;
+const MEM_LIMIT = /^\s+mem_limit:\s*(\S+)\s*$/;
+const GO_MEM_LIMIT = /^\s+(?:-\s+)?GOMEMLIMIT[:=]\s*(\S+)\s*$/;
+const MEM_DIVISOR =
+  /process_resident_memory_bytes\{job="([A-Za-z0-9_-]+)"\}\s*\/\s*(\d+)(?:\s*>\s*([0-9.]+))?/;
+const SIZE = /^(\d+)([kmg]?)b?$/i;
+const SCALE = { '': 1, k: 1024, m: 1024 ** 2, g: 1024 ** 3 };
+const GO_SIZE = /^(\d+)(B|KiB|MiB|GiB|TiB)$/;
+const GO_SCALE = { B: 1, KiB: 1024, MiB: 1024 ** 2, GiB: 1024 ** 3, TiB: 1024 ** 4 };
 
 function names(text, pattern) {
   return [...text.matchAll(pattern)].map((match) => match[1]);
@@ -84,6 +94,78 @@ export function lokiAlertLabels(root) {
   for (const file of yamlFilesUnder(join(root, PATHS.lokiRules))) {
     for (const [name, labels] of declaredLabels(readFileSync(file, 'utf8'))) {
       out.set(name, labels);
+    }
+  }
+  return out;
+}
+
+export function toBytes(value) {
+  const match = SIZE.exec(value.trim().replace(/['"]/g, ''));
+  if (!match) return null;
+  return Number(match[1]) * SCALE[match[2].toLowerCase()];
+}
+
+export function toGoBytes(value) {
+  const match = GO_SIZE.exec(value.trim().replace(/['"]/g, ''));
+  if (!match) return null;
+  return Number(match[1]) * GO_SCALE[match[2]];
+}
+
+function perService(text, read) {
+  const out = new Map();
+  let inServices = false;
+  let service = null;
+  for (const line of text.split('\n')) {
+    if (/^[A-Za-z0-9_-]+:/.test(line)) {
+      inServices = /^services:\s*$/.test(line);
+      service = null;
+      continue;
+    }
+    if (!inServices) continue;
+    const head = /^ {2}([A-Za-z0-9_-]+):\s*$/.exec(line);
+    if (head) {
+      service = head[1];
+      continue;
+    }
+    const value = read(line);
+    if (value !== undefined && service) out.set(service, value);
+  }
+  return out;
+}
+
+export function memoryCaps(text) {
+  return perService(text, (line) => {
+    const cap = MEM_LIMIT.exec(line);
+    return cap ? toBytes(cap[1]) : undefined;
+  });
+}
+
+export function goMemoryLimits(text) {
+  return perService(text, (line) => {
+    const limit = GO_MEM_LIMIT.exec(line);
+    if (!limit) return undefined;
+    const bytes = toGoBytes(limit[1]);
+    return bytes === null ? limit[1].trim().replace(/['"]/g, '') : bytes;
+  });
+}
+
+export function memoryDivisors(text) {
+  const out = [];
+  let current = null;
+  for (const line of text.split('\n')) {
+    const alert = /^\s*-\s+alert:\s*([A-Za-z0-9_]+)\s*$/.exec(line);
+    if (alert) {
+      current = alert[1];
+      continue;
+    }
+    const divisor = MEM_DIVISOR.exec(line);
+    if (divisor && current) {
+      out.push({
+        alert: current,
+        job: divisor[1],
+        bytes: Number(divisor[2]),
+        fraction: divisor[3] === undefined ? null : Number(divisor[3]),
+      });
     }
   }
   return out;
@@ -248,6 +330,96 @@ export function audit(root) {
     orphans += 1;
   }
   if (orphans === 0) ok.push(`${alertNames.length} alerts each have a runbook row`);
+
+  const composes = [PATHS.composeLocal, PATHS.composeProd].map((path) => {
+    const full = join(root, path);
+    if (!existsSync(full)) return null;
+    const text = readFileSync(full, 'utf8');
+    return { caps: memoryCaps(text), soft: goMemoryLimits(text) };
+  });
+  if (composes.every((entry) => entry !== null)) {
+    const [localCaps, prodCaps] = composes.map((entry) => entry.caps);
+    const [localSoft, prodSoft] = composes.map((entry) => entry.soft);
+    const divisors = memoryDivisors(readFileSync(join(root, PATHS.alerts), 'utf8'));
+    let capped = 0;
+    let capGaps = 0;
+    for (const service of [...new Set([...localCaps.keys(), ...prodCaps.keys()])].sort()) {
+      capped += 1;
+      const here = localCaps.get(service);
+      const there = prodCaps.get(service);
+      if (here !== there) {
+        findings.push(
+          `${service} is capped at ${here ?? 'nothing'} locally and ${there ?? 'nothing'} in prod`
+        );
+        capGaps += 1;
+        continue;
+      }
+      const watching = divisors.filter((entry) => entry.job === service);
+      if (watching.length === 0) {
+        if (allowed(used, exceptions, 'memory-caps', service)) continue;
+        findings.push(`${service} has a memory limit that no alert watches`);
+        capGaps += 1;
+        continue;
+      }
+      const soft = localSoft.get(service);
+      const softProd = prodSoft.get(service);
+      const unreadable = [
+        ['locally', soft],
+        ['in prod', softProd],
+      ].find(([, value]) => typeof value === 'string');
+      if (unreadable) {
+        findings.push(
+          `${service} asks the runtime for ${unreadable[1]} ${unreadable[0]}, ` +
+            `which Go does not accept — it takes B, KiB, MiB, GiB or TiB`
+        );
+        capGaps += 1;
+        continue;
+      }
+      if (soft !== softProd) {
+        findings.push(
+          `${service} asks the runtime for ${soft ?? 'nothing'} locally and ` +
+            `${softProd ?? 'nothing'} in prod`
+        );
+        capGaps += 1;
+        continue;
+      }
+      if (soft !== undefined && !(soft < here)) {
+        findings.push(
+          `${service} asks the runtime for ${soft}, which its ${here} memory limit cannot give it`
+        );
+        capGaps += 1;
+        continue;
+      }
+      for (const entry of watching) {
+        if (entry.bytes !== here) {
+          findings.push(
+            `${entry.alert} divides by ${entry.bytes}, but ${service} is capped at ${here}`
+          );
+          capGaps += 1;
+          continue;
+        }
+        if (entry.fraction === null) continue;
+        const fires = entry.bytes * entry.fraction;
+        if (fires >= here) {
+          findings.push(
+            `${entry.alert} fires at ${Math.round(fires)}, at or above the ${here} ceiling it is meant to warn about`
+          );
+          capGaps += 1;
+          continue;
+        }
+        if (soft !== undefined && fires <= soft) {
+          findings.push(
+            `${entry.alert} fires at ${Math.round(fires)}, at or below the ${soft} ${service} is allowed to use`
+          );
+          capGaps += 1;
+        }
+      }
+    }
+    if (capGaps === 0 && capped > 0) {
+      const subject = capped === 1 ? '1 memory limit agrees' : `${capped} memory limits agree`;
+      ok.push(`${subject} across environments, with any runtime limit and alert inside it`);
+    }
+  }
 
   let dead = 0;
   let declared = 0;

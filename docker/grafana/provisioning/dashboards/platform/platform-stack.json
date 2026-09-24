@@ -841,7 +841,7 @@
       "id": 16,
       "type": "timeseries",
       "title": "Memory by component",
-      "description": "Resident memory of each part of the stack. Tempo is capped at 512 MiB.",
+      "description": "Resident memory of each part of the stack. Tempo is the only one with a limit, and TempoMemoryNearLimit fires before it reaches it.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
@@ -924,6 +924,108 @@
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "expr": "sum(rate(tempo_metrics_generator_spans_discarded_total[$__rate_interval]))",
           "legendFormat": "generator discards",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Tempo memory against its limits",
+      "description": "What the Go runtime holds is what GOMEMLIMIT caps; resident memory is what the kernel charges towards mem_limit. The runtime line flat under its limit while resident memory climbs is TempoMemoryNearLimit without a Go cause.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 37, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "process_resident_memory_bytes{job=\"tempo\"}",
+          "legendFormat": "resident",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "go_memstats_sys_bytes{job=\"tempo\"} - go_memstats_heap_released_bytes{job=\"tempo\"}",
+          "legendFormat": "held by the runtime",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "go_memstats_heap_inuse_bytes{job=\"tempo\"}",
+          "legendFormat": "heap in use",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Tempo garbage collection",
+      "description": "Collections per second. GOMEMLIMIT is soft, so the runtime buys headroom with CPU before it gives up and lets the kernel reclaim instead. A sustained climb here is TempoMemoryGcThrashing, and it is what that cost looks like.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 12, "y": 37, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(go_gc_duration_seconds_count{job=\"tempo\"}[$__rate_interval])",
+          "legendFormat": "collections",
           "range": true,
           "instant": false,
           "exemplar": false

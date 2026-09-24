@@ -343,6 +343,44 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/host-memory.md'
           dashboard: 'platform-host'
 
+      - alert: TempoMemoryNearLimit
+        expr: |
+          process_resident_memory_bytes{job="tempo"} / 1073741824 > 0.92
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Tempo is holding {{ $value | humanizePercentage }} of its memory limit'
+          description: >-
+            Tempo is the only container in the stack with a memory limit, and
+            GOMEMLIMIT keeps the Go runtime below that limit on its own. This
+            fires above GOMEMLIMIT, so the runtime has already stopped holding
+            its own line and what is left is the cgroup ceiling. Resident
+            memory is Tempo's own figure and reads below what the kernel counts
+            against the limit, so the ceiling is closer than this number looks.
+            If TempoMemoryGcThrashing is quiet the growth is outside the Go
+            heap; if it is firing the runtime lost and gave up.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/tempo-memory.md'
+          dashboard: 'platform-stack'
+
+      - alert: TempoMemoryGcThrashing
+        expr: |
+          rate(go_gc_duration_seconds_count{job="tempo"}[10m]) > 0.5
+        for: 20m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Tempo is collecting {{ $value | humanize }} times a second to stay under GOMEMLIMIT'
+          description: >-
+            GOMEMLIMIT is a soft limit: the runtime collects harder rather than
+            growing past it, and pays for the headroom in CPU. A sustained
+            collection rate means it is paying a lot, on a host with two vCPUs
+            shared by everything else. The runtime caps itself at half the CPU
+            and then grows past the limit anyway, so this is the warning that
+            comes before TempoMemoryNearLimit, not instead of it.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/tempo-memory.md'
+          dashboard: 'platform-stack'
+
       - alert: HostFilesystemWillFillIn24h
         # Rate of change rather than a level: catches a slow leak while there is
         # still time to act, which a threshold alone does not. A threshold tells

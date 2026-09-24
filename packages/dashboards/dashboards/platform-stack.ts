@@ -73,12 +73,22 @@ export const platformStack: DashboardSpec = {
       ], { unit: 'short', min: 0 }),
     ],
     [
-      timeseries('Memory by component', 'Resident memory of each part of the stack. Tempo is capped at 512 MiB.', { w: 12, h: 8 }, [
+      timeseries('Memory by component', 'Resident memory of each part of the stack. Tempo is the only one with a limit, and TempoMemoryNearLimit fires before it reaches it.', { w: 12, h: 8 }, [
         prom(`max by (job) (process_resident_memory_bytes{job=~"${STACK}"})`, { legend: '{{job}}' }),
       ], { unit: 'bytes', min: 0 }),
       timeseries('Tempo', 'Traces held in memory, and spans the metrics generator dropped.', { w: 12, h: 8 }, [
         prom('sum(tempo_ingester_live_traces)', { legend: 'live traces' }),
         prom(`sum(rate(tempo_metrics_generator_spans_discarded_total[${RATE_INTERVAL}]))`, { legend: 'generator discards' }),
+      ], { unit: 'short', min: 0 }),
+    ],
+    [
+      timeseries('Tempo memory against its limits', 'What the Go runtime holds is what GOMEMLIMIT caps; resident memory is what the kernel charges towards mem_limit. The runtime line flat under its limit while resident memory climbs is TempoMemoryNearLimit without a Go cause.', { w: 12, h: 8 }, [
+        prom('process_resident_memory_bytes{job="tempo"}', { legend: 'resident' }),
+        prom('go_memstats_sys_bytes{job="tempo"} - go_memstats_heap_released_bytes{job="tempo"}', { legend: 'held by the runtime' }),
+        prom('go_memstats_heap_inuse_bytes{job="tempo"}', { legend: 'heap in use' }),
+      ], { unit: 'bytes', min: 0 }),
+      timeseries('Tempo garbage collection', 'Collections per second. GOMEMLIMIT is soft, so the runtime buys headroom with CPU before it gives up and lets the kernel reclaim instead. A sustained climb here is TempoMemoryGcThrashing, and it is what that cost looks like.', { w: 12, h: 8 }, [
+        prom(`rate(go_gc_duration_seconds_count{job="tempo"}[${RATE_INTERVAL}])`, { legend: 'collections' }),
       ], { unit: 'short', min: 0 }),
     ],
   ],
