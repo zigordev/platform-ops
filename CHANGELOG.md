@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.1](https://github.com/zigordev/platform-ops/compare/v1.42.0...v1.42.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **tempo:** raise the memory limit to 1 GiB and hold the runtime under it ([#239](https://github.com/zigordev/platform-ops/issues/239)) ([41160f0](https://github.com/zigordev/platform-ops/commit/41160f0931b44d38afbe9112e10cd9ed18a49793))
+
 ## [1.42.0](https://github.com/zigordev/platform-ops/compare/v1.41.0...v1.42.0) (2026-09-24)
 
 
