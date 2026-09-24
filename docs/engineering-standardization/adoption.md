@@ -69,6 +69,19 @@ local-stack body and its config block, the docs pair, the README spine, the
 design-system tag, and that the three shared script bodies are byte-identical
 across the estate.
 
+Where it runs is a decision, not an oversight. The script reads all eight
+repositories from one common root, so a pre-commit hook would refuse a commit in
+one repository because of the state of another, and a worktree — how most work
+here is done — does not have the others beside it at all. It used to find
+nothing there and print `All checks passed`. So it runs on a schedule instead:
+[`verify-standards.yml`](../../.github/workflows/verify-standards.yml) clones
+all eight at `main` every Monday, prints the table, and keeps one deduplicated
+issue open for as long as a check fails. `main` is also the only well-defined
+input: a local run reads working trees, which on 24 September passed cv's README
+spine from a stale checkout while `origin/main` was broken, and failed
+`auto-merge.yml` parity because one clone was a commit behind. `ESTATE_ROOT`
+points the script at any other checkout.
+
 ## Order
 
 Phased so each stage leaves the estate coherent. Front-loaded on what is cheap

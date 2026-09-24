@@ -43,10 +43,20 @@ for repo in $REPOS; do
 
   # --- hooks actually installed, not merely present -------------------------
   if [ -d "$d/.husky" ]; then
-    if [ "$(git -C "$d" config core.hooksPath 2>/dev/null)" != "" ]; then
-      ok "husky active (hooksPath set)"
+    prepare=$(sed -n 's/.*"prepare"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$d/package.json" 2>/dev/null | head -1)
+    case "$prepare" in
+      *husky*) installs_hooks=yes ;;
+      *) installs_hooks=no ;;
+    esac
+    if [ "$installs_hooks" = yes ] && [ -f "$d/.husky/pre-commit" ]; then
+      ok "npm install arms the hooks (prepare: $prepare)"
     else
-      bad "husky present but INACTIVE — run 'npm install' in $repo"
+      bad "hooks are not armed by 'npm install' (prepare: ${prepare:-none})"
+    fi
+    if [ -n "$(git -C "$d" config core.hooksPath 2>/dev/null)" ]; then
+      ok "hooks active in this clone"
+    else
+      skip "hooks not installed in this clone — run 'npm install' in $repo"
     fi
   else
     skip "no .husky (design-system has no build to gate)"

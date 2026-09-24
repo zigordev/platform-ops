@@ -1,0 +1,118 @@
+name: Verify Standards
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-standards
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    permissions:
+      contents: read
+      issues: write
+    name: Check every repository against the standard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: estate/platform-ops
+          persist-credentials: false
+
+      - name: Clone the rest of the estate at main
+        run: |
+          set -euo pipefail
+          for repo in cv gpool kini trading-bot notifications sity design-system; do
+            git clone --quiet --depth 1 --branch main \
+              "https://github.com/zigordev/${repo}.git" "estate/${repo}"
+          done
+
+      - name: Verify
+        id: verify
+        env:
+          ESTATE_ROOT: ${{ github.workspace }}/estate
+        run: |
+          set -uo pipefail
+
+          report="$(bash estate/platform-ops/scripts/verify-standards.sh 2>&1)"
+          status=$?
+
+          printf '%s\n' "$report"
+
+          {
+            echo "report<<VERIFY_EOF"
+            printf '%s\n' "$report" | sed 's/\x1b\[[0-9;]*m//g'
+            echo "VERIFY_EOF"
+            echo "status=$status"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Open or update an issue
+        if: steps.verify.outputs.status != '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          REPORT: ${{ steps.verify.outputs.report }}
+        with:
+          script: |
+            const title = 'Estate standards: checks failing';
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              'The weekly estate check found repositories that no longer meet the standard.',
+              '',
+              '```',
+              process.env.REPORT,
+              '```',
+              '',
+              `[Check run](${run}) · [The standard](../tree/main/docs/engineering-standardization)`,
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'all',
+              labels: 'standards',
+              per_page: 20,
+            });
+            const open = existing.data.find((i) => i.title === title);
+
+            if (!open) {
+              await github.rest.issues.create({ ...context.repo, title, body, labels: ['standards'] });
+              return;
+            }
+
+            if (open.state === 'closed') {
+              await github.rest.issues.update({ ...context.repo, issue_number: open.number, state: 'open' });
+            }
+            await github.rest.issues.createComment({ ...context.repo, issue_number: open.number, body });
+
+      - name: Close the issue when the estate is clean
+        if: steps.verify.outputs.status == '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = 'Estate standards: checks failing';
+            const open = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'open',
+              labels: 'standards',
+              per_page: 20,
+            });
+            const issue = open.data.find((i) => i.title === title);
+            if (issue) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: issue.number,
+                body: 'Every check passes again. Closing.',
+              });
+              await github.rest.issues.update({ ...context.repo, issue_number: issue.number, state: 'closed' });
+            }
+
+      - name: Fail the run when a check failed
+        if: steps.verify.outputs.status != '0'
+        run: exit 1

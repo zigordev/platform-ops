@@ -46,7 +46,7 @@ npm run check:hooks
 npm run audit
 ```
 
-`check:hooks` runs the secret scan, shellcheck, workflow, compose and Terraform checks — the same set husky runs before a commit.
+`check:hooks` runs the secret scan, the shell syntax, workflow, compose and Terraform checks, the kit manifest check and the alert wiring check — the same set husky runs before a commit.
 
 ## Release + deploy model
 
@@ -88,6 +88,8 @@ Checks include:
 - workflow YAML parse
 - compose config render (local/prod)
 - terraform fmt check
+- observability kit manifest matches the kit
+- every alert is scraped, routed, runbooked and dashboarded
 
 Requirements for checks:
 
