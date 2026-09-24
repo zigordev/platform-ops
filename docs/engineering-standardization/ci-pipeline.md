@@ -70,9 +70,11 @@ fullest set and is the one to copy: Trivy on the pushed image, an SBOM
 attestation, a cosign signature and SLSA provenance.
 
 `sity` follows the same three jobs. It is one static-serving container and it
-fits on the shared host, and the shared side of its delivery — ingress route,
-ECR repository, OIDC deploy role — is in place. The repository itself still has
-no `deploy.yml` and no production compose manifest, so it does not deploy yet.
+fits on the shared host; the shared side of its delivery — ingress route, ECR
+repository, OIDC deploy role — is in place, and so are its own `deploy.yml` and
+production compose manifest. It has not deployed all the same: its `production`
+environment holds no values, so the v0.4.0 release deploy stopped at its own
+variable check on a missing `AWS_REGION`.
 
 `trading-bot` is the exception, and deliberately so. It has the same ingress
 route, ECR repository and OIDC deploy role as everything else, but its deploy is

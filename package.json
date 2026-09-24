@@ -27,7 +27,6 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "dashboards": "node packages/dashboards/generate.ts",
-    "check:licences": "node ./scripts/check-licences.mjs .",
     "check:secret-expiry": "node ./scripts/check-secret-expiry.mjs",
     "audit": "npm audit --audit-level=high"
   },

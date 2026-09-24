@@ -15,10 +15,12 @@ it. This page exists because the next thing anyone wants to deploy is
 
 `sity` adds one: a single static-serving container, and it fits. The shared
 side of its delivery is built here — ingress route, ECR repository, OIDC deploy
-role — but `sity` itself has no deploy workflow and no production compose file
-in its own repository, so nothing runs `sity-web` in production yet. It has no
-prod scrape job for that reason; the `sity-web` entry in
-`docker/observability-parity.json` records the gap.
+role — and `sity` now carries its own deploy workflow and production compose
+file, so the code path is complete. It has still never deployed: its
+`production` environment holds no values, so the v0.4.0 release deploy stopped
+at its own variable check on a missing `AWS_REGION`, and `sity.zigordev.com` has
+no DNS record. Nothing runs `sity-web` in production, so it has no prod scrape
+job; the `sity-web` entry in `docker/observability-parity.json` records the gap.
 
 ## Why trading-bot does not fit
 

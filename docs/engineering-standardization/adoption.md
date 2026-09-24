@@ -21,7 +21,7 @@ gpool, kini, sity and trading-bot.
 | One local-stack body       | yes | yes   | yes  | yes         | yes           | yes  |
 | Shared audit + licence     | yes | yes   | yes  | yes         | yes           | yes  |
 | Shared prettier config     | yes | yes   | yes  | yes         | yes           | yes  |
-| Docs pair                  | yes | yes   | yes  | yes         | n/a           | ~    |
+| Docs pair                  | yes | yes   | yes  | yes         | n/a           | yes  |
 | README spine               | yes | yes   | yes  | yes         | yes           | yes  |
 | **CI**                     |     |       |      |             |               |      |
 | quality                    | yes | ~     | yes  | ~           | yes           | yes  |
@@ -59,8 +59,8 @@ its page renders come from span metrics. trading-bot runs
 its integration suite against Postgres only and is scraped only locally; its
 control-plane alone goes through the OpenBao wrapper. sity's Fastify server sets
 `nosniff`, a referrer policy and a report-only CSP; trading-bot and sity are
-scraped only locally, and sity has no `cloud-first-deploy.md` because it does not
-deploy. trading-bot's image scans became required checks on 15 September.
+scraped only locally. trading-bot's image scans became required checks on
+15 September.
 
 Verified rather than asserted: every row above that `verify-standards.sh` can
 check, it checks — the Node and Rust pins, the gitleaks rules, the Dependabot
@@ -391,10 +391,9 @@ Started, and further along than "ongoing" suggests.
    different image after signing, and the signature would still verify against
    the tag — which is exactly the attack signing is supposed to prevent.
 
-2. **Licence scanning.** Done in all five app repositories, and later in sity, on
-   production
-   dependencies only: a GPL build tool that never ships imposes nothing on the
-   artefact. Licences are read from the installed tree rather than the registry
+2. **Licence scanning.** Done in all five app repositories, in sity, and in
+   platform-ops itself, on production dependencies only: a GPL build tool that
+   never ships imposes nothing on the artefact. Licences are read from the installed tree rather than the registry
    — one `npm view` per package is several minutes, and it reports what the
    registry says now rather than what actually shipped.
 
