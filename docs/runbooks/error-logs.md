@@ -3,6 +3,17 @@
 Two alerts read the logs rather than the metrics, because some failures never
 reach a metric at all.
 
+Both name the services they watch instead of watching everything that carries an
+`app` label. `app` is the application's own `service` field, so anything that
+writes the estate's JSON format into Docker's log driver gets one — a test run
+under `gpool-api-test`, a container with no `OTEL_SERVICE_NAME` under
+`unknown-service`, and unrelated work projects sharing the same Docker daemon
+have all appeared there. None of them is scraped, so the alert named a `job`
+Prometheus has never heard of and `ServiceDown` could not inhibit it either.
+The list is every service with a `service-*` dashboard, and
+`scripts/check-alert-wiring.mjs` fails if the two ever disagree, so a new service
+cannot be added without deciding about its logs.
+
 ## ErrorLogsSpiking
 
 **What fired.** One application wrote more than one error line every five

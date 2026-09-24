@@ -280,7 +280,12 @@ for repo in cv gpool kini trading-bot; do
   esac
 done
 
-distinct=$(printf '%s\n' $DS_VERSIONS | sort -u | wc -l | tr -d ' ')
+if [ -z "${DS_VERSIONS// /}" ]; then
+  skip "no consumer pins a design-system version"
+  distinct=0
+else
+  distinct=$(printf '%s\n' $DS_VERSIONS | sort -u | wc -l | tr -d ' ')
+fi
 if [ "$distinct" -gt 1 ]; then
   bad "consumers are on $distinct different versions:$(printf '%s\n' $DS_VERSIONS | sort -u | tr '\n' ' ')"
 elif [ "$distinct" = 1 ]; then
@@ -372,22 +377,26 @@ pins=$(for repo in $REPOS; do
   grep -hoE 'uses: [A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}([ \t]*#[ \t]*\S+)?' "$dir"/*.yml 2>/dev/null
 done | sed 's/^uses:[ \t]*//' | tr -s ' \t' ' ' | sort -u)
 
-split=0
-for action in $(printf '%s\n' "$pins" | cut -d@ -f1 | sort -u); do
-  variants=$(printf '%s\n' "$pins" | grep -c "^$action@")
-  if [ "$variants" -gt 1 ]; then
-    bad "$action: $variants different pins across the estate"
-    split=$((split + 1))
-  fi
-done
-total=$(printf '%s\n' "$pins" | cut -d@ -f1 | sort -u | wc -l | tr -d ' ')
-[ "$split" -eq 0 ] && ok "$total actions, one sha and one label each"
-
-unlabelled=$(printf '%s\n' "$pins" | grep -cv '#' || true)
-if [ "$unlabelled" -eq 0 ]; then
-  ok "every pin carries its version"
+if [ -z "$pins" ]; then
+  skip "no sha-pinned actions found"
 else
-  bad "$unlabelled pin(s) with no version comment"
+  split=0
+  for action in $(printf '%s\n' "$pins" | cut -d@ -f1 | sort -u); do
+    variants=$(printf '%s\n' "$pins" | grep -c "^$action@")
+    if [ "$variants" -gt 1 ]; then
+      bad "$action: $variants different pins across the estate"
+      split=$((split + 1))
+    fi
+  done
+  total=$(printf '%s\n' "$pins" | cut -d@ -f1 | sort -u | wc -l | tr -d ' ')
+  [ "$split" -eq 0 ] && ok "$total actions, one sha and one label each"
+
+  unlabelled=$(printf '%s\n' "$pins" | grep -cv '#' || true)
+  if [ "$unlabelled" -eq 0 ]; then
+    ok "every pin carries its version"
+  else
+    bad "$unlabelled pin(s) with no version comment"
+  fi
 fi
 
 printf '\n'
