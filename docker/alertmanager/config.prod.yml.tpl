@@ -68,7 +68,7 @@ inhibit_rules:
   - source_matchers:
       - alertname="RedpandaDown"
     target_matchers:
-      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsDeadLetterUnread|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|TeamInvitationsNotQueued|MarketDataProducerDisconnected|MarketDataNotPublishing|NotificationsConsumerCrashLooping|ControlPlaneConfigPublishFailing"
+      - alertname=~"KafkaConsumerLagGrowing|DeadLetterQueueGrowing|NotificationsDeadLetterUnread|NotificationsConsumerStuck|NotificationsReceivedButNotSent|ContactPublishFailing|GpoolMailPublishFailing|GpoolMailRequestedButNotSent|TeamInvitationsNotQueued|MarketDataProducerDisconnected|MarketDataNotPublishing|NotificationsConsumerCrashLooping|ControlPlaneConfigPublishFailing|NotificationsDeadLetterUnwritable"
     equal: ['environment']
   - source_matchers:
       - alertname="RedpandaDown"

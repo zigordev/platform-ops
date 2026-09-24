@@ -59,6 +59,14 @@ export const emailDelivery: DashboardSpec = {
       ], { unit: 'short', min: 0, bars: true }),
     ],
     [
+      timeseries('Dead letters the broker would not take', 'Writes to the dead-letter topic that failed. retried recovered on a later attempt and cost only delay; exhausted gave up, and that record holds its partition until the broker takes it.', { w: 12, h: 8 }, [
+        prom(`sum by (outcome) (increase(notifications_dlq_publish_failures_total[${RATE_INTERVAL}]))`, { legend: '{{outcome}}' }),
+      ], { unit: 'short', min: 0, stack: true, bars: true }),
+      logs('Blocked records', 'The record a partition is stuck on, with how many times it has failed, and every dead-letter write that was retried or abandoned.', { w: 12, h: 8 }, [
+        loki('{app="notifications-api"} | json | event=~"notification.record_blocked|notification.dlt_publish_retry_scheduled|notification.dlt_publish_exhausted"'),
+      ]),
+    ],
+    [
       table('By template', 'Totals over the time range.', { w: 12, h: 10 }, [
         prom(perTemplate('notifications_received_total'), { instant: true, table: true }),
         prom(perTemplate('notifications_sent_total'), { instant: true, table: true }),

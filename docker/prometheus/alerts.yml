@@ -489,6 +489,27 @@ groups:
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/dead-letters.md'
           dashboard: 'service-notifications-api'
 
+      - alert: NotificationsDeadLetterUnwritable
+        expr: |
+          sum by (job) (
+            increase(notifications_dlq_publish_failures_total{outcome="exhausted"}[1h])
+          ) > 0
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'notifications could not even dead-letter a failed email'
+          description: >-
+            {{ $value | humanize }} emails failed and then could not be written
+            to the dead-letter topic either, after every retry. The record is
+            held rather than lost — the offset is never committed — but its
+            partition stops moving until the broker takes the write, so the
+            emails queued behind it wait too. The wedged record names itself:
+            {app="notifications-api"} | json | event = "notification.record_blocked"
+            carries the topic, partition, offset and how many times it has failed.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/dead-letters.md'
+          dashboard: 'service-notifications-api'
+
       - alert: RedpandaDown
         expr: up{job="redpanda"} == 0
         for: 2m

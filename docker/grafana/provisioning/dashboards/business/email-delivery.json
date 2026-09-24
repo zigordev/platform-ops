@@ -605,6 +605,74 @@
     },
     {
       "id": 12,
+      "type": "timeseries",
+      "title": "Dead letters the broker would not take",
+      "description": "Writes to the dead-letter topic that failed. retried recovered on a later attempt and cost only delay; exhausted gave up, and that record holds its partition until the broker takes it.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "normal", "group": "A" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "gridPos": { "x": 0, "y": 21, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome) (increase(notifications_dlq_publish_failures_total[$__rate_interval]))",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "logs",
+      "title": "Blocked records",
+      "description": "The record a partition is stuck on, with how many times it has failed, and every dead-letter write that was retried or abandoned.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "gridPos": { "x": 12, "y": 21, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{app=\"notifications-api\"} | json | event=~\"notification.record_blocked|notification.dlt_publish_retry_scheduled|notification.dlt_publish_exhausted\"",
+          "queryType": "range"
+        }
+      ]
+    },
+    {
+      "id": 14,
       "type": "table",
       "title": "By template",
       "description": "Totals over the time range.",
@@ -647,7 +715,7 @@
           }
         }
       ],
-      "gridPos": { "x": 0, "y": 21, "w": 12, "h": 10 },
+      "gridPos": { "x": 0, "y": 29, "w": 12, "h": 10 },
       "targets": [
         {
           "refId": "A",
@@ -692,7 +760,7 @@
       ]
     },
     {
-      "id": 13,
+      "id": 15,
       "type": "logs",
       "title": "Failures",
       "description": "Every failed attempt and dead letter, with the template, the app, the error class and the SMTP reply. dlt_payload_invalid is a dead letter the consumer could not even parse, so it carries no template.",
@@ -707,7 +775,7 @@
         "dedupStrategy": "none",
         "sortOrder": "Descending"
       },
-      "gridPos": { "x": 12, "y": 21, "w": 12, "h": 10 },
+      "gridPos": { "x": 12, "y": 29, "w": 12, "h": 10 },
       "targets": [
         {
           "refId": "A",

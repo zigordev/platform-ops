@@ -36,6 +36,7 @@ const APP = [
   'notifications_failed_total',
   'notifications_deduplicated_total',
   'notifications_dlq_total',
+  'notifications_dlq_publish_failures_total',
   'notification_render_duration_seconds_bucket',
   'notification_send_duration_seconds_bucket',
   'notification_delivery_duration_seconds_bucket',

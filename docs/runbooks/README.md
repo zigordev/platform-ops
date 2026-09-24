@@ -33,7 +33,7 @@ says what it depends on.
 | `KafkaConsumerLagGrowing`                                                                            | [kafka-lag.md](kafka-lag.md)                                       |
 | `NotificationsConsumerStuck`, `NotificationsReceivedButNotSent`, `NotificationsConsumerCrashLooping` | [notifications-stalled.md](notifications-stalled.md)               |
 | `EmailDeliveryBudget*`                                                                               | [email-delivery.md](email-delivery.md)                             |
-| `DeadLetterQueueGrowing`, `NotificationsDeadLetterUnread`                                            | [dead-letters.md](dead-letters.md)                                 |
+| `DeadLetterQueueGrowing`, `NotificationsDeadLetterUnread`, `NotificationsDeadLetterUnwritable`       | [dead-letters.md](dead-letters.md)                                 |
 | `RedpandaDown`                                                                                       | [redpanda-down.md](redpanda-down.md)                               |
 | `CoreWebVitalsRegressed`                                                                             | [web-vitals.md](web-vitals.md)                                     |
 | `BrowserErrorsRising`                                                                                | [browser-errors.md](browser-errors.md)                             |
