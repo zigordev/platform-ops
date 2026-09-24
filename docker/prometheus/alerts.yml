@@ -986,3 +986,31 @@ groups:
             If this was not deliberate, stop the service now.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/execution-live-mode.md'
           dashboard: 'service-trading-bot-execution'
+
+      - alert: ControlPlaneProjectionsFailing
+        expr: |
+          (
+            sum by (job, stream) (
+              increase(trading_bot_control_plane_projections_total{outcome="failed"}[1h])
+            )
+            /
+            sum by (job, stream) (increase(trading_bot_control_plane_projections_total[1h]))
+          ) > 0.01
+          and
+          sum by (job, stream) (
+            increase(trading_bot_control_plane_projections_total{outcome="failed"}[1h])
+          ) > 5
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'the control plane is dropping {{ $value | humanizePercentage }} of {{ $labels.stream }}'
+          description: >-
+            More than one in a hundred {{ $labels.stream }} events was delivered
+            to the control plane in the last hour and failed to project. The
+            consumer commits the message either way, so nothing retries them and
+            they are gone. Nothing else notices: the API is up, health says ok,
+            and the console keeps serving whatever the last event that did
+            project wrote. The value is the share of that stream being lost.
+          runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/control-plane-projections.md'
+          dashboard: 'trading-bot-pipeline'

@@ -18,41 +18,42 @@ inconvenient moment. Each one answers four questions in the same order:
 Nothing here is a decision tree. When the answer is "it depends", the runbook
 says what it depends on.
 
-| Alert                                                                                                | Runbook                                              |
-| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `AvailabilityBudget*`                                                                                | [availability-burn.md](availability-burn.md)         |
-| `LatencyBudget*`                                                                                     | [latency-burn.md](latency-burn.md)                   |
-| `ServiceDown`                                                                                        | [service-down.md](service-down.md)                   |
-| `ServiceUnhealthy`                                                                                   | [service-unhealthy.md](service-unhealthy.md)         |
-| `ServiceDegraded`                                                                                    | [service-degraded.md](service-degraded.md)           |
-| `ComponentDown`                                                                                      | [component-down.md](component-down.md)               |
-| `HealthSignalMissing`                                                                                | [health-signal-missing.md](health-signal-missing.md) |
-| `OpenBaoSealed`                                                                                      | [openbao-sealed.md](openbao-sealed.md)               |
-| `HostDisk*`, `HostFilesystemWillFillIn24h`                                                           | [host-disk.md](host-disk.md)                         |
-| `HostMemoryPressure`                                                                                 | [host-memory.md](host-memory.md)                     |
-| `TempoMemory*`                                                                                       | [tempo-memory.md](tempo-memory.md)                   |
-| `KafkaConsumerLagGrowing`                                                                            | [kafka-lag.md](kafka-lag.md)                         |
-| `NotificationsConsumerStuck`, `NotificationsReceivedButNotSent`, `NotificationsConsumerCrashLooping` | [notifications-stalled.md](notifications-stalled.md) |
-| `EmailDeliveryBudget*`                                                                               | [email-delivery.md](email-delivery.md)               |
-| `DeadLetterQueueGrowing`, `NotificationsDeadLetterUnread`                                            | [dead-letters.md](dead-letters.md)                   |
-| `RedpandaDown`                                                                                       | [redpanda-down.md](redpanda-down.md)                 |
-| `CoreWebVitalsRegressed`                                                                             | [web-vitals.md](web-vitals.md)                       |
-| `BrowserErrorsRising`                                                                                | [browser-errors.md](browser-errors.md)               |
-| `CspViolationsSeen`                                                                                  | [csp-violations.md](csp-violations.md)               |
-| `RumIngestUnderAttack`                                                                               | [rum-ingest.md](rum-ingest.md)                       |
-| `PageLatencyBudget*`                                                                                 | [page-latency.md](page-latency.md)                   |
-| `AskSlow`, `AskUpstreamFailing`, `AskBudget*`                                                        | [ask.md](ask.md)                                     |
-| `ContactPublishFailing`                                                                              | [contact-publish.md](contact-publish.md)             |
-| `PoolsSync*`                                                                                         | [pools-sync.md](pools-sync.md)                       |
-| `TeamInvitationsNotQueued`                                                                           | [kini-invitations.md](kini-invitations.md)           |
-| `PoolSocketOriginRefused`, `PoolSocketRefusingConnections`                                           | [kini-socket.md](kini-socket.md)                     |
-| `GpoolMailPublishFailing`, `GpoolMailRequestedButNotSent`                                            | [gpool-mail.md](gpool-mail.md)                       |
-| `ErrorLogsSpiking`, `UncaughtExceptions`                                                             | [error-logs.md](error-logs.md)                       |
-| `EdgeErrorRatioHigh`, `EdgeLatencyHigh`                                                              | [edge-slis.md](edge-slis.md)                         |
-| `MarketStreamDisconnected`                                                                           | [market-stream.md](market-stream.md)                 |
-| `MarketDataNotPublishing`, `MarketDataProducerDisconnected`                                          | [market-data-stalled.md](market-data-stalled.md)     |
-| `BinanceRateLimitNearCap`                                                                            | [binance-rate-limit.md](binance-rate-limit.md)       |
-| `ExecutionLeftPaperMode`                                                                             | [execution-live-mode.md](execution-live-mode.md)     |
+| Alert                                                                                                | Runbook                                                      |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `AvailabilityBudget*`                                                                                | [availability-burn.md](availability-burn.md)                 |
+| `LatencyBudget*`                                                                                     | [latency-burn.md](latency-burn.md)                           |
+| `ServiceDown`                                                                                        | [service-down.md](service-down.md)                           |
+| `ServiceUnhealthy`                                                                                   | [service-unhealthy.md](service-unhealthy.md)                 |
+| `ServiceDegraded`                                                                                    | [service-degraded.md](service-degraded.md)                   |
+| `ComponentDown`                                                                                      | [component-down.md](component-down.md)                       |
+| `HealthSignalMissing`                                                                                | [health-signal-missing.md](health-signal-missing.md)         |
+| `OpenBaoSealed`                                                                                      | [openbao-sealed.md](openbao-sealed.md)                       |
+| `HostDisk*`, `HostFilesystemWillFillIn24h`                                                           | [host-disk.md](host-disk.md)                                 |
+| `HostMemoryPressure`                                                                                 | [host-memory.md](host-memory.md)                             |
+| `KafkaConsumerLagGrowing`                                                                            | [kafka-lag.md](kafka-lag.md)                                 |
+| `NotificationsConsumerStuck`, `NotificationsReceivedButNotSent`, `NotificationsConsumerCrashLooping` | [notifications-stalled.md](notifications-stalled.md)         |
+| `EmailDeliveryBudget*`                                                                               | [email-delivery.md](email-delivery.md)                       |
+| `DeadLetterQueueGrowing`, `NotificationsDeadLetterUnread`                                            | [dead-letters.md](dead-letters.md)                           |
+| `RedpandaDown`                                                                                       | [redpanda-down.md](redpanda-down.md)                         |
+| `CoreWebVitalsRegressed`                                                                             | [web-vitals.md](web-vitals.md)                               |
+| `BrowserErrorsRising`                                                                                | [browser-errors.md](browser-errors.md)                       |
+| `CspViolationsSeen`                                                                                  | [csp-violations.md](csp-violations.md)                       |
+| `RumIngestUnderAttack`                                                                               | [rum-ingest.md](rum-ingest.md)                               |
+| `PageLatencyBudget*`                                                                                 | [page-latency.md](page-latency.md)                           |
+| `AskSlow`, `AskUpstreamFailing`, `AskBudget*`                                                        | [ask.md](ask.md)                                             |
+| `ContactPublishFailing`                                                                              | [contact-publish.md](contact-publish.md)                     |
+| `PoolsSync*`                                                                                         | [pools-sync.md](pools-sync.md)                               |
+| `TeamInvitationsNotQueued`                                                                           | [kini-invitations.md](kini-invitations.md)                   |
+| `PoolSocketOriginRefused`, `PoolSocketRefusingConnections`                                           | [kini-socket.md](kini-socket.md)                             |
+| `GpoolMailPublishFailing`, `GpoolMailRequestedButNotSent`                                            | [gpool-mail.md](gpool-mail.md)                               |
+| `ErrorLogsSpiking`, `UncaughtExceptions`                                                             | [error-logs.md](error-logs.md)                               |
+| `EdgeErrorRatioHigh`, `EdgeLatencyHigh`                                                              | [edge-slis.md](edge-slis.md)                                 |
+| `MarketStreamDisconnected`                                                                           | [market-stream.md](market-stream.md)                         |
+| `MarketDataNotPublishing`, `MarketDataProducerDisconnected`                                          | [market-data-stalled.md](market-data-stalled.md)             |
+| `BinanceRateLimitNearCap`                                                                            | [binance-rate-limit.md](binance-rate-limit.md)               |
+| `ExecutionLeftPaperMode`                                                                             | [execution-live-mode.md](execution-live-mode.md)             |
+| `ControlPlaneProjectionsFailing`                                                                     | [control-plane-projections.md](control-plane-projections.md) |
+| `TempoMemory*`                                                                                       | [tempo-memory.md](tempo-memory.md)                           |
 
 ## Procedures
 
