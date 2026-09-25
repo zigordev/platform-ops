@@ -104,11 +104,13 @@ In the order they are usually true:
 - **The export came back unusable.** Tolgee answered 200 and the loader refused
   the body. `FlatExport` is dotted keys — `home.title` rather than a nested
   `home` object — where the apps read a nested export. `EmptyExport` is a 200
-  the loader could pull no messages object out of at all. Nothing is wrong with
-  Tolgee itself in either case: the project's export settings, or an upgrade
-  that changed their defaults, stopped producing what the loader asks for. Fix
-  the export settings on the project. **Restarting Tolgee changes nothing** — it
-  will serve the same body. `TolgeeExportWrongShape` watches both names whether
+  the loader could pull no usable messages out of: no JSON member in the
+  archive, a body that was literally `null`, or an object with no keys in it.
+  Nothing is wrong with Tolgee itself in either case: the project's export
+  settings, or an upgrade that changed their defaults, stopped producing what
+  the loader asks for. Fix the export settings on the project. **Restarting
+  Tolgee changes nothing** — it will serve the same body.
+  `TolgeeExportWrongShape` watches both names whether
   or not a cached export is hiding them; the section below is its runbook.
 - **A container restarted during an outage.** The alert clears once the process
   gets one successful export.
@@ -142,10 +144,10 @@ already had. The dependency is reachable; its export settings are wrong.
 Two error names reach that branch, and the alert carries whichever one fired as
 its `error_name` label:
 
-| `error_name`  | The body was                                                                                       | The setting that produced it |
-| ------------- | -------------------------------------------------------------------------------------------------- | ---------------------------- |
-| `FlatExport`  | dotted keys — `home.title` rather than a nested `home` object                                      | the export structure         |
-| `EmptyExport` | no messages object at all: an archive carrying no JSON member, or a body that was literally `null` | the export format            |
+| `error_name`  | The body was                                                                                                                     | The setting that produced it |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `FlatExport`  | dotted keys — `home.title` rather than a nested `home` object                                                                    | the export structure         |
+| `EmptyExport` | no usable messages at all: an archive carrying no JSON member, a body that was literally `null`, or an object with no keys in it | the export format            |
 
 Reachability is what the `tolgee` health component means, so both belong on the
 **up** side of it. The precedent was already in the loader: a 400 with
@@ -167,6 +169,14 @@ restating the same reasons, for no decision an operator makes differently.
 
 `EmptyExport` is **not** an emptied project. A project with nothing to export
 answers 400 `no_exported_result`, which is `NoExport` and is covered further up.
+
+An export of `{}` is `EmptyExport`. The loader counts the keys rather than
+testing the body for truthiness, so an export that parsed cleanly and carries
+nothing takes the same branch as one it could not parse at all: the same name,
+the same `up`, the same alert, and it is not cached. There is no third row to
+look for, because there is no third `error_name` — an export with no keys in it
+and an archive with no JSON in it are one decision for an operator, and the fix
+starts on the same settings page.
 
 Both names belong on the **up** side in every loader — `src/i18n/remote.ts` in
 each app, under `apps/web` in the three sites and `apps/operator-console` in
@@ -211,17 +221,10 @@ back.
 Fix the export settings on the Tolgee project. For `FlatExport` the loader asks
 for `structureDelimiter=.` and `supportArrays=true` and something on the project
 — usually an upgrade that changed its defaults — stopped honouring them. For
-`EmptyExport` the project is answering with something that is not the JSON the
-loader reads, so check the export format itself. Nothing is wrong with Tolgee in
-either case and **restarting it changes nothing**. The alert clears within the
-hour after the next export comes back usable.
-
-### What this does not cover
-
-A 200 whose body is an empty JSON object. `{}` is not `EmptyExport`: it is
-truthy, it holds no dotted keys, so the loader caches it as a good export,
-reports `tolgee` up, merges nothing over the committed copy and counts the
-render `merged`. No log line is written and no alert has anything to fire on,
-while every edit made in Tolgee stays invisible. Closing it needs a check in the
-loader — an export with no keys is not a usable export — and only then is there
-a log line to widen this matcher onto.
+`EmptyExport`, check the export format first: the body may not be the JSON the
+loader reads at all. If the format is right, the export is coming back with no
+keys in it, and the question is what that project has under the language the
+site asked for — the same check as `NoExport` further up, on a project that
+still has enough left to answer 200. Nothing is wrong with Tolgee in either case
+and **restarting it changes nothing**. The alert clears within the hour after
+the next export comes back usable.
