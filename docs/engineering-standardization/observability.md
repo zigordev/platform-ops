@@ -525,11 +525,11 @@ Reporting either of those `down` costs an operator a wasted restart:
 `ComponentDown` tells them the site cannot reach Tolgee, while the actual fix is
 an export setting on a Tolgee that is perfectly healthy. The semantic that
 matches the rest of the estate is reachability — a component is `down` when the
-service could not get an answer, not when it did not like the answer it got. cv,
-gpool and kini pass `'up'` on `FlatExport` today; trading-bot's operator console
-does not, and no loader does on `EmptyExport` yet. `TolgeeExportWrongShape`
-covers both names from the logs regardless, so the signal does not depend on
-those loaders landing;
+service could not get an answer, not when it did not like the answer it got.
+That line is drawn in `src/i18n/remote.ts` in each app — under `apps/web` in cv,
+gpool and kini, and `apps/operator-console` in trading-bot — and both names
+belong on the `up` side of it there. `TolgeeExportWrongShape` covers both from
+the logs regardless, so the signal never depended on those loaders;
 [docs/runbooks/i18n-fallback.md](../runbooks/i18n-fallback.md) carries the
 detail, and the detection gap that remains.
 

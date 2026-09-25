@@ -168,13 +168,12 @@ restating the same reasons, for no decision an operator makes differently.
 `EmptyExport` is **not** an emptied project. A project with nothing to export
 answers 400 `no_exported_result`, which is `NoExport` and is covered further up.
 
-cv, gpool and kini pass `'up'` on their `FlatExport` branch today;
-trading-bot's operator console still passes `'down'` there, and all four still
-pass `'down'` on `EmptyExport` — `src/i18n/remote.ts` in each, under `apps/web`
-in the three sites and `apps/operator-console` in trading-bot. Until those
-branches move, an unusable export still raises `ComponentDown` alongside this
-alert, and this is the one of the two that names the cause. Once they land, it
-is the only signal left.
+Both names belong on the **up** side in every loader — `src/i18n/remote.ts` in
+each app, under `apps/web` in the three sites and `apps/operator-console` in
+trading-bot. While any loader still reports `down` on one of them, an unusable
+export raises `ComponentDown` alongside this alert, and this is the one of the
+two that names the cause. Where every branch passes `'up'`, this is the only
+signal left, which is why it ships ahead of the loaders rather than behind them.
 
 Reporting `up` costs something, and this alert is the price. While any process
 still holds a cached export the fallback returns that cache, the loader counts
