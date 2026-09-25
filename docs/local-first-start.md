@@ -83,7 +83,8 @@ What this command does:
 - starts `openbao` first
 - validates the required env values
 - starts the remaining ops services, including the shared Redpanda broker
-- exits non-zero when OpenBao ends up uninitialized, sealed or unreachable, because no application can read its secrets then
+- waits for Tolgee to answer, because the `local:up` of cv, gpool and kini pushes and pulls translations through it straight away
+- exits non-zero when OpenBao ends up uninitialized, sealed or unreachable, or Tolgee never answers, because the products' own `local:up` needs both
 
 What it does not do:
 
