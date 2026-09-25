@@ -79,18 +79,19 @@ npm run local:up
 What this command does:
 
 - creates the shared Docker network `platform_ops_shared`
+- creates `docker/.openbao-local-static-seal-key` on the first run: the gitignored key OpenBao unseals itself with
 - starts `openbao` first
 - validates the required env values
 - starts the remaining ops services, including the shared Redpanda broker
+- exits non-zero when OpenBao ends up uninitialized, sealed or unreachable, because no application can read its secrets then
 
 What it does not do:
 
 - it does not initialize OpenBao
-- it does not unseal OpenBao
 
-So a first boot always requires the manual OpenBao steps below.
+So a first boot still needs the one-time initialization below.
 
-## 5. Initialize And Unseal OpenBao
+## 5. Initialize OpenBao
 
 Open the OpenBao UI:
 
@@ -98,14 +99,16 @@ Open the OpenBao UI:
 
 On the first run, OpenBao will be uninitialized.
 
-Initialize it with:
+Choose `Create a new Raft cluster`, then initialize it with:
 
 - `Key shares = 1`
 - `Key threshold = 1`
 
+OpenBao unseals itself as soon as it is initialized, so there is no unseal step. The one key it shows you is a recovery key, not an unseal key: `generate-root` and `rekey` ask for it, a normal start never does.
+
 Save these values immediately:
 
-- `Unseal Key 1`
+- `Recovery Key 1`
 - `Initial Root Token`
 
 Treat both as real secrets:
@@ -114,9 +117,19 @@ Treat both as real secrets:
 - do not commit them
 - do not put them in tracked repo files
 
-Then unseal OpenBao in the UI using `Unseal Key 1`.
+Back up `docker/.openbao-local-static-seal-key` next to them. Nothing else holds a copy, and OpenBao cannot unseal this data without it:
 
-After unsealing:
+```bash
+base64 < docker/.openbao-local-static-seal-key
+```
+
+To restore it from that value:
+
+```bash
+printf '%s' '<value>' | base64 -d > docker/.openbao-local-static-seal-key && chmod 600 docker/.openbao-local-static-seal-key
+```
+
+Then sign in:
 
 1. choose token login
 2. paste `Initial Root Token`
@@ -215,17 +228,21 @@ npm run local:reset
 Important:
 
 - resetting deletes local OpenBao, Tolgee, Redpanda, Grafana, Loki, and related data
-- after a reset, you must initialize OpenBao again
+- after a reset, you must initialize OpenBao again; the static seal key survives the reset and is reused
 
-If OpenBao restarts in the sealed state:
+OpenBao unseals itself on every start with `docker/.openbao-local-static-seal-key`,
+the way production unseals itself through KMS. The seal stanza is the only difference
+between `docker/openbao/local.hcl` and `docker/openbao/prod.hcl.tpl`.
 
-- `npm run local:up` unseals it automatically when `docker/.openbao-local-unseal-key`
-  holds `Unseal Key 1`; that file is gitignored
-- otherwise open `http://localhost:8200/ui` and unseal it again with `Unseal Key 1`
+An OpenBao initialized before the static seal existed starts sealed once, waiting to
+move onto it. `npm run local:up` finishes the move when `docker/.openbao-local-unseal-key`
+holds `Unseal Key 1`; that file is gitignored. Without it, run:
 
-Local uses the Shamir seal and so starts sealed on every process start. Production
-auto-unseals through KMS instead, which is why `docker/openbao/local.hcl` and
-`docker/openbao/prod.hcl.tpl` are separate files.
+```bash
+docker compose --env-file docker/.env.ops.local -f docker/compose.ops.local.yml exec -e BAO_ADDR=http://127.0.0.1:8200 openbao bao operator unseal -migrate
+```
+
+and give it `Unseal Key 1`. From then on that key is a recovery key, and the file is no longer needed.
 
 ## 10. Troubleshooting
 
@@ -241,8 +258,9 @@ OpenBao health returns `501`:
 
 OpenBao health returns `503`:
 
-- OpenBao is sealed
-- run `bash scripts/local-openbao-unseal.sh`, or unseal it in the UI with `Unseal Key 1`
+- OpenBao is sealed although it unseals itself
+- run `bash scripts/local-openbao-unseal.sh`: it finishes a pending move off the Shamir seal (section 9) and otherwise says why OpenBao stays sealed
+- `docs/runbooks/openbao-sealed.md` covers each cause
 
 Grafana or Tolgee login fails after you changed bootstrap credentials:
 
@@ -269,8 +287,7 @@ Examples:
 If the UI is not available, the equivalent OpenBao CLI flow is:
 
 ```bash
-docker compose --env-file docker/.env.ops.local -f docker/compose.ops.local.yml exec -T -e BAO_ADDR=http://127.0.0.1:8200 openbao bao operator init -key-shares=1 -key-threshold=1
-docker compose --env-file docker/.env.ops.local -f docker/compose.ops.local.yml exec -T -e BAO_ADDR=http://127.0.0.1:8200 openbao bao operator unseal <UNSEAL_KEY>
+docker compose --env-file docker/.env.ops.local -f docker/compose.ops.local.yml exec -T -e BAO_ADDR=http://127.0.0.1:8200 openbao bao operator init -recovery-shares=1 -recovery-threshold=1
 docker compose --env-file docker/.env.ops.local -f docker/compose.ops.local.yml exec -T -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN=<ROOT_TOKEN> openbao bao login <ROOT_TOKEN>
 docker compose --env-file docker/.env.ops.local -f docker/compose.ops.local.yml exec -T -e BAO_ADDR=http://127.0.0.1:8200 -e BAO_TOKEN=<ROOT_TOKEN> openbao bao secrets enable -path=kv kv-v2
 ```

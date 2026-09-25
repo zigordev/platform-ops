@@ -25,7 +25,7 @@ npm ci
 npm run local:up
 ```
 
-That creates the shared `platform_ops_shared` network every product attaches to, and brings up OpenBao, Redpanda, Tolgee and the observability services. First-time setup — initialising and unsealing OpenBao, seeding Tolgee — is in `docs/local-first-start.md`.
+That creates the shared `platform_ops_shared` network every product attaches to, and brings up OpenBao, Redpanda, Tolgee and the observability services. First-time setup — initialising OpenBao, seeding Tolgee — is in `docs/local-first-start.md`.
 
 3. Stop it
 
@@ -111,10 +111,10 @@ brew install gitleaks
 Local OpenBao behaves like production:
 
 - no `-dev` auto-init
-- no auto-unseal
+- auto-unseal, from a static key in `docker/.openbao-local-static-seal-key` where production uses KMS; `npm run local:up` creates the key on the first run, and it needs a backup
 - no default dev token
 
-So a first run — or a run after `npm run local:reset`, which drops the volumes — needs a manual initialise and unseal. `docs/local-first-start.md` walks through it.
+So a first run — or a run after `npm run local:reset`, which drops the volumes — needs a manual initialise, and OpenBao unseals itself from then on. `docs/local-first-start.md` walks through it.
 
 ## Production Deployment
 
