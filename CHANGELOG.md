@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.46.0](https://github.com/zigordev/platform-ops/compare/v1.45.1...v1.46.0) (2026-09-25)
+
+
+### Features
+
+* **alerting:** tell somebody from outside aws when the prod host stops ([#255](https://github.com/zigordev/platform-ops/issues/255)) ([a067547](https://github.com/zigordev/platform-ops/commit/a067547e78ef76f061e98415945e5dba258b59ad))
+
 ## [1.45.1](https://github.com/zigordev/platform-ops/compare/v1.45.0...v1.45.1) (2026-09-25)
 
 
