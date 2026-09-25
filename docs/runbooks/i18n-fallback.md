@@ -1,6 +1,8 @@
 # Copy served from the repository
 
-**Alert:** `CopyServedFromRepository` (ticket)
+**Alert:** `CopyServedFromRepository` (ticket). `TolgeeExportWrongShape` is
+answered on its own further down, under
+[a wrong-shape export](#a-wrong-shape-export-is-not-an-unreachable-tolgee).
 
 ## What fired
 
@@ -106,7 +108,8 @@ In the order they are usually true:
   settings, or an upgrade that changed their defaults, stopped honouring the
   `structureDelimiter=.` and `supportArrays=true` the loader asks for. Fix the
   export format on the project. **Restarting Tolgee changes nothing** — it will
-  serve the same body.
+  serve the same body. `TolgeeExportWrongShape` watches this case whether or
+  not a cached export is hiding it; the section below is its runbook.
 - **A container restarted during an outage.** The alert clears once the process
   gets one successful export.
 
@@ -131,31 +134,65 @@ quiet until it restarts.
 
 ## A wrong-shape export is not an unreachable Tolgee
 
-Today it is reported as one, and that is wrong. `FlatExport` and `EmptyExport`
-go through the same fallback as a timeout, which reports the `tolgee` component
-`down`. So a Tolgee that is up, answering 200 and merely misconfigured raises
-`ComponentDown` — whose summary says the site "cannot reach" Tolgee — and
-degrades every site that reads it alongside it. An operator who follows that
-alert restarts a healthy Tolgee and fixes nothing.
+**Alert:** `TolgeeExportWrongShape` (ticket)
 
-The precedent already in this loader points the other way. A 400 with
-`no_exported_result` reports the component **up**, deliberately, because an
+Tolgee answered 200 and the body came back as dotted keys — `home.title` rather
+than a nested `home` object — so the loader refused it and kept the copy it
+already had. The dependency is reachable; its export settings are wrong.
+
+Reachability is what the `tolgee` health component means, so a wrong-shape
+export belongs on the **up** side of it. The precedent was already in the
+loader: a 400 with `no_exported_result` reports `up` deliberately, because an
 empty project is a content gap and not an unreachable dependency. A wrong-shape
-export is the same kind of fault and is strictly more reachable than an empty
-one: the request succeeded. `up` is the correct answer, and the signal belongs
-in the `FlatExport` log line above, next to `NoExport`.
+export is the same class of fault and is strictly more reachable — the request
+succeeded. Reporting it `down` raises `ComponentDown`, whose summary says the
+site "cannot reach" Tolgee and whose runbook ends in restarting Tolgee, which
+re-serves the identical body and fixes nothing.
 
-Two things are owed for that, neither of them in this repository:
+This alert ships before the loaders do. Until cv, gpool, kini and trading-bot's
+operator console pass `'up'` on their `FlatExport` branch — `src/i18n/remote.ts`
+in each, under `apps/web` in the three sites and `apps/operator-console` in
+trading-bot — a wrong-shape export still raises `ComponentDown` alongside this
+alert, and this is the one of the two that names the cause. Once they land, it
+is the only signal left.
 
-- All four should pass `'up'` on the `FlatExport` and `EmptyExport` branches of
-  their loader, as the `NoExport` branch already does. The file is
-  `src/i18n/remote.ts` in each: under `apps/web` in cv, gpool and kini, and
-  under `apps/operator-console` in trading-bot.
-- Once they do, nothing in Prometheus catches a wrong-shape export while a
-  process still holds a cached copy: the fallback returns the cache, the loader
-  counts `merged`, and neither this alert nor `ComponentDown` fires. That is the
-  same blind spot `cached` already has, and closing it means a Loki rule on
-  `error_name="FlatExport"` rather than a health component.
+Reporting `up` costs something, and this alert is the price. While any process
+still holds a cached export the fallback returns that cache, the loader counts
+`merged`, and neither `CopyServedFromRepository` — which needs `local` — nor
+`ComponentDown` has anything left to fire on. The only evidence is the log line,
+so the alert is a Loki rule on it:
 
-Until both land, treat a `tolgee` `ComponentDown` on any of the four as
-ambiguous and read the log line before touching Tolgee.
+```logql
+sum by (app, environment) (
+  count_over_time({job="docker-json-logs", app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event = "i18n.fallback" | error_name = "FlatExport" [30m])
+) > 0
+```
+
+It waits an hour on purpose. A wrong-shape export is never urgent — the site
+renders, in the right language, from the committed copy — but it is permanent:
+nothing repairs an export setting on its own. So it is a ticket, and the `for:
+1h` over a thirty-minute window opens one only once the wrong shape has survived
+an hour of renders, which no Tolgee upgrade or export-settings edit in flight
+lasts. One bad export holds the expression true for thirty minutes, half of what
+firing needs, so a blip stays quiet.
+
+`ServiceDown` inhibits it, as it already inhibits `CopyServedFromRepository`:
+both say the copy on that site is wrong, and a site that is serving nothing is
+the larger problem. The wrong shape is still there afterwards and the alert
+comes back.
+
+### What to do
+
+Fix the export format on the Tolgee project. The loader asks for
+`structureDelimiter=.` and `supportArrays=true`, and something on the project —
+usually an upgrade that changed its defaults — stopped honouring them. Nothing
+is wrong with Tolgee itself and **restarting it changes nothing**. The alert
+clears within the hour after the next export comes back nested.
+
+### What this does not cover
+
+`EmptyExport` — a 200 whose body held no messages at all — reaches the same
+fallback and will have the same blind spot, and this rule does not watch it. It
+still reports the component `down`, so `ComponentDown` still answers for it,
+ambiguously. When that branch moves to `up` as well, widen the `error_name`
+matcher above to take both names and say so here.

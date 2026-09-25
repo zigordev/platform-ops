@@ -68,28 +68,26 @@ jobs:
 
           echo "release_tag=$raw_tag" >> "$GITHUB_OUTPUT"
           echo "image_tag=$safe_tag" >> "$GITHUB_OUTPUT"
-      - name: Validate required deploy variables
+      - name: Validate required deploy variables and secrets
         env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEPLOY_BUCKET: ${{ vars.AWS_DEPLOY_BUCKET }}
           AWS_DEPLOY_INSTANCE_ID: ${{ vars.AWS_DEPLOY_INSTANCE_ID }}
           AWS_SSM_OPS_PREFIX: ${{ vars.AWS_SSM_OPS_PREFIX }}
         run: |
+          set -euo pipefail
           required=(
             AWS_REGION
             AWS_DEPLOY_BUCKET
             AWS_DEPLOY_INSTANCE_ID
             AWS_SSM_OPS_PREFIX
+            AWS_DEPLOY_ROLE_ARN
           )
 
           for name in "${required[@]}"; do
-            if printenv "$name" >/dev/null; then
-              value="$(printenv "$name")"
-            else
-              value=""
-            fi
-            if [ -z "$value" ]; then
-              echo "Missing GitHub environment variable: $name" >&2
+            if [ -z "$(printenv "$name" || true)" ]; then
+              echo "Missing GitHub environment variable or secret: $name" >&2
               exit 1
             fi
           done

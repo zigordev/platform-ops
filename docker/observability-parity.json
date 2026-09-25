@@ -29,6 +29,40 @@
       "reason": "the prod path exists but is not enabled; see docs/host-capacity.md."
     }
   ],
+  "log-alert-apps": [
+    {
+      "name": "TolgeeExportWrongShape:gpool-api",
+      "reason": "serves JSON to the web tier and renders no pages, so it never loads a Tolgee export and cannot write an i18n.fallback line"
+    },
+    {
+      "name": "TolgeeExportWrongShape:kini-api",
+      "reason": "serves JSON to the web tier and renders no pages, so it never loads a Tolgee export and cannot write an i18n.fallback line"
+    },
+    {
+      "name": "TolgeeExportWrongShape:notifications-api",
+      "reason": "serves JSON to the web tier and renders no pages, so it never loads a Tolgee export and cannot write an i18n.fallback line"
+    },
+    {
+      "name": "TolgeeExportWrongShape:sity-web",
+      "reason": "sity has no i18n layer at all: one language, copy in the components, no Tolgee client to fall back from"
+    },
+    {
+      "name": "TolgeeExportWrongShape:trading-bot-control-plane",
+      "reason": "a Rust service with no user-facing copy; it never loads a Tolgee export and cannot write an i18n.fallback line"
+    },
+    {
+      "name": "TolgeeExportWrongShape:trading-bot-execution",
+      "reason": "a Rust service with no user-facing copy; it never loads a Tolgee export and cannot write an i18n.fallback line"
+    },
+    {
+      "name": "TolgeeExportWrongShape:trading-bot-market-data",
+      "reason": "a Rust service with no user-facing copy; it never loads a Tolgee export and cannot write an i18n.fallback line"
+    },
+    {
+      "name": "TolgeeExportWrongShape:trading-bot-research-backtesting",
+      "reason": "a Rust service with no user-facing copy; it never loads a Tolgee export and cannot write an i18n.fallback line"
+    }
+  ],
   "inhibit-labels": [],
   "inhibit-siblings": [
     {
