@@ -46,7 +46,7 @@ says what it depends on.
 | `TeamInvitationsNotQueued`                                                                           | [kini-invitations.md](kini-invitations.md)                         |
 | `PoolSocketOriginRefused`, `PoolSocketRefusingConnections`                                           | [kini-socket.md](kini-socket.md)                                   |
 | `GpoolMailPublishFailing`, `GpoolMailRequestedButNotSent`                                            | [gpool-mail.md](gpool-mail.md)                                     |
-| `CopyServedFromRepository`                                                                           | [i18n-fallback.md](i18n-fallback.md)                               |
+| `CopyServedFromRepository`, `TolgeeExportWrongShape`                                                 | [i18n-fallback.md](i18n-fallback.md)                               |
 | `ErrorLogsSpiking`, `UncaughtExceptions`                                                             | [error-logs.md](error-logs.md)                                     |
 | `EdgeErrorRatioHigh`, `EdgeLatencyHigh`                                                              | [edge-slis.md](edge-slis.md)                                       |
 | `MarketStreamDisconnected`                                                                           | [market-stream.md](market-stream.md)                               |
