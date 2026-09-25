@@ -14,6 +14,8 @@ ENV
   export CALLS="$REPO/calls"
   export HEALTH_CODES="$REPO/health-codes"
   export UNSEAL_BODY="$REPO/unseal-body"
+  export TOLGEE_CODES="$REPO/tolgee-codes"
+  printf '200\n' >"$TOLGEE_CODES"
   export SEAL_STATUS='{"type":"shamir","sealed":true,"migration":false,"recovery_seal":false}'
   UNSEAL_KEY_FILE="$REPO/docker/.openbao-local-unseal-key"
   STATIC_KEY_FILE="$REPO/docker/.openbao-local-static-seal-key"
@@ -38,6 +40,13 @@ case "$url" in
   */v1/sys/unseal)
     cat >"$UNSEAL_BODY"
     printf '200'
+    ;;
+  */actuator/health)
+    head -n1 "$TOLGEE_CODES" | tr -d '\n'
+    if [ "$(wc -l <"$TOLGEE_CODES")" -gt 1 ]; then
+      tail -n +2 "$TOLGEE_CODES" >"$TOLGEE_CODES.next"
+      mv "$TOLGEE_CODES.next" "$TOLGEE_CODES"
+    fi
     ;;
 esac
 STUB
@@ -172,4 +181,29 @@ health_codes() {
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"OpenBao is not initialized, so no application can read its secrets"* ]]
+}
+
+@test "local:up waits for Tolgee to answer before it reports the stack started" {
+  health_codes 200
+  printf '%s\n' 000 000 200 >"$TOLGEE_CODES"
+
+  run bash "$UP"
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -c "actuator/health" "$CALLS")" -eq 3 ]
+  [[ "$output" == *"Tolgee is ready."* ]]
+  [ "${lines[${#lines[@]}-1]}" = "Ops stack started." ]
+}
+
+@test "local:up fails and names the products that need Tolgee when it never answers" {
+  health_codes 200
+  printf '000\n' >"$TOLGEE_CODES"
+
+  run env TOLGEE_READY_WAIT_SECONDS=4 bash "$UP"
+
+  [ "$status" -eq 1 ]
+  grep -q "up -d$" "$CALLS"
+  [[ "$output" == *"Tolgee has not answered"* ]]
+  [[ "$output" == *"cv, gpool and kini"* ]]
+  [[ "$output" != *"Ops stack started."* ]]
 }
