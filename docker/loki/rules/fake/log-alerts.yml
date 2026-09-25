@@ -75,14 +75,16 @@ groups:
             the loader threw the export away and served the copy it already had.
             FlatExport is dotted keys where the app reads a nested object, and
             means the project stopped honouring structureDelimiter=. and
-            supportArrays=true. EmptyExport is a 200 carrying no messages at all
-            — an archive with no JSON member, or a null body — and means the
-            project stopped exporting JSON. Both are export settings on a Tolgee
+            supportArrays=true. EmptyExport is a 200 carrying no usable messages
+            — an archive with no JSON member, a body that was literally null, or
+            an object with no keys in it — so check the export format first, and
+            if the format is right ask what the project still holds under the
+            language the site requested. Both names are questions for a Tolgee
             that is reachable and healthy, and nothing on the page is broken,
             which is why no health component reports this: while any process
             still holds a cached export the render counts as merged and neither
-            ComponentDown nor CopyServedFromRepository fires. Every edit made in
-            Tolgee is invisible until the settings are fixed. Restarting Tolgee
-            re-serves the same body.
+            ComponentDown nor CopyServedFromRepository fires. Whatever Tolgee
+            holds stays invisible until the export comes back usable. Restarting
+            Tolgee re-serves the same body.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/i18n-fallback.md'
           dashboard: 'service-overview'

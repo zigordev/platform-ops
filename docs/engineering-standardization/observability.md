@@ -518,8 +518,9 @@ reports `tolgee` **up**, deliberately: the project is empty, which is a content
 gap and not an unreachable dependency, and `CopyServedFromRepository` is the
 alert that covers it. Every 200 the loader refuses is the same class of fault
 and is strictly more reachable, because the request succeeded — an export of
-dotted keys instead of a nested object (`FlatExport`), and one the loader can
-pull no messages out of at all (`EmptyExport`).
+dotted keys instead of a nested object (`FlatExport`), and one carrying no
+usable messages at all — unparseable, `null`, or an object with no keys in it
+(`EmptyExport`).
 
 Reporting either of those `down` costs an operator a wasted restart:
 `ComponentDown` tells them the site cannot reach Tolgee, while the actual fix is
@@ -531,7 +532,7 @@ gpool and kini, and `apps/operator-console` in trading-bot — and both names
 belong on the `up` side of it there. `TolgeeExportWrongShape` covers both from
 the logs regardless, so the signal never depended on those loaders;
 [docs/runbooks/i18n-fallback.md](../runbooks/i18n-fallback.md) carries the
-detail, and the detection gap that remains.
+detail.
 
 Component values are objects, not bare strings — `{"status": "up"}` rather than
 `"up"`. The nesting looks redundant for a bare up/down, and it is, until the day
