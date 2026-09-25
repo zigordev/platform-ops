@@ -45,6 +45,11 @@ export const serviceTradingBotOperatorConsole: DashboardSpec = {
         prom(`histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket${SEL}[${RATE_INTERVAL}])))`, { legend: '{{route}}', exemplar: true }),
       ], { unit: 's', min: 0 }),
     ],
+    [
+      timeseries('Where the copy came from', 'Message loads by source. This console has no Tolgee configured anywhere: TOLGEE_API_URL appears in none of the three compose files trading-bot ships, and the local stack sets TOLGEE_SYNC to none, so the loader skips Tolgee before it fetches and every render counts local. A flat local line is this service behaving correctly, which is why CopyServedFromRepository watches the three sites and deliberately not this one — a > 0 alert here would fire forever. The panel earns its place as the evidence for that: the day somebody wires the console to Tolgee, merged appears and local stops being the whole story, and local coming back after that means the same fallback the three sites alert on.', { w: 24, h: 6 }, [
+        prom(`sum by (source) (rate(trading_bot_operator_console_i18n_messages_total${SEL}[${RATE_INTERVAL}]))`, { legend: '{{source}}' }),
+      ], { unit: 'ops', min: 0 }),
+    ],
     runtimeRow(JOB),
     [failingTraces(JOB, 12), slowTraces(JOB, '1s', 12)],
     [errorLogs(JOB, 24)],
