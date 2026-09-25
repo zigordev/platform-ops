@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.43.0](https://github.com/zigordev/platform-ops/compare/v1.42.3...v1.43.0) (2026-09-25)
+
+
+### Features
+
+* **alerting:** see a wrong-shape tolgee export, and validate the ops deploy role ([#248](https://github.com/zigordev/platform-ops/issues/248)) ([9b4a978](https://github.com/zigordev/platform-ops/commit/9b4a97853db7a6f40959473d6af5100fdff58e8e))
+
 ## [1.42.3](https://github.com/zigordev/platform-ops/compare/v1.42.2...v1.42.3) (2026-09-24)
 
 
