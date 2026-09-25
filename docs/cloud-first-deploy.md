@@ -134,8 +134,15 @@ clicked and the alarm is firing into nothing. A real ARN means it is live. Leave
 `host_alarm_email` empty and the topic and alarm are still created, with no
 subscriber — the alarm is then visible in the console and mails nobody.
 
-The alarm costs $0.10 a month, and the first 1,000 SNS email notifications a
-month are free. `docs/runbooks/host-stopped.md` is what the mail links to.
+The same topic carries `platform-ops-prod-host-not-running`, which mails when the
+host is not running during hours the window says it should be, and when the
+poller behind it stops answering. One confirmation arms both; leaving it pending
+leaves both firing into nothing.
+
+The two alarms cost $0.20 a month, the poller's custom metric $0.30, and its
+Lambda invocations and CloudWatch API requests stay inside the free allowances.
+The first 1,000 SNS email notifications a month are free.
+`docs/runbooks/host-stopped.md` is what both mails link to.
 
 ## 5. Configure GitHub
 

@@ -116,10 +116,31 @@ than lit. It keeps evaluating and keeps its state history throughout; it simply
 mails nobody. And the blindness is not a delay: a fault that begins while the
 alarm is muted is never mailed, not even once the window reopens, because
 CloudWatch mails on a state change and that change happened with the actions
-off. A host that dies an hour after the window closes is mailed about by
-nothing. `uptime-probe.yml` is the only cover for that case.
-[`power.md`](../power.md) and
+off. [`power.md`](../power.md) and
 [`host-stopped.md`](../runbooks/host-stopped.md) cover the rest.
+
+**Is the host here when it should be?** `platform-ops-prod-host-watch`, a Lambda
+on a five-minute schedule, asks the state rather than waiting for a change:
+does the host alarm have `ActionsEnabled`, and is the instance `running`? Yes
+and no publishes `1` to the custom metric `HostStoppedWhenItShouldRun`, and
+`platform-ops-prod-host-not-running` mails after fifteen minutes of it. It reads
+the same `ActionsEnabled` as the mute schedules and the probe, so there is no
+second copy of the window anywhere, and it publishes `0` while the window is
+closed — no weekend noise, and no routine mail of any kind.
+
+This is what covers the case the alarm above structurally cannot: a host that
+broke while muted, or a scheduled start that never happened, is still not
+running on the first tick after the window opens, and a state detector sees that
+where a transition detector has nothing left to send. It is deduplicated by
+being a CloudWatch alarm rather than a mailer: one mail per fault and one `OK`
+when it clears, however long the fault lasts. The price of that is that a fault
+nobody fixes is announced once and not repeated; the uptime probe's standing
+issue is the artefact that keeps nagging.
+
+The poller is also the one thing here that watches its own watcher. Its alarm
+treats missing data as breaching, so fifteen minutes with nothing published
+mails in the poller's own name. That is not a heartbeat for the estate — nothing
+outside AWS checks AWS — but it does mean the checker cannot fail quietly.
 
 **Do the public endpoints serve?**
 [`uptime-probe.yml`](../../.github/workflows/uptime-probe.yml) runs on GitHub,
@@ -158,9 +179,18 @@ so an instance limping on a degraded volume while both checks pass does not
 fire.
 
 Nor does anything mail while the power window has the alarm muted. Alertmanager
-is down with the host, the alarm is silent by design, and the probe is the only
-one left looking. From the moment the window closes on a Friday until it opens
-again, the estate's alerting is the probe and nothing else.
+is down with the host, the alarm is silent by design, the poller is asking that
+same window and publishing `0`, and the probe is the only one left looking. From
+the moment the window closes until it opens again, the estate's alerting is the
+probe and nothing else. Muting the alarm by hand has the same effect on all
+three, which is the point of there being one flag.
+
+The poller answers "is it here", not "is it well". A host that starts on time
+and comes up impaired after a window already spent in `ALARM` reaches neither
+alarm — the first has no transition to send, the second sees `running` — and the
+probe is its only cover. Closing that would mean the poller mailing about every
+in-window fault the status alarm has already mailed about, a second mail per
+incident to catch one that has not happened here yet.
 
 There is no heartbeat, by decision on 2026-09-20: nothing pings an outside
 service while the monitoring works, so nothing notices the monitoring itself

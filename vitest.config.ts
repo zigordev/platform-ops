@@ -9,7 +9,7 @@ import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['packages/**/*.test.ts', 'scripts/**/*.test.mjs'],
+    include: ['packages/**/*.test.ts', 'scripts/**/*.test.mjs', 'infra/**/*.test.mjs'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
