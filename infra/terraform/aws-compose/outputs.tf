@@ -258,6 +258,11 @@ output "host_alarm" {
     alarm_name = aws_cloudwatch_metric_alarm.host_status.alarm_name
     topic_arn  = aws_sns_topic.host_alarm.arn
     notifies   = var.host_alarm_email != "" ? var.host_alarm_email : "nobody: host_alarm_email is empty"
+    mails_only_inside_the_power_window = (
+      var.power_schedule_enabled
+      ? "Yes. ${aws_scheduler_schedule.host_alarm_mute.name} mutes it at ${var.power_off_schedule} and ${aws_scheduler_schedule.host_alarm_unmute.name} un-mutes it at ${var.power_on_schedule}, ${var.power_schedule_timezone}. Outside that window the alarm still changes state and still records history, and it mails nobody. A fault that starts while it is muted is never mailed, not even when the window reopens: CloudWatch mails on a state change, and that change happened while the actions were off. The uptime probe is the backstop for that case."
+      : "No: the window is off, so the alarm mails around the clock. ${aws_scheduler_schedule.host_alarm_unmute.name} stays enabled anyway and re-enables the actions at ${var.power_on_schedule}, so a mute left behind by hand or by an earlier window cannot outlive one tick of it."
+    )
     confirm_the_subscription = (
       var.host_alarm_email != ""
       ? "ACTION REQUIRED: AWS has emailed ${var.host_alarm_email} a confirmation link. Terraform cannot click it, and until somebody does this alarm fires into nothing. Verify with: aws sns list-subscriptions-by-topic --topic-arn ${aws_sns_topic.host_alarm.arn} --query 'Subscriptions[].SubscriptionArn' --output text -- a result of PendingConfirmation means it is still not delivering."

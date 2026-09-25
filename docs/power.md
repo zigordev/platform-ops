@@ -52,6 +52,23 @@ terraform -chdir=infra/terraform/aws-compose apply -var-file=environments/prod.t
 
 Set `power_schedule_enabled = false` and apply again to pause the window without removing it. The manual switch and the schedule do not conflict: both act on the same instance state, and whichever runs later wins.
 
+### The alarm follows the same window
+
+Two more schedules sit in the same group and mute the CloudWatch alarm `platform-ops-prod-host-status` while the window has the host off:
+
+| Schedule                              | Runs at              | Calls                 |
+| ------------------------------------- | -------------------- | --------------------- |
+| `platform-ops-prod-power-off`         | `power_off_schedule` | `ec2:StopInstances`   |
+| `platform-ops-prod-host-alarm-mute`   | `power_off_schedule` | `DisableAlarmActions` |
+| `platform-ops-prod-power-on`          | `power_on_schedule`  | `ec2:StartInstances`  |
+| `platform-ops-prod-host-alarm-unmute` | `power_on_schedule`  | `EnableAlarmActions`  |
+
+They read the same three variables as the power cycle, so the window exists in one place and changing it moves the alarm with the host. There is no second copy to keep in step.
+
+The mute schedule follows `power_schedule_enabled`. The un-mute schedule does not: it stays enabled whatever the flag says, because it is the only thing that can turn the mail back on, and a switch that can only be thrown one way is how an alarm ends up silent for good. With the window off it still fires at `power_on_schedule` and re-enables actions that are already enabled, which costs nothing and bounds how long any mute — the schedule's or a human's — can last.
+
+Terraform no longer corrects `actions_enabled`; the resource ignores changes to it, because the schedules own it between applies. An `apply` will not un-mute the alarm for you any more.
+
 ## What to expect when the host comes back
 
 Docker starts on boot and every container carries `restart: unless-stopped`, so the whole estate restarts on its own. OpenBao unseals itself through KMS. Applications retry their dependencies for about ninety seconds and are restarted by Docker if they give up, so the first few minutes show containers restarting; that is normal. Expect three to five minutes until every public endpoint answers.
@@ -62,7 +79,13 @@ The `ServiceDown` alerts for the five trading-bot scrape jobs fire on every boot
 
 - The public sites do not answer. Behind Cloudflare that is a 522 page; without it, a connection timeout.
 - Every deploy fails at the SSM step, because the instance is not there to receive the command. Power the host on, then re-run the deploy. This applies to the ops deploy and to the four product deploys.
-- The CloudWatch alarm `platform-ops-prod-host-status` fires about five minutes after the host stops, and clears about two minutes after it starts. It cannot tell a deliberate stop from an accidental one — a stopped instance publishes no metrics, and the absence is the only thing the alarm has to go on — so a scheduled window produces one `ALARM` mail a night and one `OK` mail a morning. That is the alarm working. To silence a planned stop, and remember to undo it:
+- The CloudWatch alarm `platform-ops-prod-host-status` still goes to `ALARM` about five minutes after the host stops, and back to `OK` about two minutes after it starts. It cannot tell a deliberate stop from an accidental one — a stopped instance publishes no metrics, and the absence is the only thing the alarm has to go on — so with the window enabled it is muted while the host is deliberately off and mails nothing then. The one exception is a mute that arrives late: the mute call retries for up to an hour, and the alarm needs only about five minutes of missing datapoints, so a first attempt that errors can let one `ALARM` mail out before the mute lands. It is self-correcting and it silences the rest of the night.
+
+  **It does not hold the page for later.** CloudWatch mails on a state change, and while the actions are off that change is discarded, not queued. Un-muting does not deliver the news of what happened while it was muted. So a host that dies just after the window closes, or a scheduled start that fails when it opens, produces no mail at all: the uptime probe is the only thing that reports either, and it works in hours. Read the window as switching the alarm off, not as deferring it.
+
+  Expect an `OK` mail most mornings: the un-mute lands as the window opens while the alarm is still in `ALARM` from the night, and the first passing status check a couple of minutes later is a real `OK` transition with the actions on. It is harmless and it is a free proof that the SNS path still delivers. It is not a heartbeat — on a morning when the host is quick or the un-mute is slow, no mail arrives and nothing is wrong.
+
+  To silence a stop taken outside the window:
 
   ```bash
   aws cloudwatch disable-alarm-actions --alarm-names platform-ops-prod-host-status
@@ -72,9 +95,9 @@ The `ServiceDown` alerts for the five trading-bot scrape jobs fire on every boot
   aws cloudwatch enable-alarm-actions --alarm-names platform-ops-prod-host-status
   ```
 
-  Nothing re-enables it for you, with one exception: the alarm does not set `actions_enabled`, so Terraform holds it at the default `true` and the next `terraform apply` un-mutes it. An apply during a planned stop therefore restores the mail, and a mute that outlives the stop survives until somebody applies or runs the second command. An alarm left muted is the outage nobody hears, which is why this is a deliberate two-command manual act rather than something wired into the schedule. [host-stopped.md](runbooks/host-stopped.md) has the rest.
+  A `terraform apply` no longer un-mutes it. The un-mute schedule does, at the next `power_on_schedule` tick — which on a weekday-only window can be a whole weekend away — and that tick is also when the uptime probe starts reporting the stopped host — so for a deliberate stop that outlives the window, mute it again or expect an uptime issue. [host-stopped.md](runbooks/host-stopped.md) has the rest.
 
-- The uptime probe reads the instance state before probing and skips a run while the host is stopped on purpose. A host that is stopped for any other reason, or terminated, opens the uptime issue as before. The probe also gives a freshly started host ten minutes before judging it. This needs the repository variables `AWS_PROBE_ROLE_ARN` (the `github_probe_role_arn` Terraform output) and `AWS_REGION`; without them the probe behaves as before and opens its issue while the host is off.
+- The uptime probe reads the instance state before probing and skips a run while the host is stopped on purpose. It decides what "on purpose" means by reading the alarm's `ActionsEnabled`, not by trusting `Client.UserInitiatedShutdown`: a start that failed when the window opened leaves the same stop reason behind as the deliberate stop that closed it, and only the mute flag tells them apart. A host stopped while the alarm is armed opens the uptime issue. A host that is stopped for any other reason, or terminated, opens it as before. The probe also gives a freshly started host ten minutes before judging it. This needs the repository variables `AWS_PROBE_ROLE_ARN` (the `github_probe_role_arn` Terraform output) and `AWS_REGION`; without them the probe behaves as before and opens its issue while the host is off.
 
 ## Do not
 

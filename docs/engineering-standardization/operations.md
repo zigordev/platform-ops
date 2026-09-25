@@ -102,9 +102,24 @@ outage it exists to catch. Five one-minute datapoints, so a stop is known in
 about five to eight minutes against the hours the probe took. It has an
 `ok_action` too, so the recovery arrives the same way.
 
-The trade it makes: it cannot tell a deliberate stop from an accident, so the
-scheduled power window mails once a night. [`power.md`](../power.md) and
-[`host-stopped.md`](../runbooks/host-stopped.md) cover that.
+The trade it makes: it cannot tell a deliberate stop from an accident. Two
+EventBridge schedules therefore mute its actions when the power window closes
+and un-mute them when it opens, reading the same `power_off_schedule`,
+`power_on_schedule` and `power_schedule_timezone` as the power cycle itself, so
+the window is written down once and moving it moves both. The alarm's
+`ActionsEnabled` flag becomes the estate's single answer to "should the host be
+up right now", and the uptime probe reads it too.
+
+The cost is that the alarm is **deliberately blind** outside the window — for a
+weekday window that is every night plus the whole weekend, far more hours dark
+than lit. It keeps evaluating and keeps its state history throughout; it simply
+mails nobody. And the blindness is not a delay: a fault that begins while the
+alarm is muted is never mailed, not even once the window reopens, because
+CloudWatch mails on a state change and that change happened with the actions
+off. A host that dies an hour after the window closes is mailed about by
+nothing. `uptime-probe.yml` is the only cover for that case.
+[`power.md`](../power.md) and
+[`host-stopped.md`](../runbooks/host-stopped.md) cover the rest.
 
 **Do the public endpoints serve?**
 [`uptime-probe.yml`](../../.github/workflows/uptime-probe.yml) runs on GitHub,
@@ -121,6 +136,16 @@ estate's outage detection: on 24 September the host stopped at about 17:40 UTC
 and the probe said nothing for nine minutes, which is what the CloudWatch alarm
 was built to fix.
 
+It skips a run while the host is stopped on purpose, and it decides what "on
+purpose" means by reading the alarm's `ActionsEnabled` rather than by trusting
+`Client.UserInitiatedShutdown`, which still reads that way once the window opens
+after a start that never happened. A host stopped while the alarm is armed opens
+the uptime issue. That is the estate's only signal for a failed scheduled start
+and for a fault that began outside the window, and it arrives at the probe's
+speed — hours, not minutes. It also leans on the un-mute schedule having run: a
+failure that takes out the whole schedule group takes the start and the re-arm
+with it, and then neither signal speaks.
+
 ### What none of it covers
 
 The alarm watches the host, not the estate. A host that is up and passing its
@@ -131,6 +156,11 @@ and each is blind exactly where the other looks. `StatusCheckFailed` is also the
 system and instance checks only — the separate attached-EBS check is not in it,
 so an instance limping on a degraded volume while both checks pass does not
 fire.
+
+Nor does anything mail while the power window has the alarm muted. Alertmanager
+is down with the host, the alarm is silent by design, and the probe is the only
+one left looking. From the moment the window closes on a Friday until it opens
+again, the estate's alerting is the probe and nothing else.
 
 There is no heartbeat, by decision on 2026-09-20: nothing pings an outside
 service while the monitoring works, so nothing notices the monitoring itself

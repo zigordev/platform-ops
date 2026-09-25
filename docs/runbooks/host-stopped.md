@@ -41,13 +41,43 @@ answers 522, and every deploy fails at its SSM step with `InvalidInstanceId`.
 
 The one boring case is a **deliberate stop**: the `Power` workflow, or the
 scheduled power window in `docs/power.md`. CloudWatch cannot tell intent from
-accident — it only sees the metrics stop — so a deliberate stop raises this
-alarm exactly like an accidental one. If the scheduled window is enabled,
-expect one `ALARM` mail a few minutes after the nightly stop and one `OK` mail
-a few minutes after the morning start, every day. That is the alarm working,
-not the alarm being wrong, and it is the price of having one signal that cannot
-be talked out of firing. `docs/power.md` has the one-liner to mute it during a
-planned stop.
+accident — it only sees the metrics stop — so the window tells it instead. Two
+EventBridge schedules, driven by the same `power_off_schedule` and
+`power_on_schedule` as the power cycle, disable this alarm's actions when the
+window closes and enable them when it opens.
+
+So if this mail reached you, the window was almost certainly open and the host
+should have been running. That is the point of the mute. The two exceptions
+worth knowing: the window may be switched off entirely
+(`power_schedule_enabled = false`), in which case the alarm mails around the
+clock and a deliberate stop mails like any other; and the mute call retries for
+up to an hour, so a first attempt that errors can let one `ALARM` mail out
+before it lands. Check `terraform output host_alarm` and the alarm history
+below before treating a mail during a known stop as an incident.
+
+You will also see an `OK` mail most mornings, a couple of minutes after the
+window opens. The un-mute lands while the alarm is still in `ALARM` from the
+night, and the host's first passing status check is a real recovery transition.
+Nothing is wrong. Nothing is wrong on a morning it does not arrive either — it
+depends on which of the two lands first, so do not read it as a heartbeat.
+
+### What the mute costs
+
+**A muted alarm discards the page, it does not defer it.** CloudWatch sends on a
+state change. If the host dies shortly after the window closes, the alarm goes
+to `ALARM` in silence, stays there until the window opens again, and the un-mute
+finds it already in `ALARM` — no state change, no mail, ever. The same is true
+of a scheduled start that fails: the instance has been `stopped` with
+`Client.UserInitiatedShutdown` since the window closed, so nothing changes when
+it opens and this alarm says nothing. A host that starts but comes up impaired
+is the same story — `StatusCheckFailed` is `1`, which is still breaching, so
+there is still no transition to send.
+
+`uptime-probe.yml` is the cover for both. It reads this alarm's
+`ActionsEnabled` to decide whether a stopped host is deliberate, so once the
+window opens it treats a stopped host as a failure and opens the uptime issue.
+It works at GitHub's cron speed — hours, not minutes. Between the window
+closing and it opening again, the estate's only alerting is that probe.
 
 An ops deploy does **not** trip this. `scripts/prod-deploy-remote.sh` runs over
 SSM and restarts containers; it never stops or reboots the instance, so the
@@ -95,8 +125,12 @@ aws cloudwatch describe-alarm-history \
 
 ## What to do
 
-1. **It was deliberate.** Nothing to do. If the window did it, the `OK` mail
-   arrives on its own at the morning start.
+1. **It was deliberate.** A stop you took yourself inside the window, with the
+   `Power` workflow. Nothing to do, and the `OK` mail arrives on its own when
+   you start it again. The scheduled window normally does not reach you this way
+   at all, because it mutes the alarm as it stops the host; a mail that lands
+   within a few minutes of the window closing is the mute having been retried,
+   and the rest of the night is silent as intended.
 
 2. **It stopped and nobody asked.** Start it and find out why:
 
@@ -148,8 +182,8 @@ silent modes worth knowing:
   console — it simply has no subscriber. `terraform output host_alarm` says
   which of the two it is.
 
-- **Somebody muted it for a planned stop and never unmuted it.** `docs/power.md`
-  has the two commands. The alarm keeps changing state while muted, so the
+- **It is muted.** Either the power window closed it, or somebody ran the mute
+  by hand for a planned stop. The alarm keeps changing state while muted, so the
   history above still shows the truth and only the mail is missing:
 
   ```bash
@@ -157,5 +191,27 @@ silent modes worth knowing:
     --query 'MetricAlarms[].[StateValue,ActionsEnabled]' --output text
   ```
 
-  `False` in the second column is a muted alarm. The resource does not set
-  `actions_enabled`, so a `terraform apply` puts it back to `True` on its own.
+  `False` in the second column is a muted alarm. `terraform apply` will not fix
+  that any more — the resource ignores changes to `actions_enabled`, because the
+  schedules own it. `platform-ops-prod-host-alarm-unmute` re-enables it at the
+  next `power_on_schedule` tick whether or not the window is enabled, so a mute
+  cannot last for good; to end one now:
+
+  ```bash
+  aws cloudwatch enable-alarm-actions --alarm-names platform-ops-prod-host-status
+  ```
+
+  Check both schedules are where they should be if the mute looks stuck:
+
+  ```bash
+  aws scheduler get-schedule --group-name platform-ops-prod-power \
+    --name platform-ops-prod-host-alarm-unmute \
+    --query '[State,ScheduleExpression,ScheduleExpressionTimezone]' --output text
+  ```
+
+- **The un-mute never ran.** It shares a schedule group and an execution role
+  with the scheduled start, so the failure that stops the host coming back can
+  be the same one that leaves the alarm muted. The probe then reads
+  `ActionsEnabled` as `False`, calls the stop deliberate and skips, and neither
+  observer says anything. If a whole working day passes with no `OK` mail and no
+  uptime issue, check the group above before believing the silence.

@@ -10,8 +10,8 @@ name: Uptime Probe
 # This runs on GitHub's infrastructure, from outside, and checks the public
 # health endpoints the way a user's browser would. The CloudWatch alarm
 # platform-ops-prod-host-status is the other signal that survives the host
-# disappearing, and it is the faster of the two: this one asks for every five
-# minutes and GitHub delivers roughly seven runs a day.
+# disappearing; inside the power window it is the faster of the two, and
+# outside it, where the alarm is muted, this probe is all that is left.
 #
 # It opens an issue rather than sending mail, deliberately: an issue is
 # deduplicated, has a state, and does not depend on the SMTP relay — which is
@@ -82,12 +82,29 @@ jobs:
               echo "::notice::$instance_id is starting; skipping this run"
               ;;
             stopping|stopped)
-              if [ "$reason" = "Client.UserInitiatedShutdown" ]; then
-                skip="true"
-                echo "::notice::$instance_id is powered off on purpose; skipping this run"
-              else
+              if [ "$reason" != "Client.UserInitiatedShutdown" ]; then
                 failure="- **host** — $instance_id is $state ($reason), and nobody asked for that\n"
                 echo "::error::$instance_id is $state ($reason)"
+              else
+                armed="$(
+                  aws cloudwatch describe-alarms \
+                    --alarm-names platform-ops-prod-host-status \
+                    --query 'MetricAlarms[0].ActionsEnabled' \
+                    --output text 2>/dev/null || true
+                )"
+
+                if [ "$armed" != "True" ] && [ "$armed" != "False" ]; then
+                  armed="False"
+                  echo "::warning::could not read platform-ops-prod-host-status; treating this stop as deliberate"
+                fi
+
+                if [ "$armed" = "True" ]; then
+                  failure="- **host** — $instance_id is $state while the power window says it should be running; the scheduled start most likely failed\n"
+                  echo "::error::$instance_id is $state inside the power window"
+                else
+                  skip="true"
+                  echo "::notice::$instance_id is powered off on purpose; skipping this run"
+                fi
               fi
               ;;
             *)

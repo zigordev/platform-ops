@@ -1726,6 +1726,17 @@ data "aws_iam_policy_document" "github_probe" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    sid    = "DescribeAlarms"
+    effect = "Allow"
+    actions = [
+      "cloudwatch:DescribeAlarms",
+    ]
+    resources = [
+      aws_cloudwatch_metric_alarm.host_status.arn,
+    ]
+  }
 }
 
 resource "aws_iam_policy" "github_probe" {
@@ -1774,6 +1785,18 @@ data "aws_iam_policy_document" "scheduler_power" {
     ]
     resources = [
       "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/${aws_instance.app.id}",
+    ]
+  }
+
+  statement {
+    sid    = "HostAlarmActions"
+    effect = "Allow"
+    actions = [
+      "cloudwatch:DisableAlarmActions",
+      "cloudwatch:EnableAlarmActions",
+    ]
+    resources = [
+      aws_cloudwatch_metric_alarm.host_status.arn,
     ]
   }
 }
@@ -1877,8 +1900,63 @@ resource "aws_cloudwatch_metric_alarm" "host_status" {
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "breaching"
 
-  alarm_actions = [aws_sns_topic.host_alarm.arn]
-  ok_actions    = [aws_sns_topic.host_alarm.arn]
+  actions_enabled = true
+  alarm_actions   = [aws_sns_topic.host_alarm.arn]
+  ok_actions      = [aws_sns_topic.host_alarm.arn]
 
   tags = merge(local.tags, { Name = "${local.name_prefix}-host-status" })
+
+  lifecycle {
+    ignore_changes = [actions_enabled]
+  }
+}
+
+resource "aws_scheduler_schedule" "host_alarm_mute" {
+  name                         = "${local.name_prefix}-host-alarm-mute"
+  group_name                   = aws_scheduler_schedule_group.power.name
+  state                        = var.power_schedule_enabled ? "ENABLED" : "DISABLED"
+  schedule_expression          = var.power_off_schedule
+  schedule_expression_timezone = var.power_schedule_timezone
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:cloudwatch:disableAlarmActions"
+    role_arn = aws_iam_role.scheduler_power.arn
+    input    = jsonencode({ AlarmNames = [aws_cloudwatch_metric_alarm.host_status.alarm_name] })
+
+    retry_policy {
+      maximum_event_age_in_seconds = 3600
+      maximum_retry_attempts       = 10
+    }
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.scheduler_power]
+}
+
+resource "aws_scheduler_schedule" "host_alarm_unmute" {
+  name                         = "${local.name_prefix}-host-alarm-unmute"
+  group_name                   = aws_scheduler_schedule_group.power.name
+  state                        = "ENABLED"
+  schedule_expression          = var.power_on_schedule
+  schedule_expression_timezone = var.power_schedule_timezone
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:cloudwatch:enableAlarmActions"
+    role_arn = aws_iam_role.scheduler_power.arn
+    input    = jsonencode({ AlarmNames = [aws_cloudwatch_metric_alarm.host_status.alarm_name] })
+
+    retry_policy {
+      maximum_event_age_in_seconds = 3600
+      maximum_retry_attempts       = 10
+    }
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.scheduler_power]
 }

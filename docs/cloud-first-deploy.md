@@ -111,7 +111,9 @@ Why these matter:
 
 `host_alarm_email` in `prod.tfvars` subscribes an address to the SNS topic that
 carries `platform-ops-prod-host-status`, the CloudWatch alarm that mails you
-when the host stops or goes impaired. **Terraform cannot finish this step.** AWS
+when the host stops or goes impaired inside the power window — outside it the
+alarm is muted, and `terraform output -json host_alarm` spells out what that
+costs. **Terraform cannot finish this step.** AWS
 sends that address a confirmation link, and the subscription delivers nothing
 until somebody clicks it.
 

@@ -13,6 +13,9 @@ It uses:
 - IAM role for EC2 runtime
 - IAM role for GitHub Actions OIDC deploy
 - CloudWatch alarm + SNS topic that mail when the host stops or goes impaired
+  while the power window says it should be running
+- EventBridge schedules that stop and start the host on the power window, and
+  mute and un-mute that alarm on the same window
 
 Domain routing for specific applications is intentionally handled outside this module
 (app repositories and their runtime env/config).
@@ -66,6 +69,14 @@ Use those outputs to configure GitHub Environment `production` variables/secrets
 -json host_alarm` says so, and
   `aws sns list-subscriptions-by-topic` answers `PendingConfirmation` while it
   is still not delivering.
+- It does **not** hold `actions_enabled` on the host alarm. The resource ignores
+  changes to it, because the two mute schedules own it between applies. An
+  `apply` will not un-mute a muted alarm; `platform-ops-prod-host-alarm-unmute`
+  does, at the next `power_on_schedule` tick.
+- It does **not** tell you about a fault that begins while the alarm is muted.
+  A muted alarm discards its state change rather than queueing it, so nothing is
+  mailed when the window reopens. `uptime-probe.yml` is the backstop, at
+  GitHub's cron speed.
 - It does **not** create your OpenBao secrets.
 - It does **not** populate SSM env parameters.
 - It does **not** unseal OpenBao after reboot.
