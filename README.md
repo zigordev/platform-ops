@@ -134,8 +134,9 @@ Production is one EC2 host, so it can be switched off to save compute cost witho
 
 - Manual: run the `Power` workflow (`.github/workflows/power.yml`) with `on`, `off` or `status`.
 - Scheduled: the `power_*` variables in `infra/terraform/aws-compose/environments/prod.tfvars` drive two EventBridge Scheduler rules.
+- Watched: the CloudWatch alarm `platform-ops-prod-host-status` mails within minutes when the host stops or goes impaired inside the power window. Two EventBridge schedules mute it when the window closes and un-mute it when it opens, reading the same variables as the power cycle, so an `ALARM` mail is almost always a host that should have been up. Outside the window it is deliberately blind, and the uptime probe is the only cover — see [docs/power.md](docs/power.md). It runs in AWS rather than on the host, which is the only way to be told the host is gone. Set `host_alarm_email` and click the link AWS sends, or the subscription stays pending and the alarm mails nobody.
 
-Details, including what deploys and the uptime probe do while the host is off, are in `docs/power.md`.
+Details, including what deploys, the alarm and the uptime probe do while the host is off, are in `docs/power.md`.
 
 ## Ops UI Access (Private via SSM)
 
