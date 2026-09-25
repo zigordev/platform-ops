@@ -14,6 +14,11 @@ storage "raft" {
   node_id = "platformops-openbao-prod-1"
 }
 
+seal "static" {
+  current_key_id = "local-1"
+  current_key    = "file:///openbao/seal/local.key"
+}
+
 api_addr = "http://openbao:8200"
 cluster_addr = "http://openbao:8201"
 

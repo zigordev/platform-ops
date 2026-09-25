@@ -281,12 +281,12 @@ groups:
         annotations:
           summary: 'OpenBao is sealed'
           description: >-
-            OpenBao is running but sealed, so it is serving no secrets. Prod
-            auto-unseals through KMS, so this means the seal was migrated away,
-            somebody sealed it by hand, or auto-unseal partially failed. Nothing
-            breaks until something restarts: applications read their secrets at
-            boot only, so running containers are unaffected and the next deploy
-            or restart fails.
+            OpenBao is running but sealed, so it is serving no secrets. It
+            auto-unseals, through KMS in prod and a static key locally, so this
+            means a seal migration is pending, somebody sealed it by hand, or
+            auto-unseal failed. Nothing breaks until something restarts:
+            applications read their secrets at boot only, so running containers
+            are unaffected and the next deploy or restart fails.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/openbao-sealed.md'
           dashboard: 'platform-stack'
 
