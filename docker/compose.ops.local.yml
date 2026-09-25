@@ -147,6 +147,12 @@ services:
     volumes:
       - ../docker/openbao/local.hcl:/etc/openbao/local.hcl:ro
       - ops-local-openbao-data:/openbao/data
+      - type: bind
+        source: ../docker/.openbao-local-static-seal-key
+        target: /openbao/seal/local.key
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8200/v1/sys/health >/dev/null']
       interval: 5s

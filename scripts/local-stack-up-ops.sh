@@ -9,6 +9,7 @@ DEFAULT_OPS_ENV_EXAMPLE_FILE="$REPO_ROOT/docker/.env.ops.local.example"
 OPS_ENV_FILE="$DEFAULT_OPS_ENV_FILE"
 OPS_COMPOSE_FILE="$REPO_ROOT/docker/compose.ops.local.yml"
 OPENBAO_LOCAL_ADDR="http://127.0.0.1:8200"
+OPENBAO_STATIC_SEAL_KEY_FILE="$REPO_ROOT/docker/.openbao-local-static-seal-key"
 OPS_SHARED_NETWORK="platform_ops_shared"
 
 OPENBAO_HEALTH_CODE=""
@@ -144,6 +145,51 @@ print_openbao_manual_init_steps() {
   echo "Follow initialization steps in: docs/local-first-start.md" >&2
 }
 
+ensure_openbao_static_seal_key() {
+  local size
+
+  if [ ! -s "$OPENBAO_STATIC_SEAL_KEY_FILE" ]; then
+    (umask 077 && head -c 32 /dev/urandom >"$OPENBAO_STATIC_SEAL_KEY_FILE")
+    echo "Created $OPENBAO_STATIC_SEAL_KEY_FILE, the key OpenBao unseals itself with."
+    echo "Keep a copy (base64 <\"$OPENBAO_STATIC_SEAL_KEY_FILE\"): without it this OpenBao's data cannot be unsealed."
+    return 0
+  fi
+
+  size="$(wc -c <"$OPENBAO_STATIC_SEAL_KEY_FILE" | tr -d '[:space:]')"
+  case "$size" in
+    32|44|64) ;;
+    *)
+      echo "$OPENBAO_STATIC_SEAL_KEY_FILE holds $size bytes, and OpenBao refuses to start with it." >&2
+      echo "It needs a 32-byte key: raw, or as 64 hex or 44 base64 characters with no trailing newline." >&2
+      exit 1
+      ;;
+  esac
+}
+
+finish_with_openbao_state() {
+  local health_code
+
+  health_code="$(curl -s -o /dev/null -w '%{http_code}' "$OPENBAO_LOCAL_ADDR/v1/sys/health" || true)"
+  case "$health_code" in
+    200|429|472|473)
+      echo "Ops stack started."
+      exit 0
+      ;;
+    501)
+      echo "Ops stack started, but OpenBao is not initialized, so no application can read its secrets." >&2
+      echo "Follow section 5 of docs/local-first-start.md." >&2
+      ;;
+    503)
+      echo "Ops stack started, but OpenBao is still sealed, so no application can read its secrets." >&2
+      echo "See docs/runbooks/openbao-sealed.md." >&2
+      ;;
+    *)
+      echo "Ops stack started, but OpenBao is not answering (health=$health_code), so no application can read its secrets." >&2
+      ;;
+  esac
+  exit 1
+}
+
 require_non_empty_env_value "GRAFANA_ADMIN_USER"
 require_non_placeholder_env_value "GRAFANA_ADMIN_PASSWORD"
 require_non_empty_env_value "TOLGEE_INITIAL_USERNAME"
@@ -152,6 +198,7 @@ require_non_placeholder_env_value "TOLGEE_JWT_SECRET"
 require_min_length_env_value "TOLGEE_JWT_SECRET" 32
 
 docker network create "$OPS_SHARED_NETWORK" >/dev/null 2>&1 || true
+ensure_openbao_static_seal_key
 prepare_openbao_volume_permissions
 compose_ops up -d openbao
 
@@ -159,8 +206,7 @@ if ! wait_for_openbao_reachable; then
   echo "OpenBao did not become reachable in time. Continuing with the rest of the stack." >&2
   compose_ops logs --no-color --tail=80 openbao || true
   compose_ops up -d
-  echo "Ops stack started (OpenBao status unknown)." >&2
-  exit 0
+  finish_with_openbao_state
 fi
 
 case "$OPENBAO_HEALTH_CODE" in
@@ -179,4 +225,4 @@ case "$OPENBAO_HEALTH_CODE" in
 esac
 
 compose_ops up -d
-echo "Ops stack started."
+finish_with_openbao_state

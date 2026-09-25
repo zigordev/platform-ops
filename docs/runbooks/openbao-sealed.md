@@ -12,9 +12,10 @@ Production auto-unseals through AWS KMS, so after a normal restart it should
 never reach this state. This alert firing means one of a small set of things,
 listed under **What to do**.
 
-Local is different by design: it has no KMS and uses the Shamir seal, so a local
-OpenBao starts sealed on every process start and is unsealed by
-`scripts/local-openbao-unseal.sh`.
+Local auto-unseals too, through a static seal: `docker/openbao/local.hcl` points it
+at `docker/.openbao-local-static-seal-key`, which `npm run local:up` creates on the
+first run. A local OpenBao that stays sealed has one of the causes under
+**Locally**.
 
 ## Whether it matters
 
@@ -65,9 +66,9 @@ curl -s http://127.0.0.1:8200/v1/sys/seal-status
 Run that on the host too — port 8200 is bound to `127.0.0.1` and is not reachable
 from anywhere else.
 
-`sealed: true` confirms it, and `recovery_seal: true` confirms the KMS seal is
-in use. `sys/health` is the same signal as an HTTP status: `200` unsealed, `503`
-sealed, `501` never initialized.
+`sealed: true` confirms it, and `recovery_seal: true` confirms an auto-unseal seal
+is in use: KMS in production, the static seal locally. `sys/health` is the same
+signal as an HTTP status: `200` unsealed, `503` sealed, `501` never initialized.
 
 ## What to do
 
@@ -108,6 +109,27 @@ Work out which of these it is. They need different fixes.
    problem — the key disabled, scheduled for deletion, or the IAM user's policy
    changed.
 
+### Locally
+
+`bash scripts/local-openbao-unseal.sh` tells these apart and fixes the first.
+
+1. **The move off the Shamir seal is pending.** An OpenBao initialized before the
+   static seal starts sealed once, with `"migration": true` in `sys/seal-status`.
+   `npm run local:up` finishes the move when `docker/.openbao-local-unseal-key`
+   holds the old unseal key; section 9 of
+   [local-first-start.md](../local-first-start.md) has the manual command.
+
+2. **Somebody sealed it.** It stays sealed until it restarts or is given the
+   recovery key: `docker restart platform-ops-local-openbao-1`.
+
+3. **The key file changed.** The log repeats `failed to unseal core`, ending in
+   `cipher: message authentication failed`, every five seconds:
+   `docker/.openbao-local-static-seal-key` no longer holds the key OpenBao was
+   sealed with. It is also what a deleted key file looks like, because
+   `npm run local:up` then writes a new one. Restore the original from your
+   backup. A new key cannot open the old data; without the original,
+   `npm run local:reset` and a fresh initialization are all that is left.
+
 ### If OpenBao is crash-looping instead of sealed
 
 This alert will **not** fire for that — `ServiceDown` will, because a scrape
@@ -129,6 +151,13 @@ from SSM at deploy and belong to the `openbao-unseal` IAM user. A different AWS
 error in the same position — `AccessDeniedException`, `NotFoundException`,
 `KMSInvalidStateException` — points at the key or its policy instead of the
 credentials.
+
+Locally the static seal fails the same way. A key file that is not 32 bytes (raw,
+or 64 hex or 44 base64 characters with no trailing newline) makes OpenBao exit
+with `unknown encoding for AES-256 key`, and a missing one stops Docker creating
+the container at all (`bind source path does not exist`). `npm run local:up`
+refuses a malformed key and replaces a missing one before starting OpenBao, so
+both only happen when the container is started some other way.
 
 **Never delete the unseal KMS key.** Its ciphertext is the only thing that can
 decrypt OpenBao's storage. The key has a 30-day deletion window, which is the
