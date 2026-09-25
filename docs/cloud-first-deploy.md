@@ -107,6 +107,34 @@ Why these matter:
 - `github_deploy_role_arn` becomes a GitHub secret in `platform-ops`
 - the `gpool_*` outputs are needed later when you configure those repos
 
+### 4.1 Confirm The Host Alarm Email
+
+`host_alarm_email` in `prod.tfvars` subscribes an address to the SNS topic that
+carries `platform-ops-prod-host-status`, the CloudWatch alarm that mails you
+when the host stops or goes impaired. **Terraform cannot finish this step.** AWS
+sends that address a confirmation link, and the subscription delivers nothing
+until somebody clicks it.
+
+```bash
+terraform -chdir=infra/terraform/aws-compose output -json host_alarm | jq .
+```
+
+Then check what AWS thinks:
+
+```bash
+aws sns list-subscriptions-by-topic \
+  --topic-arn "$(terraform -chdir=infra/terraform/aws-compose output -json host_alarm | jq -r .topic_arn)" \
+  --query 'Subscriptions[].[Endpoint,SubscriptionArn]' --output text
+```
+
+`PendingConfirmation` in place of a subscription ARN means the link has not been
+clicked and the alarm is firing into nothing. A real ARN means it is live. Leave
+`host_alarm_email` empty and the topic and alarm are still created, with no
+subscriber — the alarm is then visible in the console and mails nobody.
+
+The alarm costs $0.10 a month, and the first 1,000 SNS email notifications a
+month are free. `docs/runbooks/host-stopped.md` is what the mail links to.
+
 ## 5. Configure GitHub
 
 ### 5.1 `platform-ops` Production Environment

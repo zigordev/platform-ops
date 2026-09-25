@@ -62,6 +62,18 @@ The `ServiceDown` alerts for the five trading-bot scrape jobs fire on every boot
 
 - The public sites do not answer. Behind Cloudflare that is a 522 page; without it, a connection timeout.
 - Every deploy fails at the SSM step, because the instance is not there to receive the command. Power the host on, then re-run the deploy. This applies to the ops deploy and to the four product deploys.
+- The CloudWatch alarm `platform-ops-prod-host-status` fires about five minutes after the host stops, and clears about two minutes after it starts. It cannot tell a deliberate stop from an accidental one — a stopped instance publishes no metrics, and the absence is the only thing the alarm has to go on — so a scheduled window produces one `ALARM` mail a night and one `OK` mail a morning. That is the alarm working. To silence a planned stop, and remember to undo it:
+
+  ```bash
+  aws cloudwatch disable-alarm-actions --alarm-names platform-ops-prod-host-status
+  ```
+
+  ```bash
+  aws cloudwatch enable-alarm-actions --alarm-names platform-ops-prod-host-status
+  ```
+
+  Nothing re-enables it for you, with one exception: the alarm does not set `actions_enabled`, so Terraform holds it at the default `true` and the next `terraform apply` un-mutes it. An apply during a planned stop therefore restores the mail, and a mute that outlives the stop survives until somebody applies or runs the second command. An alarm left muted is the outage nobody hears, which is why this is a deliberate two-command manual act rather than something wired into the schedule. [host-stopped.md](runbooks/host-stopped.md) has the rest.
+
 - The uptime probe reads the instance state before probing and skips a run while the host is stopped on purpose. A host that is stopped for any other reason, or terminated, opens the uptime issue as before. The probe also gives a freshly started host ten minutes before judging it. This needs the repository variables `AWS_PROBE_ROLE_ARN` (the `github_probe_role_arn` Terraform output) and `AWS_REGION`; without them the probe behaves as before and opens its issue while the host is off.
 
 ## Do not

@@ -251,3 +251,17 @@ output "power_schedule" {
     on       = var.power_on_schedule
   }
 }
+
+output "host_alarm" {
+  description = "CloudWatch alarm watching the prod host from outside it. Read confirm_the_subscription before trusting it."
+  value = {
+    alarm_name = aws_cloudwatch_metric_alarm.host_status.alarm_name
+    topic_arn  = aws_sns_topic.host_alarm.arn
+    notifies   = var.host_alarm_email != "" ? var.host_alarm_email : "nobody: host_alarm_email is empty"
+    confirm_the_subscription = (
+      var.host_alarm_email != ""
+      ? "ACTION REQUIRED: AWS has emailed ${var.host_alarm_email} a confirmation link. Terraform cannot click it, and until somebody does this alarm fires into nothing. Verify with: aws sns list-subscriptions-by-topic --topic-arn ${aws_sns_topic.host_alarm.arn} --query 'Subscriptions[].SubscriptionArn' --output text -- a result of PendingConfirmation means it is still not delivering."
+      : "ACTION REQUIRED: set host_alarm_email in environments/prod.tfvars and apply again, then click the confirmation link AWS emails. Until then the alarm changes state and tells nobody."
+    )
+  }
+}

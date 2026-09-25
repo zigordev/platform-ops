@@ -66,6 +66,18 @@ and that you may need to inspect, re-run or read the output of.
 | ------------------- | -------------------------------- |
 | Nightly log archive | [log-archive.md](log-archive.md) |
 
+## Alarms that are not Prometheus
+
+One alarm in the estate is raised by AWS rather than by Prometheus, because it
+watches the host Prometheus runs on. It arrives by email from SNS, not through
+Alertmanager, and it has no `runbook_url` for `verify-standards.sh` to check —
+its runbook link lives in the alarm description, which is what the SNS mail
+prints.
+
+| Alarm                           | Raised by  | Runbook                            |
+| ------------------------------- | ---------- | ---------------------------------- |
+| `platform-ops-prod-host-status` | CloudWatch | [host-stopped.md](host-stopped.md) |
+
 ## Where to look
 
 | Thing        | Local                   | Prod                   |

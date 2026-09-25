@@ -77,3 +77,5 @@ power_schedule_enabled  = false
 power_schedule_timezone = "Europe/Madrid"
 power_off_schedule      = "cron(0 1 * * ? *)"
 power_on_schedule       = "cron(0 8 * * ? *)"
+
+host_alarm_email = "you@example.com"

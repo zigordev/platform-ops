@@ -1843,3 +1843,42 @@ resource "aws_scheduler_schedule" "power_on" {
 
   depends_on = [aws_iam_role_policy_attachment.scheduler_power]
 }
+
+resource "aws_sns_topic" "host_alarm" {
+  name = "${local.name_prefix}-host-alarm"
+  tags = local.tags
+}
+
+resource "aws_sns_topic_subscription" "host_alarm_email" {
+  count     = var.host_alarm_email != "" ? 1 : 0
+  topic_arn = aws_sns_topic.host_alarm.arn
+  protocol  = "email"
+  endpoint  = var.host_alarm_email
+}
+
+resource "aws_cloudwatch_metric_alarm" "host_status" {
+  alarm_name = "${local.name_prefix}-host-status"
+  alarm_description = join(" ", [
+    "The prod host failed its EC2 status checks, or stopped publishing them at all:",
+    "it is impaired, stopped or gone.",
+    "Every dashboard and every other alert lives on this host, so they cannot tell you this.",
+    "Runbook: https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/host-stopped.md",
+  ])
+
+  namespace   = "AWS/EC2"
+  metric_name = "StatusCheckFailed"
+  dimensions  = { InstanceId = aws_instance.app.id }
+
+  statistic           = "Maximum"
+  period              = 60
+  evaluation_periods  = 5
+  datapoints_to_alarm = 5
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "breaching"
+
+  alarm_actions = [aws_sns_topic.host_alarm.arn]
+  ok_actions    = [aws_sns_topic.host_alarm.arn]
+
+  tags = merge(local.tags, { Name = "${local.name_prefix}-host-status" })
+}

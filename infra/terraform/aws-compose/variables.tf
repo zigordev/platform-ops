@@ -405,3 +405,14 @@ variable "log_archive_expiration_days" {
   type        = number
   default     = 365
 }
+
+variable "host_alarm_email" {
+  description = "Address the prod host alarm notifies. Empty still creates the topic and the alarm, with nobody subscribed."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.host_alarm_email == "" || can(regex("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", var.host_alarm_email))
+    error_message = "host_alarm_email must be empty or a single email address."
+  }
+}
