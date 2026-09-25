@@ -39,8 +39,8 @@ does, it is that service.
 - **`db`** — is Postgres running, is it out of connections
   (`pg_stat_activity`), is the disk full.
 - **`kafka`** — [redpanda-down.md](redpanda-down.md).
-- **`tolgee`** — do not trust this one on its own. cv, gpool and kini report
-  Tolgee `down` for a body they could not use as well as for a Tolgee they could
+- **`tolgee`** — do not trust this one on its own. Every site that reads Tolgee
+  reports it `down` for a body it could not use as well as for a Tolgee it could
   not reach, so an up-but-misconfigured Tolgee looks identical here. Read the
   `i18n.fallback` log line first: [i18n-fallback.md](i18n-fallback.md) has the
   query and the reason that split is wrong.

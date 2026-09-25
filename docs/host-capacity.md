@@ -19,8 +19,9 @@ role — and `sity` now carries its own deploy workflow and production compose
 file, so the code path is complete. It has still never deployed: its
 `production` environment holds no values, so both release deploys, v0.4.0 and
 v0.4.1, stopped at their own variable check on a missing `AWS_REGION`, and
-`sity.zigordev.com` has no DNS record. Nothing runs `sity-web` in production, so it has no prod scrape
-job; the `sity-web` entry in `docker/observability-parity.json` records the gap.
+`sity.zigordev.com` has no DNS record. Nothing runs `sity-web` in production, so
+it has no prod scrape job; the `sity-web` entry in
+`docker/observability-parity.json` records the gap.
 
 ## Why trading-bot does not fit
 
@@ -72,7 +73,11 @@ What deliberately does **not** exist:
   fire forever, and an alert that is always on is an alert nobody reads. The
   five `trading-bot` entries in `docker/observability-parity.json` record that
   as a deliberate gap rather than an oversight.
-- **No uptime probe.** Same reason: it would open an issue every five minutes.
+- **No uptime probe.** Same reason as the bullet above: nothing is running, so
+  every probe run would fail and the uptime issue would stay open permanently.
+  It is not a question of volume — the probe opens a single deduplicated issue,
+  and GitHub runs it about seven times a day rather than the every five minutes
+  its cron asks for.
 - **No release-triggered deploy.** `trading-bot`'s deploy workflow is
   `workflow_dispatch` only. Merging a PR does not deploy it and cutting a
   release does not deploy it.

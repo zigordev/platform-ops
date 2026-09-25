@@ -526,7 +526,8 @@ That split is inconsistent, and it costs an operator a wasted restart:
 an export setting on a Tolgee that is perfectly healthy. The semantic that
 matches the rest of the estate is reachability — a component is `down` when the
 service could not get an answer, not when it did not like the answer it got. cv,
-gpool and kini owe that change;
+gpool, kini and trading-bot's operator console all run this loader and all owe
+that change;
 [docs/runbooks/i18n-fallback.md](../runbooks/i18n-fallback.md) carries the
 detail, and the detection gap it opens.
 

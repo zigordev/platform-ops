@@ -64,8 +64,12 @@ service_component_up{component="tolgee"}
 The log line each fallback writes, with the locale and the error:
 
 ```logql
-{app=~"cv-web|gpool-web|kini-web"} | json | event="i18n.fallback"
+{app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event="i18n.fallback"
 ```
+
+All four applications run the same loader and write the same line. Only the
+three web sites are scraped in production; trading-bot's console is shipped
+locally only, so in prod that fourth selector matches nothing.
 
 `source` in that log line is `cached` or `local`: `cached` is the milder case
 this alert deliberately ignores.
@@ -75,7 +79,7 @@ Why the fallback happened is in `error.name` — `FlatExport`, `NoExport`,
 refused connection:
 
 ```logql
-{app=~"cv-web|gpool-web|kini-web"} | json | event="i18n.fallback" | error_name="FlatExport"
+{app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event="i18n.fallback" | error_name="FlatExport"
 ```
 
 ## What to do
@@ -112,8 +116,8 @@ Today it is reported as one, and that is wrong. `FlatExport` and `EmptyExport`
 go through the same fallback as a timeout, which reports the `tolgee` component
 `down`. So a Tolgee that is up, answering 200 and merely misconfigured raises
 `ComponentDown` — whose summary says the site "cannot reach" Tolgee — and
-degrades cv, gpool and kini alongside it. An operator who follows that alert
-restarts a healthy Tolgee and fixes nothing.
+degrades every site that reads it alongside it. An operator who follows that
+alert restarts a healthy Tolgee and fixes nothing.
 
 The precedent already in this loader points the other way. A 400 with
 `no_exported_result` reports the component **up**, deliberately, because an
@@ -124,14 +128,15 @@ in the `FlatExport` log line above, next to `NoExport`.
 
 Two things are owed for that, neither of them in this repository:
 
-- cv, gpool and kini should pass `'up'` on the `FlatExport` and `EmptyExport`
-  branches of `apps/web/src/i18n/remote.ts`, as the `NoExport` branch already
-  does.
+- All four should pass `'up'` on the `FlatExport` and `EmptyExport` branches of
+  their loader, as the `NoExport` branch already does. The file is
+  `src/i18n/remote.ts` in each: under `apps/web` in cv, gpool and kini, and
+  under `apps/operator-console` in trading-bot.
 - Once they do, nothing in Prometheus catches a wrong-shape export while a
   process still holds a cached copy: the fallback returns the cache, the loader
   counts `merged`, and neither this alert nor `ComponentDown` fires. That is the
   same blind spot `cached` already has, and closing it means a Loki rule on
   `error_name="FlatExport"` rather than a health component.
 
-Until both land, treat a `tolgee` `ComponentDown` on cv, gpool or kini as
+Until both land, treat a `tolgee` `ComponentDown` on any of the four as
 ambiguous and read the log line before touching Tolgee.
