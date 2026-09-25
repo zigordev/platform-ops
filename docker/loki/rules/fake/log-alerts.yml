@@ -61,24 +61,28 @@ groups:
 
       - alert: TolgeeExportWrongShape
         expr: |
-          sum by (app, environment) (
-            count_over_time({job="docker-json-logs", app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event = "i18n.fallback" | error_name = "FlatExport" [30m])
+          sum by (app, environment, error_name) (
+            count_over_time({job="docker-json-logs", app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event = "i18n.fallback" | error_name =~ "FlatExport|EmptyExport" [30m])
           ) > 0
         for: 1h
         labels:
           severity: ticket
           job: '{{ $labels.app }}'
         annotations:
-          summary: '{{ $labels.app }} is refusing the Tolgee export because it comes back in the wrong shape'
+          summary: '{{ $labels.app }} is refusing the Tolgee export because it comes back unusable ({{ $labels.error_name }})'
           description: >-
-            Tolgee answered 200 with dotted keys where {{ $labels.app }} reads a
-            nested export, so the loader threw the export away and served the
-            copy it already had. Tolgee is reachable and nothing on the page is
-            broken, which is why no health component reports this: while any
-            process still holds a cached export the render counts as merged and
-            neither ComponentDown nor CopyServedFromRepository fires. Every edit
-            made in Tolgee is invisible until the project's export settings
-            honour structureDelimiter=. and supportArrays=true again. Restarting
-            Tolgee re-serves the same body.
+            Tolgee answered 200 with a body {{ $labels.app }} could not use, so
+            the loader threw the export away and served the copy it already had.
+            FlatExport is dotted keys where the app reads a nested object, and
+            means the project stopped honouring structureDelimiter=. and
+            supportArrays=true. EmptyExport is a 200 carrying no messages at all
+            — an archive with no JSON member, or a null body — and means the
+            project stopped exporting JSON. Both are export settings on a Tolgee
+            that is reachable and healthy, and nothing on the page is broken,
+            which is why no health component reports this: while any process
+            still holds a cached export the render counts as merged and neither
+            ComponentDown nor CopyServedFromRepository fires. Every edit made in
+            Tolgee is invisible until the settings are fixed. Restarting Tolgee
+            re-serves the same body.
           runbook_url: 'https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/i18n-fallback.md'
           dashboard: 'service-overview'

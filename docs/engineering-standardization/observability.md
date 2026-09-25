@@ -513,23 +513,25 @@ a relay rejecting its login means no email leaves.
 
 ### `up` means reachable, not useful
 
-The Tolgee loader draws that line once and then crosses it. A 400 with
-`no_exported_result` reports `tolgee` **up**, deliberately: the project is empty,
-which is a content gap and not an unreachable dependency, and
-`CopyServedFromRepository` is the alert that covers it. An export that comes back
-with dotted keys instead of a nested object is refused by the same loader and
-reports `tolgee` **down** — although the request succeeded and Tolgee is
-answering.
+The Tolgee loader is where that line was drawn. A 400 with `no_exported_result`
+reports `tolgee` **up**, deliberately: the project is empty, which is a content
+gap and not an unreachable dependency, and `CopyServedFromRepository` is the
+alert that covers it. Every 200 the loader refuses is the same class of fault
+and is strictly more reachable, because the request succeeded — an export of
+dotted keys instead of a nested object (`FlatExport`), and one the loader can
+pull no messages out of at all (`EmptyExport`).
 
-That split is inconsistent, and it costs an operator a wasted restart:
+Reporting either of those `down` costs an operator a wasted restart:
 `ComponentDown` tells them the site cannot reach Tolgee, while the actual fix is
 an export setting on a Tolgee that is perfectly healthy. The semantic that
 matches the rest of the estate is reachability — a component is `down` when the
-service could not get an answer, not when it did not like the answer it got. cv,
-gpool, kini and trading-bot's operator console all run this loader and all owe
-that change;
+service could not get an answer, not when it did not like the answer it got.
+That line is drawn in `src/i18n/remote.ts` in each app — under `apps/web` in cv,
+gpool and kini, and `apps/operator-console` in trading-bot — and both names
+belong on the `up` side of it there. `TolgeeExportWrongShape` covers both from
+the logs regardless, so the signal never depended on those loaders;
 [docs/runbooks/i18n-fallback.md](../runbooks/i18n-fallback.md) carries the
-detail, and the detection gap it opens.
+detail, and the detection gap that remains.
 
 Component values are objects, not bare strings — `{"status": "up"}` rather than
 `"up"`. The nesting looks redundant for a bare up/down, and it is, until the day

@@ -2,7 +2,7 @@
 
 **Alert:** `CopyServedFromRepository` (ticket). `TolgeeExportWrongShape` is
 answered on its own further down, under
-[a wrong-shape export](#a-wrong-shape-export-is-not-an-unreachable-tolgee).
+[an unusable export](#an-unusable-export-is-not-an-unreachable-tolgee).
 
 ## What fired
 
@@ -81,7 +81,7 @@ Why the fallback happened is in `error.name` — `FlatExport`, `NoExport`,
 refused connection:
 
 ```logql
-{app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event="i18n.fallback" | error_name="FlatExport"
+{app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event="i18n.fallback" | error_name=~"FlatExport|EmptyExport"
 ```
 
 ## What to do
@@ -101,15 +101,15 @@ In the order they are usually true:
   The log line carries `NoExport`. Check the language tags: they are
   short BCP 47 across the estate (`en`, `es`), and a language named anything
   else exports nothing under the name the site asks for.
-- **The export came back in the wrong shape.** Tolgee answered 200 with a body
-  of dotted keys — `home.title` rather than a nested `home` object — and the
-  loader refused it, because the apps read a nested export. The log line carries
-  `FlatExport`. Nothing is wrong with Tolgee itself: the project's export
-  settings, or an upgrade that changed their defaults, stopped honouring the
-  `structureDelimiter=.` and `supportArrays=true` the loader asks for. Fix the
-  export format on the project. **Restarting Tolgee changes nothing** — it will
-  serve the same body. `TolgeeExportWrongShape` watches this case whether or
-  not a cached export is hiding it; the section below is its runbook.
+- **The export came back unusable.** Tolgee answered 200 and the loader refused
+  the body. `FlatExport` is dotted keys — `home.title` rather than a nested
+  `home` object — where the apps read a nested export. `EmptyExport` is a 200
+  the loader could pull no messages object out of at all. Nothing is wrong with
+  Tolgee itself in either case: the project's export settings, or an upgrade
+  that changed their defaults, stopped producing what the loader asks for. Fix
+  the export settings on the project. **Restarting Tolgee changes nothing** — it
+  will serve the same body. `TolgeeExportWrongShape` watches both names whether
+  or not a cached export is hiding them; the section below is its runbook.
 - **A container restarted during an outage.** The alert clears once the process
   gets one successful export.
 
@@ -132,29 +132,48 @@ Tolgee, then pull. It is written **once per process per key**, so a quiet log
 does not mean the drift is gone — a process that has already reported it stays
 quiet until it restarts.
 
-## A wrong-shape export is not an unreachable Tolgee
+## An unusable export is not an unreachable Tolgee
 
 **Alert:** `TolgeeExportWrongShape` (ticket)
 
-Tolgee answered 200 and the body came back as dotted keys — `home.title` rather
-than a nested `home` object — so the loader refused it and kept the copy it
+Tolgee answered 200 and the loader refused the body, so it kept the copy it
 already had. The dependency is reachable; its export settings are wrong.
 
-Reachability is what the `tolgee` health component means, so a wrong-shape
-export belongs on the **up** side of it. The precedent was already in the
-loader: a 400 with `no_exported_result` reports `up` deliberately, because an
-empty project is a content gap and not an unreachable dependency. A wrong-shape
-export is the same class of fault and is strictly more reachable — the request
-succeeded. Reporting it `down` raises `ComponentDown`, whose summary says the
-site "cannot reach" Tolgee and whose runbook ends in restarting Tolgee, which
-re-serves the identical body and fixes nothing.
+Two error names reach that branch, and the alert carries whichever one fired as
+its `error_name` label:
 
-This alert ships before the loaders do. Until cv, gpool, kini and trading-bot's
-operator console pass `'up'` on their `FlatExport` branch — `src/i18n/remote.ts`
-in each, under `apps/web` in the three sites and `apps/operator-console` in
-trading-bot — a wrong-shape export still raises `ComponentDown` alongside this
-alert, and this is the one of the two that names the cause. Once they land, it
-is the only signal left.
+| `error_name`  | The body was                                                                                       | The setting that produced it |
+| ------------- | -------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `FlatExport`  | dotted keys — `home.title` rather than a nested `home` object                                      | the export structure         |
+| `EmptyExport` | no messages object at all: an archive carrying no JSON member, or a body that was literally `null` | the export format            |
+
+Reachability is what the `tolgee` health component means, so both belong on the
+**up** side of it. The precedent was already in the loader: a 400 with
+`no_exported_result` reports `up` deliberately, because an empty project is a
+content gap and not an unreachable dependency. These two are the same class of
+fault and are strictly more reachable — the request succeeded. Reporting them
+`down` raises `ComponentDown`, whose summary says the site "cannot reach" Tolgee
+and whose runbook ends in restarting Tolgee, which re-serves the identical body
+and fixes nothing.
+
+They share one alert rather than two because they share everything an operator
+acts on: the site keeps rendering correct copy from the repository, Tolgee is
+healthy, the fix is an export setting on the project, a restart is the wrong
+move, and neither repairs itself. What differs is one field on one settings
+page, which the `error_name` label and the table above already name. Splitting
+them would buy a second runbook row, a second entry in both Alertmanager
+inhibit matchers, and a second eight-line block of `log-alert-apps` exceptions
+restating the same reasons, for no decision an operator makes differently.
+
+`EmptyExport` is **not** an emptied project. A project with nothing to export
+answers 400 `no_exported_result`, which is `NoExport` and is covered further up.
+
+Both names belong on the **up** side in every loader — `src/i18n/remote.ts` in
+each app, under `apps/web` in the three sites and `apps/operator-console` in
+trading-bot. While any loader still reports `down` on one of them, an unusable
+export raises `ComponentDown` alongside this alert, and this is the one of the
+two that names the cause. Where every branch passes `'up'`, this is the only
+signal left, which is why it ships ahead of the loaders rather than behind them.
 
 Reporting `up` costs something, and this alert is the price. While any process
 still holds a cached export the fallback returns that cache, the loader counts
@@ -163,36 +182,46 @@ still holds a cached export the fallback returns that cache, the loader counts
 so the alert is a Loki rule on it:
 
 ```logql
-sum by (app, environment) (
-  count_over_time({job="docker-json-logs", app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event = "i18n.fallback" | error_name = "FlatExport" [30m])
+sum by (app, environment, error_name) (
+  count_over_time({job="docker-json-logs", app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event = "i18n.fallback" | error_name =~ "FlatExport|EmptyExport" [30m])
 ) > 0
 ```
 
-It waits an hour on purpose. A wrong-shape export is never urgent — the site
+The app list is spelled out rather than matched loosely on purpose: a bare
+`app=~".+"` also matches log lines that carry no `app` label at all, and the
+twelve services that have dashboards are the only ones that can write this line.
+The eight that render no pages are named in `docker/observability-parity.json`
+with the reason each cannot.
+
+It waits an hour on purpose. An unusable export is never urgent — the site
 renders, in the right language, from the committed copy — but it is permanent:
 nothing repairs an export setting on its own. So it is a ticket, and the `for:
-1h` over a thirty-minute window opens one only once the wrong shape has survived
+1h` over a thirty-minute window opens one only once the bad export has survived
 an hour of renders, which no Tolgee upgrade or export-settings edit in flight
 lasts. One bad export holds the expression true for thirty minutes, half of what
 firing needs, so a blip stays quiet.
 
 `ServiceDown` inhibits it, as it already inhibits `CopyServedFromRepository`:
 both say the copy on that site is wrong, and a site that is serving nothing is
-the larger problem. The wrong shape is still there afterwards and the alert
-comes back.
+the larger problem. The bad export is still there afterwards and the alert comes
+back.
 
 ### What to do
 
-Fix the export format on the Tolgee project. The loader asks for
-`structureDelimiter=.` and `supportArrays=true`, and something on the project —
-usually an upgrade that changed its defaults — stopped honouring them. Nothing
-is wrong with Tolgee itself and **restarting it changes nothing**. The alert
-clears within the hour after the next export comes back nested.
+Fix the export settings on the Tolgee project. For `FlatExport` the loader asks
+for `structureDelimiter=.` and `supportArrays=true` and something on the project
+— usually an upgrade that changed its defaults — stopped honouring them. For
+`EmptyExport` the project is answering with something that is not the JSON the
+loader reads, so check the export format itself. Nothing is wrong with Tolgee in
+either case and **restarting it changes nothing**. The alert clears within the
+hour after the next export comes back usable.
 
 ### What this does not cover
 
-`EmptyExport` — a 200 whose body held no messages at all — reaches the same
-fallback and will have the same blind spot, and this rule does not watch it. It
-still reports the component `down`, so `ComponentDown` still answers for it,
-ambiguously. When that branch moves to `up` as well, widen the `error_name`
-matcher above to take both names and say so here.
+A 200 whose body is an empty JSON object. `{}` is not `EmptyExport`: it is
+truthy, it holds no dotted keys, so the loader caches it as a good export,
+reports `tolgee` up, merges nothing over the committed copy and counts the
+render `merged`. No log line is written and no alert has anything to fire on,
+while every edit made in Tolgee stays invisible. Closing it needs a check in the
+loader — an export with no keys is not a usable export — and only then is there
+a log line to widen this matcher onto.
