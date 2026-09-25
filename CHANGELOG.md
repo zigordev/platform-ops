@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.0](https://github.com/zigordev/platform-ops/compare/v1.43.0...v1.44.0) (2026-09-25)
+
+
+### Features
+
+* **alerting:** see an empty tolgee export, and show the console which copy it served ([#250](https://github.com/zigordev/platform-ops/issues/250)) ([b5012b5](https://github.com/zigordev/platform-ops/commit/b5012b57dac2558ff68b0b80aa97316a9a0b8417))
+
 ## [1.43.0](https://github.com/zigordev/platform-ops/compare/v1.42.3...v1.43.0) (2026-09-25)
 
 
