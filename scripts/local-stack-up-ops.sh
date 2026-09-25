@@ -10,6 +10,8 @@ OPS_ENV_FILE="$DEFAULT_OPS_ENV_FILE"
 OPS_COMPOSE_FILE="$REPO_ROOT/docker/compose.ops.local.yml"
 OPENBAO_LOCAL_ADDR="http://127.0.0.1:8200"
 OPENBAO_STATIC_SEAL_KEY_FILE="$REPO_ROOT/docker/.openbao-local-static-seal-key"
+TOLGEE_LOCAL_ADDR="http://127.0.0.1:8090"
+TOLGEE_READY_WAIT_SECONDS="${TOLGEE_READY_WAIT_SECONDS:-120}"
 OPS_SHARED_NETWORK="platform_ops_shared"
 
 OPENBAO_HEALTH_CODE=""
@@ -166,27 +168,55 @@ ensure_openbao_static_seal_key() {
   esac
 }
 
-finish_with_openbao_state() {
+wait_for_tolgee() {
+  local waited=0
+
+  echo "Waiting for Tolgee, which each product's local:up syncs its translations through..."
+  while [ "$waited" -lt "$TOLGEE_READY_WAIT_SECONDS" ]; do
+    if [ "$(curl -s -o /dev/null -w '%{http_code}' "$TOLGEE_LOCAL_ADDR/actuator/health" || true)" = "200" ]; then
+      echo "Tolgee is ready."
+      return 0
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+  return 1
+}
+
+finish_with_platform_state() {
   local health_code
+  local ready="true"
 
   health_code="$(curl -s -o /dev/null -w '%{http_code}' "$OPENBAO_LOCAL_ADDR/v1/sys/health" || true)"
   case "$health_code" in
-    200|429|472|473)
-      echo "Ops stack started."
-      exit 0
-      ;;
+    200|429|472|473) ;;
     501)
       echo "Ops stack started, but OpenBao is not initialized, so no application can read its secrets." >&2
       echo "Follow section 5 of docs/local-first-start.md." >&2
+      ready="false"
       ;;
     503)
       echo "Ops stack started, but OpenBao is still sealed, so no application can read its secrets." >&2
       echo "See docs/runbooks/openbao-sealed.md." >&2
+      ready="false"
       ;;
     *)
       echo "Ops stack started, but OpenBao is not answering (health=$health_code), so no application can read its secrets." >&2
+      ready="false"
       ;;
   esac
+
+  if ! wait_for_tolgee; then
+    echo "Ops stack started, but Tolgee has not answered on $TOLGEE_LOCAL_ADDR in ${TOLGEE_READY_WAIT_SECONDS}s," >&2
+    echo "so the local:up of cv, gpool and kini would fail on their translation sync." >&2
+    echo "Its log says why: docker logs platform-ops-local-tolgee-1" >&2
+    ready="false"
+  fi
+
+  if [ "$ready" = "true" ]; then
+    echo "Ops stack started."
+    exit 0
+  fi
   exit 1
 }
 
@@ -206,7 +236,7 @@ if ! wait_for_openbao_reachable; then
   echo "OpenBao did not become reachable in time. Continuing with the rest of the stack." >&2
   compose_ops logs --no-color --tail=80 openbao || true
   compose_ops up -d
-  finish_with_openbao_state
+  finish_with_platform_state
 fi
 
 case "$OPENBAO_HEALTH_CODE" in
@@ -225,4 +255,4 @@ case "$OPENBAO_HEALTH_CODE" in
 esac
 
 compose_ops up -d
-finish_with_openbao_state
+finish_with_platform_state
