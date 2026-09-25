@@ -70,6 +70,14 @@ The log line each fallback writes, with the locale and the error:
 `source` in that log line is `cached` or `local`: `cached` is the milder case
 this alert deliberately ignores.
 
+Why the fallback happened is in `error.name` — `FlatExport`, `NoExport`,
+`EmptyExport`, `HttpError`, or the name of the fetch error for a timeout or a
+refused connection:
+
+```logql
+{app=~"cv-web|gpool-web|kini-web"} | json | event="i18n.fallback" | error_name="FlatExport"
+```
+
 ## What to do
 
 In the order they are usually true:
@@ -87,5 +95,43 @@ In the order they are usually true:
   The log line carries `NoExport`. Check the language tags: they are
   short BCP 47 across the estate (`en`, `es`), and a language named anything
   else exports nothing under the name the site asks for.
+- **The export came back in the wrong shape.** Tolgee answered 200 with a body
+  of dotted keys — `home.title` rather than a nested `home` object — and the
+  loader refused it, because the apps read a nested export. The log line carries
+  `FlatExport`. Nothing is wrong with Tolgee itself: the project's export
+  settings, or an upgrade that changed their defaults, stopped honouring the
+  `structureDelimiter=.` and `supportArrays=true` the loader asks for. Fix the
+  export format on the project. **Restarting Tolgee changes nothing** — it will
+  serve the same body.
 - **A container restarted during an outage.** The alert clears once the process
   gets one successful export.
+
+## A wrong-shape export is not an unreachable Tolgee
+
+Today it is reported as one, and that is wrong. `FlatExport` and `EmptyExport`
+go through the same fallback as a timeout, which reports the `tolgee` component
+`down`. So a Tolgee that is up, answering 200 and merely misconfigured raises
+`ComponentDown` — whose summary says the site "cannot reach" Tolgee — and
+degrades cv, gpool and kini alongside it. An operator who follows that alert
+restarts a healthy Tolgee and fixes nothing.
+
+The precedent already in this loader points the other way. A 400 with
+`no_exported_result` reports the component **up**, deliberately, because an
+empty project is a content gap and not an unreachable dependency. A wrong-shape
+export is the same kind of fault and is strictly more reachable than an empty
+one: the request succeeded. `up` is the correct answer, and the signal belongs
+in the `FlatExport` log line above, next to `NoExport`.
+
+Two things are owed for that, neither of them in this repository:
+
+- cv, gpool and kini should pass `'up'` on the `FlatExport` and `EmptyExport`
+  branches of `apps/web/src/i18n/remote.ts`, as the `NoExport` branch already
+  does.
+- Once they do, nothing in Prometheus catches a wrong-shape export while a
+  process still holds a cached copy: the fallback returns the cache, the loader
+  counts `merged`, and neither this alert nor `ComponentDown` fires. That is the
+  same blind spot `cached` already has, and closing it means a Loki rule on
+  `error_name="FlatExport"` rather than a health component.
+
+Until both land, treat a `tolgee` `ComponentDown` on cv, gpool or kini as
+ambiguous and read the log line before touching Tolgee.

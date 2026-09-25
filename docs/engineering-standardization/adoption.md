@@ -4,7 +4,10 @@ Where each repository stands against the standard, and the order in which to
 close the gaps. Read from each repository's `origin/main` on 2026-09-16, after
 the repository-shape convergence landed. The observability rows for cv and sity,
 and sity's security headers, were updated on 2026-09-22 for the rollout to
-gpool, kini, sity and trading-bot.
+gpool, kini, sity and trading-bot. The Dashboard and Runbooks rows were
+corrected on 2026-09-25: both are delivered from this repository rather than
+from the product's own, and trading-bot's and sity's had not been re-read since
+they landed here.
 
 `~` means present but shallow, unwired, or in one repository only.
 
@@ -40,7 +43,7 @@ gpool, kini, sity and trading-bot.
 | Health shape converged     | yes | yes   | yes  | yes         | yes           | yes  |
 | Single `/health` path      | yes | yes   | yes  | yes         | yes           | yes  |
 | Broker in health           | yes | yes   | yes  | yes         | yes           | n/a  |
-| Dashboard                  | ~   | yes   | yes  | no          | yes           | n/a  |
+| Dashboard                  | ~   | yes   | yes  | yes         | yes           | yes  |
 | Graceful shutdown          | n/a | no    | no   | yes         | yes           | yes  |
 | **Security**               |     |       |      |             |               |      |
 | OpenBao wrapper            | yes | yes   | yes  | ~           | shell         | n/a  |
@@ -50,7 +53,7 @@ gpool, kini, sity and trading-bot.
 | **Operations**             |     |       |      |             |               |      |
 | Backups                    | no  | no    | no   | no          | no            | n/a  |
 | SLO + burn-rate alert      | no  | yes   | yes  | no          | yes           | n/a  |
-| Runbooks                   | yes | yes   | yes  | no          | yes           | n/a  |
+| Runbooks                   | yes | yes   | yes  | yes         | yes           | n/a  |
 
 gpool's quality is shallow because its API lint is a no-op, trading-bot's because
 neither Node application has an ESLint config, so `lint` runs clippy and nothing
@@ -60,7 +63,9 @@ its integration suite against Postgres only and is scraped only locally; its
 control-plane alone goes through the OpenBao wrapper. sity's Fastify server sets
 `nosniff`, a referrer policy and a report-only CSP; trading-bot and sity are
 scraped only locally. trading-bot's image scans became required checks on
-15 September.
+15 September. trading-bot has five service dashboards, a pipeline dashboard and
+six runbooks; sity has a service dashboard. sity's Runbooks row stays `n/a`
+because it raises no alert of its own, and a runbook exists to answer one.
 
 Verified rather than asserted: every row above that `verify-standards.sh` can
 check, it checks — the Node and Rust pins, the gitleaks rules, the Dependabot

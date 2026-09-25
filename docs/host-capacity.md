@@ -17,9 +17,9 @@ it. This page exists because the next thing anyone wants to deploy is
 side of its delivery is built here — ingress route, ECR repository, OIDC deploy
 role — and `sity` now carries its own deploy workflow and production compose
 file, so the code path is complete. It has still never deployed: its
-`production` environment holds no values, so the v0.4.0 release deploy stopped
-at its own variable check on a missing `AWS_REGION`, and `sity.zigordev.com` has
-no DNS record. Nothing runs `sity-web` in production, so it has no prod scrape
+`production` environment holds no values, so both release deploys, v0.4.0 and
+v0.4.1, stopped at their own variable check on a missing `AWS_REGION`, and
+`sity.zigordev.com` has no DNS record. Nothing runs `sity-web` in production, so it has no prod scrape
 job; the `sity-web` entry in `docker/observability-parity.json` records the gap.
 
 ## Why trading-bot does not fit
@@ -111,6 +111,11 @@ challenge, and retry with backoff. That failure is per-hostname and does not
 touch the certificates for the sites that do resolve.
 
 Both vhosts answer 502 until something is actually deployed behind them. For
-`trading-bot` that waits on the resize. For `sity` it waits on a deploy
-workflow and a production compose file in the `sity` repository: the DNS record
-alone will not serve the scene.
+`trading-bot` that waits on the resize. For `sity` the code path is already
+complete — it carries its own deploy workflow and production compose — and what
+is left is outside this repository: values on sity's `production` environment,
+and the DNS record. Neither has ever been supplied, so `sity` has never
+deployed: both of its release deploys, v0.4.0 and v0.4.1, stopped at their own
+variable check on a missing `AWS_REGION` before reaching the host. The DNS
+record alone will not serve the scene, and neither will the environment values
+alone.
