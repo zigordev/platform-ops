@@ -68,15 +68,20 @@ and that you may need to inspect, re-run or read the output of.
 
 ## Alarms that are not Prometheus
 
-One alarm in the estate is raised by AWS rather than by Prometheus, because it
-watches the host Prometheus runs on. It arrives by email from SNS, not through
-Alertmanager, and it has no `runbook_url` for `verify-standards.sh` to check —
-its runbook link lives in the alarm description, which is what the SNS mail
-prints.
+Two alarms in the estate are raised by AWS rather than by Prometheus, because
+they watch the host Prometheus runs on. They arrive by email from SNS, not
+through Alertmanager, and they have no `runbook_url` for `verify-standards.sh`
+to check — each runbook link lives in the alarm description, which is what the
+SNS mail prints.
 
-| Alarm                           | Raised by  | Runbook                            |
-| ------------------------------- | ---------- | ---------------------------------- |
-| `platform-ops-prod-host-status` | CloudWatch | [host-stopped.md](host-stopped.md) |
+| Alarm                                | Raised by  | Runbook                            |
+| ------------------------------------ | ---------- | ---------------------------------- |
+| `platform-ops-prod-host-status`      | CloudWatch | [host-stopped.md](host-stopped.md) |
+| `platform-ops-prod-host-not-running` | CloudWatch | [host-stopped.md](host-stopped.md) |
+
+One runbook covers both because they are two halves of one question: the first
+mails when the host breaks, the second when the host is absent during hours it
+should be serving and nothing changed state to say so.
 
 ## Where to look
 

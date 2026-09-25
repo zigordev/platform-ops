@@ -1960,3 +1960,246 @@ resource "aws_scheduler_schedule" "host_alarm_unmute" {
 
   depends_on = [aws_iam_role_policy_attachment.scheduler_power]
 }
+
+locals {
+  host_watch_name        = "${local.name_prefix}-host-watch"
+  host_watch_namespace   = "${var.project}/${var.environment}"
+  host_watch_metric_name = "HostStoppedWhenItShouldRun"
+}
+
+data "archive_file" "host_watch" {
+  type        = "zip"
+  source_file = "${path.module}/lambda/host-watch.mjs"
+  output_path = "${path.module}/.terraform/host-watch.zip"
+}
+
+resource "aws_cloudwatch_log_group" "host_watch" {
+  name              = "/aws/lambda/${local.host_watch_name}"
+  retention_in_days = var.host_watch_log_retention_days
+  tags              = local.tags
+}
+
+data "aws_iam_policy_document" "host_watch_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+resource "aws_iam_role" "host_watch" {
+  name               = local.host_watch_name
+  assume_role_policy = data.aws_iam_policy_document.host_watch_assume_role.json
+  tags               = local.tags
+}
+
+data "aws_iam_policy_document" "host_watch" {
+  statement {
+    sid    = "ShouldTheHostBeUp"
+    effect = "Allow"
+    actions = [
+      "cloudwatch:DescribeAlarms",
+    ]
+    resources = [
+      aws_cloudwatch_metric_alarm.host_status.arn,
+    ]
+  }
+
+  statement {
+    sid    = "AndIsIt"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "PublishTheAnswer"
+    effect = "Allow"
+    actions = [
+      "cloudwatch:PutMetricData",
+    ]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = [local.host_watch_namespace]
+    }
+  }
+
+  statement {
+    sid    = "Logs"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = [
+      "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:${aws_cloudwatch_log_group.host_watch.name}:*",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "host_watch" {
+  name   = local.host_watch_name
+  policy = data.aws_iam_policy_document.host_watch.json
+  tags   = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "host_watch" {
+  role       = aws_iam_role.host_watch.name
+  policy_arn = aws_iam_policy.host_watch.arn
+}
+
+resource "aws_lambda_function" "host_watch" {
+  function_name    = local.host_watch_name
+  description      = "Asks every five minutes whether the prod host should be running and whether it is."
+  role             = aws_iam_role.host_watch.arn
+  runtime          = "nodejs24.x"
+  architectures    = ["arm64"]
+  handler          = "host-watch.handler"
+  filename         = data.archive_file.host_watch.output_path
+  source_code_hash = data.archive_file.host_watch.output_base64sha256
+  timeout          = 20
+  memory_size      = 128
+
+  environment {
+    variables = {
+      HOST_ALARM_NAME   = aws_cloudwatch_metric_alarm.host_status.alarm_name
+      INSTANCE_ID       = aws_instance.app.id
+      METRIC_NAMESPACE  = local.host_watch_namespace
+      METRIC_NAME       = local.host_watch_metric_name
+      OTEL_SERVICE_NAME = local.host_watch_name
+    }
+  }
+
+  logging_config {
+    log_format            = "JSON"
+    application_log_level = "INFO"
+    system_log_level      = "WARN"
+    log_group             = aws_cloudwatch_log_group.host_watch.name
+  }
+
+  tags = merge(local.tags, { Name = local.host_watch_name })
+
+  depends_on = [
+    aws_cloudwatch_log_group.host_watch,
+    aws_iam_role_policy_attachment.host_watch,
+  ]
+}
+
+data "aws_iam_policy_document" "scheduler_host_watch_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["scheduler.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+resource "aws_iam_role" "scheduler_host_watch" {
+  name               = "${local.name_prefix}-scheduler-host-watch"
+  assume_role_policy = data.aws_iam_policy_document.scheduler_host_watch_assume_role.json
+  tags               = local.tags
+}
+
+data "aws_iam_policy_document" "scheduler_host_watch" {
+  statement {
+    sid    = "InvokeHostWatch"
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      aws_lambda_function.host_watch.arn,
+    ]
+  }
+}
+
+resource "aws_iam_policy" "scheduler_host_watch" {
+  name   = "${local.name_prefix}-scheduler-host-watch"
+  policy = data.aws_iam_policy_document.scheduler_host_watch.json
+  tags   = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "scheduler_host_watch" {
+  role       = aws_iam_role.scheduler_host_watch.name
+  policy_arn = aws_iam_policy.scheduler_host_watch.arn
+}
+
+resource "aws_scheduler_schedule" "host_watch" {
+  name                = local.host_watch_name
+  group_name          = aws_scheduler_schedule_group.power.name
+  state               = "ENABLED"
+  schedule_expression = "rate(5 minutes)"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = aws_lambda_function.host_watch.arn
+    role_arn = aws_iam_role.scheduler_host_watch.arn
+
+    retry_policy {
+      maximum_event_age_in_seconds = 60
+      maximum_retry_attempts       = 2
+    }
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.scheduler_host_watch]
+}
+
+resource "aws_cloudwatch_metric_alarm" "host_not_running" {
+  alarm_name = "${local.name_prefix}-host-not-running"
+  alarm_description = join(" ", [
+    "For fifteen minutes the prod host has been something other than running while the power window",
+    "said it should be up, or ${local.host_watch_name} stopped answering and the silence is read the",
+    "same way. This is the state the host-status alarm cannot report: that alarm mails on a change,",
+    "and a host that broke while muted, or never started, never changes.",
+    "Runbook: https://github.com/zigordev/platform-ops/blob/main/docs/runbooks/host-stopped.md",
+  ])
+
+  namespace   = local.host_watch_namespace
+  metric_name = local.host_watch_metric_name
+  dimensions  = { InstanceId = aws_instance.app.id }
+
+  statistic           = "Maximum"
+  period              = 300
+  evaluation_periods  = 3
+  datapoints_to_alarm = 3
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "breaching"
+
+  actions_enabled = true
+  alarm_actions   = [aws_sns_topic.host_alarm.arn]
+  ok_actions      = [aws_sns_topic.host_alarm.arn]
+
+  tags = merge(local.tags, { Name = "${local.name_prefix}-host-not-running" })
+
+  depends_on = [aws_scheduler_schedule.host_watch]
+}

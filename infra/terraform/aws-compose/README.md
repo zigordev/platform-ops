@@ -16,6 +16,9 @@ It uses:
   while the power window says it should be running
 - EventBridge schedules that stop and start the host on the power window, and
   mute and un-mute that alarm on the same window
+- A five-minute Lambda poller, its custom metric and a second alarm on the same
+  topic, for the state the first alarm cannot report: the host is not running
+  and the window says it should be
 
 Domain routing for specific applications is intentionally handled outside this module
 (app repositories and their runtime env/config).
@@ -26,6 +29,7 @@ Domain routing for specific applications is intentionally handled outside this m
 - `variables.tf` inputs
 - `main.tf` resources
 - `outputs.tf` values to wire into GitHub
+- `lambda/host-watch.mjs` the five-minute poller, zipped by `archive_file`
 - `templates/user-data.sh.tftpl` EC2 bootstrap
 - `environments/prod.tfvars.example` starter values
 
@@ -57,6 +61,7 @@ terraform output
 terraform output -json github_actions_variables
 terraform output github_deploy_role_arn
 terraform output -json host_alarm
+terraform output -json host_watch
 ```
 
 Use those outputs to configure GitHub Environment `production` variables/secrets.
@@ -75,8 +80,18 @@ Use those outputs to configure GitHub Environment `production` variables/secrets
   does, at the next `power_on_schedule` tick.
 - It does **not** tell you about a fault that begins while the alarm is muted.
   A muted alarm discards its state change rather than queueing it, so nothing is
-  mailed when the window reopens. `uptime-probe.yml` is the backstop, at
-  GitHub's cron speed.
+  mailed when the window reopens. `platform-ops-prod-host-not-running` is what
+  reports that, on the first ticks after the window opens, with
+  `uptime-probe.yml` behind it at GitHub's cron speed.
+- It does **not** build the poller. `archive_file` zips
+  `lambda/host-watch.mjs` as it is, with no bundler, no dependency install and
+  no CI step, so `terraform apply` is the whole deploy. The handler imports the
+  AWS SDK the managed Node runtime already carries and nothing else; adding a
+  dependency to it would end that.
+- It does **not** hide a broken poller. `platform-ops-prod-host-not-running`
+  treats missing data as breaching, so a poller that stops publishing mails in
+  its own name rather than going quiet. Both meanings arrive on one topic;
+  `docs/runbooks/host-stopped.md` has the one command that separates them.
 - It does **not** create your OpenBao secrets.
 - It does **not** populate SSM env parameters.
 - It does **not** unseal OpenBao after reboot.
