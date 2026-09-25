@@ -64,11 +64,23 @@ service_component_up{component="tolgee"}
 The log line each fallback writes, with the locale and the error:
 
 ```logql
-{app=~"cv-web|gpool-web|kini-web"} | json | event="i18n.fallback"
+{app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event="i18n.fallback"
 ```
+
+All four applications run the same loader and write the same line. Only the
+three web sites are scraped in production; trading-bot's console is shipped
+locally only, so in prod that fourth selector matches nothing.
 
 `source` in that log line is `cached` or `local`: `cached` is the milder case
 this alert deliberately ignores.
+
+Why the fallback happened is in `error.name` — `FlatExport`, `NoExport`,
+`EmptyExport`, `HttpError`, or the name of the fetch error for a timeout or a
+refused connection:
+
+```logql
+{app=~"cv-web|gpool-web|kini-web|trading-bot-operator-console"} | json | event="i18n.fallback" | error_name="FlatExport"
+```
 
 ## What to do
 
@@ -87,5 +99,63 @@ In the order they are usually true:
   The log line carries `NoExport`. Check the language tags: they are
   short BCP 47 across the estate (`en`, `es`), and a language named anything
   else exports nothing under the name the site asks for.
+- **The export came back in the wrong shape.** Tolgee answered 200 with a body
+  of dotted keys — `home.title` rather than a nested `home` object — and the
+  loader refused it, because the apps read a nested export. The log line carries
+  `FlatExport`. Nothing is wrong with Tolgee itself: the project's export
+  settings, or an upgrade that changed their defaults, stopped honouring the
+  `structureDelimiter=.` and `supportArrays=true` the loader asks for. Fix the
+  export format on the project. **Restarting Tolgee changes nothing** — it will
+  serve the same body.
 - **A container restarted during an outage.** The alert clears once the process
   gets one successful export.
+
+## A list the export could not be laid over
+
+This one raises no alert and does not reach this dashboard, but it is the other
+way Tolgee copy fails to appear. cv, gpool and kini merge the export over the
+committed copy entry by entry, and a list is only merged when both sides have
+the same number of entries. When they differ the committed list is kept whole —
+a half-translated list would otherwise be served with entries missing — and the
+loader writes one line naming it:
+
+```logql
+{app=~"cv-web|gpool-web|kini-web"} | json | event="i18n.list_length_mismatch"
+```
+
+The line carries `key`, `committed` and `remote`. It means the list in Tolgee
+and the list in the repository have drifted apart: push the committed copy to
+Tolgee, then pull. It is written **once per process per key**, so a quiet log
+does not mean the drift is gone — a process that has already reported it stays
+quiet until it restarts.
+
+## A wrong-shape export is not an unreachable Tolgee
+
+Today it is reported as one, and that is wrong. `FlatExport` and `EmptyExport`
+go through the same fallback as a timeout, which reports the `tolgee` component
+`down`. So a Tolgee that is up, answering 200 and merely misconfigured raises
+`ComponentDown` — whose summary says the site "cannot reach" Tolgee — and
+degrades every site that reads it alongside it. An operator who follows that
+alert restarts a healthy Tolgee and fixes nothing.
+
+The precedent already in this loader points the other way. A 400 with
+`no_exported_result` reports the component **up**, deliberately, because an
+empty project is a content gap and not an unreachable dependency. A wrong-shape
+export is the same kind of fault and is strictly more reachable than an empty
+one: the request succeeded. `up` is the correct answer, and the signal belongs
+in the `FlatExport` log line above, next to `NoExport`.
+
+Two things are owed for that, neither of them in this repository:
+
+- All four should pass `'up'` on the `FlatExport` and `EmptyExport` branches of
+  their loader, as the `NoExport` branch already does. The file is
+  `src/i18n/remote.ts` in each: under `apps/web` in cv, gpool and kini, and
+  under `apps/operator-console` in trading-bot.
+- Once they do, nothing in Prometheus catches a wrong-shape export while a
+  process still holds a cached copy: the fallback returns the cache, the loader
+  counts `merged`, and neither this alert nor `ComponentDown` fires. That is the
+  same blind spot `cached` already has, and closing it means a Loki rule on
+  `error_name="FlatExport"` rather than a health component.
+
+Until both land, treat a `tolgee` `ComponentDown` on any of the four as
+ambiguous and read the log line before touching Tolgee.

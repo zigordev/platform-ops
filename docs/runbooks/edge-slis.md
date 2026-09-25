@@ -4,9 +4,10 @@ Two alerts describe what a visitor actually got, measured where the request
 arrives rather than inside the application.
 
 They exist because nothing else sees this. A Next.js page render emits no
-request metric of its own; the external uptime probe runs every five minutes
-from GitHub and only asks for the health endpoint; and `up` says whether
-Prometheus could scrape a service, not whether anyone could use it.
+request metric of its own; the external uptime probe only asks for the health
+endpoint, and GitHub runs it about seven times a day rather than the every five
+minutes its cron asks for; and `up` says whether Prometheus could scrape a
+service, not whether anyone could use it.
 
 ## Where the numbers come from
 
