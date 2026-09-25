@@ -15,6 +15,12 @@ else depend on it.
 trading-bot runs locally only. There is no production scrape job for it, so this
 alert can only fire against the local stack.
 
+An empty subscription list does not fire it. With its runtime config loaded and
+no pairs to stream, market-data reports the stream `idle`, stays healthy, and
+keeps no `marketStream` series. That is an empty trading-bot database, not a
+broken stream: add pairs from the control plane's `/docs`, or restore the seed
+described in trading-bot's `docs/architecture/postgres-seed-data.md`.
+
 ## Whether it matters
 
 Yes, and it gets worse quietly rather than loudly:
@@ -49,10 +55,11 @@ The dashboard is **trading-bot-market-data**. The log panel there carries
 `subscriptions.refreshed` and the backfill events, which is how you tell "the
 stream is down" from "the stream is up and subscribed to nothing".
 
-Note that `trading_bot_market_data_stream_connected` exists as a metric and is
-never written — it reads 0 on a healthy service. Do not use it. The truth is in
-`service_component_up{component="marketStream"}`, which the health handler
-writes from the same state `/health` reports.
+`trading_bot_market_data_stream_connected` follows the websocket: 1 while
+connected, 0 otherwise, idle included. The alert reads
+`service_component_up{component="marketStream"}` instead, which the health
+handler writes from the same state `/health` reports, and which has no series
+while the stream is idle.
 
 ## What to do
 
@@ -62,8 +69,9 @@ writes from the same state `/health` reports.
 2. **Was it rate limited into a ban?** See
    [binance-rate-limit.md](binance-rate-limit.md). A 418 gets the address
    blocked for a while, and the websocket goes with it.
-3. **Is it subscribed to anything?** A runtime-config refresh that failed can
-   leave the service with an empty subscription list, which looks like silence.
-   `trading_bot_market_data_active_kline_subscriptions` should be non-zero.
+3. **Is it subscribed to anything?** A runtime config that never loaded leaves
+   the service with an empty subscription list and the stream down.
+   `trading_bot_market_data_active_kline_subscriptions` should be non-zero, and
+   the `runtimeConfig` component should be `up`.
 4. **Restart it.** The reconnect loop is the thing that is stuck; a fresh
    process re-subscribes and backfills what it missed.

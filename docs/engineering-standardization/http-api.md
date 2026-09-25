@@ -127,8 +127,13 @@ Health answers with the shape four services already send:
 ```
 
 `status` is `ok`, `degraded` or `error`. `components` maps a dependency name to
-`{"status": "up" | "down" | "unknown"}`; `unknown` means no connection has been
-attempted yet, which is not a failure. The response is 200 unless the service
+`{"status": "up" | "down" | "idle" | "unknown"}`. `unknown` means no connection has
+been attempted yet. `idle` means the service has nothing that needs the dependency
+right now: trading-bot's execution with no analyses to evaluate, or its market-data
+with no pairs to stream. Neither is a failure, and the Rust kit keeps no
+`service_component_up` series for either. The TypeScript kit skips `unknown` but
+writes 0 for any other status that is not `up`, so a TypeScript service must not
+send `idle` until `recordHealth` learns it. The response is 200 unless the service
 cannot serve traffic at all, and 503 when it cannot.
 
 This is a description, not a proposal: `gpool`, `kini`, `notifications` and
