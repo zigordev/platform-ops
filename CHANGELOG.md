@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.45.0](https://github.com/zigordev/platform-ops/compare/v1.44.0...v1.45.0) (2026-09-25)
+
+
+### Features
+
+* **openbao:** unseal the local openbao by itself with a static seal ([#253](https://github.com/zigordev/platform-ops/issues/253)) ([9773ef2](https://github.com/zigordev/platform-ops/commit/9773ef2cddbfc680d7503750ee0e86715bd2a404))
+
 ## [1.44.0](https://github.com/zigordev/platform-ops/compare/v1.43.0...v1.44.0) (2026-09-25)
 
 
