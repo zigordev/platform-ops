@@ -110,6 +110,25 @@ In the order they are usually true:
 - **A container restarted during an outage.** The alert clears once the process
   gets one successful export.
 
+## A list the export could not be laid over
+
+This one raises no alert and does not reach this dashboard, but it is the other
+way Tolgee copy fails to appear. cv, gpool and kini merge the export over the
+committed copy entry by entry, and a list is only merged when both sides have
+the same number of entries. When they differ the committed list is kept whole —
+a half-translated list would otherwise be served with entries missing — and the
+loader writes one line naming it:
+
+```logql
+{app=~"cv-web|gpool-web|kini-web"} | json | event="i18n.list_length_mismatch"
+```
+
+The line carries `key`, `committed` and `remote`. It means the list in Tolgee
+and the list in the repository have drifted apart: push the committed copy to
+Tolgee, then pull. It is written **once per process per key**, so a quiet log
+does not mean the drift is gone — a process that has already reported it stays
+quiet until it restarts.
+
 ## A wrong-shape export is not an unreachable Tolgee
 
 Today it is reported as one, and that is wrong. `FlatExport` and `EmptyExport`
