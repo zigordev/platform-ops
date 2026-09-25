@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.45.1](https://github.com/zigordev/platform-ops/compare/v1.45.0...v1.45.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **local:** wait for tolgee before the ops stack reports started ([#256](https://github.com/zigordev/platform-ops/issues/256)) ([eea79d2](https://github.com/zigordev/platform-ops/commit/eea79d2ee80ebffb3ef8aecc26947133509e9410))
+
 ## [1.45.0](https://github.com/zigordev/platform-ops/compare/v1.44.0...v1.45.0) (2026-09-25)
 
 
