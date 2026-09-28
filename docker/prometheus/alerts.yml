@@ -827,7 +827,7 @@ groups:
       - alert: CopyServedFromRepository
         expr: |
           sum by (job) (
-            increase({__name__=~"(cv|gpool|kini)_i18n_messages_total", source="local"}[15m])
+            increase({__name__=~"(cv|gpool|kini|trading_bot_operator_console)_i18n_messages_total", source="local"}[15m])
           ) > 0
         labels:
           severity: ticket
