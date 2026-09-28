@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.0](https://github.com/zigordev/platform-ops/compare/v1.46.0...v1.47.0) (2026-09-28)
+
+
+### Features
+
+* **alerting:** ask every five minutes whether the host is here when it should be ([#260](https://github.com/zigordev/platform-ops/issues/260)) ([9d0cc6d](https://github.com/zigordev/platform-ops/commit/9d0cc6d74dd15e7cf1cf822fec132c4c15cc03a8))
+
 ## [1.46.0](https://github.com/zigordev/platform-ops/compare/v1.45.1...v1.46.0) (2026-09-25)
 
 
