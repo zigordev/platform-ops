@@ -2189,8 +2189,8 @@ resource "aws_cloudwatch_metric_alarm" "host_not_running" {
 
   statistic           = "Maximum"
   period              = 300
-  evaluation_periods  = 3
-  datapoints_to_alarm = 3
+  evaluation_periods  = 2
+  datapoints_to_alarm = 2
   threshold           = 1
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "breaching"

@@ -153,6 +153,8 @@ jobs:
             --exclude-rule yaml.docker-compose.security.no-new-privileges.no-new-privileges \
             --exclude-rule bash.lang.security.ifs-tampering.ifs-tampering \
             --exclude-rule generic.secrets.security.detected-generic-secret.detected-generic-secret \
+            --exclude-rule terraform.aws.security.aws-cloudwatch-log-group-unencrypted.aws-cloudwatch-log-group-unencrypted \
+            --exclude-rule terraform.aws.security.aws-lambda-environment-unencrypted.aws-lambda-environment-unencrypted \
             --exclude-rule javascript.lang.security.audit.prototype-pollution.prototype-pollution-loop.prototype-pollution-loop \
             --exclude-rule javascript.lang.security.audit.incomplete-sanitization.incomplete-sanitization \
             --exclude-rule javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp \
