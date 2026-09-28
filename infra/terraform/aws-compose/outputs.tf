@@ -270,3 +270,21 @@ output "host_alarm" {
     )
   }
 }
+
+output "host_watch" {
+  description = "The five-minute poller that answers what the host alarm cannot: the host is not here and it should be."
+  value = {
+    function     = aws_lambda_function.host_watch.function_name
+    schedule     = "${aws_scheduler_schedule.host_watch.name} in group ${aws_scheduler_schedule_group.power.name}, every five minutes"
+    alarm_name   = aws_cloudwatch_metric_alarm.host_not_running.alarm_name
+    metric       = "${local.host_watch_namespace} ${local.host_watch_metric_name}, dimension InstanceId=${aws_instance.app.id}"
+    topic_arn    = aws_sns_topic.host_alarm.arn
+    what_it_asks = "Does ${aws_cloudwatch_metric_alarm.host_status.alarm_name} have ActionsEnabled, and is ${aws_instance.app.id} running? Yes and no publishes 1. Every other combination publishes 0."
+    what_alarm_means = join(" ", [
+      "Fifteen minutes of 1, or fifteen minutes of nothing published at all —",
+      "the alarm treats missing data as breaching, so a poller that has died mails in its own name.",
+      "aws cloudwatch get-metric-statistics tells the two apart; the runbook has the call.",
+    ])
+    what_it_costs = "About $0.40 a month: one custom metric at $0.30, one standard-resolution alarm at $0.10, and Lambda invocations and CloudWatch API requests that stay inside the free allowances."
+  }
+}

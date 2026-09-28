@@ -1,8 +1,30 @@
 # Host stopped or impaired
 
-**Alarm:** `platform-ops-prod-host-status` (CloudWatch, not Prometheus)
+**Alarms:** `platform-ops-prod-host-status` and
+`platform-ops-prod-host-not-running` (CloudWatch, not Prometheus)
 
-## What fired
+Two alarms share this runbook. They ask different questions, and the second
+exists only because the first cannot answer its own.
+
+| Alarm                                | The question                               | What it is            |
+| ------------------------------------ | ------------------------------------------ | --------------------- |
+| `platform-ops-prod-host-status`      | did the host just break?                   | a transition detector |
+| `platform-ops-prod-host-not-running` | is the host absent when it should be here? | a state detector      |
+
+A CloudWatch alarm mails on a **change of state**, never on a state, and that is
+the whole difference between them. `host-status` sees the host fail and tells
+you. It cannot see that the host has been failing since before it was allowed to
+speak: a host that breaks after the power window closes goes to `ALARM` while
+muted, the mail is discarded rather than queued, and when the window opens there
+is no change left to send. A scheduled start that never happens is the same
+story with nothing moving at all.
+
+`host-not-running` reads the state instead of waiting for a change, so a fault
+that has been true all weekend is still true on the first tick after the window
+opens. Read the first as "it broke just now" and the second as "it is not here
+and it should be".
+
+## What fired: `platform-ops-prod-host-status`
 
 The prod EC2 host either failed an EC2 status check for five consecutive
 minutes, or stopped publishing status checks altogether for five consecutive
@@ -30,6 +52,43 @@ entire point of it.
 
 The matching `OK` mail means the host is publishing passing status checks
 again. It is not a promise that the applications are back — see **What to do**.
+
+## What fired: `platform-ops-prod-host-not-running`
+
+`platform-ops-prod-host-watch` is a Lambda on a five-minute schedule. Every tick
+it asks two questions and nothing else:
+
+1. Does `platform-ops-prod-host-status` have `ActionsEnabled`? That flag is the
+   estate's single answer to "should the host be up right now". The power
+   schedules set it, the uptime probe reads it, and you can set it by hand for a
+   planned stop.
+2. Is the instance `running`?
+
+Yes and no publishes `1` to the custom metric `HostStoppedWhenItShouldRun` in
+the `platform-ops/prod` namespace. Every other combination publishes `0`,
+including every possible state while the window is closed. Three consecutive
+`1`s — fifteen minutes — raise this alarm.
+
+So it fires for one thing: **the host is not running during hours it is meant to
+serve.** `stopped`, `stopping`, `pending`, `terminated` and "no instance with
+that id" all count, because none of them is `running`. Fifteen minutes is long
+enough for the morning's `pending` and the boot behind it to pass through
+without a word.
+
+**It also fires when the poller itself stops answering.** The alarm treats
+missing data as breaching, so fifteen minutes with nothing published reads the
+same as fifteen minutes of trouble. That is deliberate, and it is the only part
+of the estate that watches its own watcher: a checker nobody checks is the
+failure this repository keeps finding. The mail cannot say which of the two it
+is. One command under **How to see** can.
+
+This alarm is never muted. The power schedules do not touch it, and Terraform
+does not ignore its `actions_enabled` the way it does the other one's, so an
+`apply` will restore it if somebody silences it by hand. It does not need a mute
+because the poller already knows about the window and publishes `0` outside it —
+the hours are still written down in exactly one place. Nothing it sends is
+routine either: it has no equivalent of the morning `OK` mail, so any mail from
+it is news.
 
 ## Whether it matters
 
@@ -73,11 +132,25 @@ it opens and this alarm says nothing. A host that starts but comes up impaired
 is the same story — `StatusCheckFailed` is `1`, which is still breaching, so
 there is still no transition to send.
 
-`uptime-probe.yml` is the cover for both. It reads this alarm's
-`ActionsEnabled` to decide whether a stopped host is deliberate, so once the
-window opens it treats a stopped host as a failure and opens the uptime issue.
-It works at GitHub's cron speed — hours, not minutes. Between the window
-closing and it opening again, the estate's only alerting is that probe.
+`platform-ops-prod-host-not-running` is the cover for all of that, and it is the
+reason it exists. It reads the state rather than waiting for a change, so a host
+that has been stopped since the window closed is reported about fifteen minutes
+after the window opens again, and a start that never happened is reported on the
+same clock. `uptime-probe.yml` sits behind it at GitHub's cron speed — hours,
+not minutes — reading the same `ActionsEnabled` to decide whether a stopped host
+is deliberate.
+
+One case is still nobody's: a host that starts on time and comes up **impaired**
+after a window already spent in `ALARM`. `host-status` has no transition left to
+send, and the poller sees `running` and is satisfied — it answers "is it here",
+not "is it well". The probe covers it, because an impaired host does not serve,
+and it covers it in hours. Closing it properly would mean the poller mailing
+about every in-window fault the status alarm has already mailed about: a second
+mail for every incident, to catch one that has not happened here yet.
+
+Between the window closing and it opening again the poller is silent too, by the
+same design — it is asking the same window. The estate's only alerting in those
+hours is still the probe.
 
 An ops deploy does **not** trip this. `scripts/prod-deploy-remote.sh` runs over
 SSM and restarts containers; it never stops or reboots the instance, so the
@@ -115,7 +188,7 @@ aws ec2 describe-instance-status \
 is the OS's problem inside you. `Events` names a scheduled retirement or
 maintenance window if one is the cause.
 
-What the alarm itself has been doing:
+What either alarm has been doing:
 
 ```bash
 aws cloudwatch describe-alarm-history \
@@ -123,7 +196,40 @@ aws cloudwatch describe-alarm-history \
   --query 'AlarmHistoryItems[].[Timestamp,HistorySummary]' --output text
 ```
 
+If the mail named `platform-ops-prod-host-not-running`, find out which of its two
+meanings you have — an absent host, or a poller that has gone quiet:
+
+```bash
+aws logs tail /aws/lambda/platform-ops-prod-host-watch --since 30m --format short
+```
+
+Every tick writes one JSON record carrying `should_be_up`, `instance_state` and
+`value`. Records with `"value": 1` are an absent host, and `instance_state` says
+what it is instead. **No records at all** are a poller that is not running, and
+the alarm is then telling you about itself. The alarm agrees from the other
+side — a state reason naming missing datapoints is the poller, not the host.
+`False` in the second column is this alarm muted by hand: nothing schedules that
+and nothing else undoes it, so the next `terraform apply` is what restores it:
+
+```bash
+aws cloudwatch describe-alarms --alarm-names platform-ops-prod-host-not-running \
+  --query 'MetricAlarms[].[StateValue,ActionsEnabled,StateReason]' --output text
+```
+
+```bash
+aws scheduler get-schedule --group-name platform-ops-prod-power \
+  --name platform-ops-prod-host-watch \
+  --query '[State,ScheduleExpression]' --output text
+```
+
 ## What to do
+
+Start by reading which alarm mailed. A `platform-ops-prod-host-not-running` mail
+that turns out to be a silent poller is not an outage: fix the schedule, the
+function or its IAM policy, and know that until you do, the estate has no state
+detector and a fault that begins outside the window will not be reported at all.
+A `platform-ops-prod-host-not-running` mail with `"value": 1` in the log is the
+same incident as below, found a different way — carry on from step 2.
 
 1. **It was deliberate.** A stop you took yourself inside the window, with the
    `Power` workflow. Nothing to do, and the `OK` mail arrives on its own when
@@ -160,10 +266,11 @@ aws cloudwatch describe-alarm-history \
    three to five minutes of containers restarting after a boot, which is
    normal and documented in `docs/power.md`.
 
-## If this alarm ever goes quiet
+## If these alarms ever go quiet
 
-An alarm that cannot mail is the failure it exists to prevent, and it has three
-silent modes worth knowing:
+An alarm that cannot mail is the failure it exists to prevent, and this pair has
+four silent modes worth knowing. The first two take both alarms with them: they
+share one SNS topic and one subscription.
 
 - **The SNS subscription was never confirmed.** AWS emails a confirmation link
   when the subscription is created and Terraform cannot click it. Until
@@ -182,9 +289,12 @@ silent modes worth knowing:
   console — it simply has no subscriber. `terraform output host_alarm` says
   which of the two it is.
 
-- **It is muted.** Either the power window closed it, or somebody ran the mute
-  by hand for a planned stop. The alarm keeps changing state while muted, so the
-  history above still shows the truth and only the mail is missing:
+- **`host-status` is muted.** Either the power window closed it, or somebody ran
+  the mute by hand for a planned stop. The alarm keeps changing state while
+  muted, so the history above still shows the truth and only the mail is
+  missing. `host-not-running` is not muted with it and never is — but it reads
+  that same flag as its question, so it publishes `0` and is just as quiet. One
+  switch silences both observers on purpose:
 
   ```bash
   aws cloudwatch describe-alarms --alarm-names platform-ops-prod-host-status \
@@ -211,7 +321,16 @@ silent modes worth knowing:
 
 - **The un-mute never ran.** It shares a schedule group and an execution role
   with the scheduled start, so the failure that stops the host coming back can
-  be the same one that leaves the alarm muted. The probe then reads
-  `ActionsEnabled` as `False`, calls the stop deliberate and skips, and neither
-  observer says anything. If a whole working day passes with no `OK` mail and no
-  uptime issue, check the group above before believing the silence.
+  be the same one that leaves the alarm muted. Everything downstream then agrees
+  with it: the poller reads the same `ActionsEnabled` and publishes `0`, the
+  probe reads it, calls the stop deliberate and skips, and all three observers
+  are quiet together. That is the price of writing the window down once, and it
+  is why `platform-ops-prod-host-alarm-unmute` is never disabled. If a whole
+  working day passes with no `OK` mail and no uptime issue, check the group
+  above before believing the silence.
+
+- **The poller stopped and its alarm was already `ALARM`.** `host-not-running`
+  mails on its own change of state like any other alarm, so a poller that dies
+  while the alarm is already raised adds no second mail. The log tail above is
+  the check; an alarm sitting in `ALARM` for longer than an incident should last
+  is the tell.
