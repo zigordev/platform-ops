@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.0](https://github.com/zigordev/platform-ops/compare/v1.47.0...v1.48.0) (2026-10-06)
+
+
+### Features
+
+* **observability:** cover the operator console in the i18n fallback alert ([#262](https://github.com/zigordev/platform-ops/issues/262)) ([fab5422](https://github.com/zigordev/platform-ops/commit/fab5422efe64133000ce26d48f48563b1cb952cb))
+
 ## [1.47.0](https://github.com/zigordev/platform-ops/compare/v1.46.0...v1.47.0) (2026-09-28)
 
 
